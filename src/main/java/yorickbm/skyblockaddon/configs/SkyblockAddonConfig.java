@@ -15,7 +15,9 @@ public class SkyblockAddonConfig {
         BUILDER.push("config");
 
         register("island.spawn.height", "110", "Define bottom height of your island.NBT to spawn at.");
+        register("island.size.radius", "400", "Set island size radius. (ONLY modify when NO ISLANDS have been created yet).");
         register("island.particles.border", "TRUE", "Enable/Disable the particle border that is generated at island buildable edge.");
+        register("mojang.API", "https://sessionserver.mojang.com/session/minecraft/profile/%s", "Mojang API used for skin rendering in UI's");
 
         BUILDER.pop();
         SPEC = BUILDER.build();

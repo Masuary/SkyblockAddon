@@ -18,6 +18,7 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraftforge.common.util.INBTSerializable;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.apache.logging.log4j.LogManager;
@@ -25,12 +26,14 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import yorickbm.skyblockaddon.SkyblockAddon;
 import yorickbm.skyblockaddon.capabilities.providers.IslandGeneratorProvider;
+import yorickbm.skyblockaddon.configs.SkyblockAddonConfig;
 import yorickbm.skyblockaddon.islands.permissions.Permission;
 import yorickbm.skyblockaddon.util.ServerHelper;
 import yorickbm.skyblockaddon.util.Square;
 import yorickbm.skyblockaddon.util.UsernameCache;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -40,10 +43,11 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class IslandData {
+public class IslandData implements INBTSerializable<CompoundTag> {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
+    private UUID id = null; //UUID Of island
     private UUID owner = null; //UUID Of owner
     private Vec3i spawn; //Spawn coordinates of island
     private Vec3i center; //Spawn coordinates of island
@@ -54,54 +58,7 @@ public class IslandData {
     private PermissionGroup Admin, Members, Default, Owner;
     private final List<PermissionGroup> permissionGroups = new ArrayList<>();
 
-    /**
-     * Load island data from CompoundTag
-     * @param tag CompoundTag containing island data
-     */
-    public IslandData(CompoundTag tag, String id) {
-        try {
-            if (tag.contains("owner")) owner = UUID.fromString(tag.getString("owner"));
-
-            CompoundTag slocation = (CompoundTag) tag.get("spawn");
-            spawn = new Vec3i(slocation.getInt("x"), slocation.getInt("y"), slocation.getInt("z"));
-            CompoundTag clocation = (CompoundTag) tag.get("center");
-            center = new Vec3i(clocation.getInt("x"), clocation.getInt("y"), clocation.getInt("z"));
-
-            if (center.distToCenterSqr(0, 0, 0) <= 4) center = spawn; //Island center was set at 0, 0, 0 not possible!
-
-            biome = tag.getString("biome");
-            travelability = tag.getBoolean("travelability");
-
-            CompoundTag permissionData = (CompoundTag) tag.get("permissions");
-            CompoundTag groups = (CompoundTag) permissionData.get("groups");
-            int gCount = groups.getInt("count");
-            for (int i = 0; i < gCount; i++) {
-                PermissionGroup group = new PermissionGroup(permissionData.getCompound(groups.getString("group-" + i)));
-                if (!group.canBeRemoved()) {
-                    switch (group.getName()) {
-                        case "Admin" -> this.Admin = group;
-                        case "Members" -> this.Members = group;
-                        case "Default" -> this.Default = group;
-                    }
-                }
-
-                permissionGroups.add(group);
-            }
-            this.Owner = new PermissionGroup("Admin", Items.AIR, true); //Allow everything, no visible display item
-
-            //Load legacy member data into permission member group
-            if (tag.contains("members")) {
-                CompoundTag members = tag.getCompound("members");
-                for (int x = 0; x < members.getInt("count"); x++) {
-                    UUID member = UUID.fromString(members.getString("member-" + x));
-                    this.Members.addMember(member);
-                }
-            }
-        } catch(Exception ex) {
-            LOGGER.error(ex);
-            LOGGER.error("Failed to load island with id: " + id);
-        }
-    }
+    public IslandData() {  }
 
     /**
      * Allow for generation from legacy data
@@ -263,44 +220,6 @@ public class IslandData {
     }
 
     /**
-     * Turn island data into a NBT Tag contain its data that can be used to create a new instance.
-     * @return NBT Tag that can be stored
-     */
-    public CompoundTag serialize() {
-        CompoundTag tag = new CompoundTag();
-        if(owner != null) tag.putString("owner", owner.toString());
-        if(spawn == null) spawn = Vec3i.ZERO;
-
-        CompoundTag slocation = new CompoundTag();
-        slocation.putInt("x", spawn.getX());
-        slocation.putInt("y", spawn.getY());
-        slocation.putInt("z", spawn.getZ());
-        tag.put("spawn", slocation);
-
-        CompoundTag clocation = new CompoundTag();
-        clocation.putInt("x", center.getX());
-        clocation.putInt("y", center.getY());
-        clocation.putInt("z", center.getZ());
-        tag.put("center", clocation);
-
-        tag.putString("biome", biome);
-        tag.putBoolean("travelability", travelability);
-
-        CompoundTag permissionData = new CompoundTag();
-        CompoundTag groups = new CompoundTag();
-        groups.putInt("count", permissionGroups.size());
-        for(int i = 0; i < permissionGroups.size(); i++) {
-            groups.putString("group-" + i, permissionGroups.get(i).getName());
-            permissionData.put(permissionGroups.get(i).getName(), permissionGroups.get(i).serialize());
-        }
-
-        permissionData.put("groups", groups);
-        tag.put("permissions", permissionData);
-
-        return tag;
-    }
-
-    /**
      * Teleport player to islands spawn coordinates
      * @param entity whom you want to teleport
      */
@@ -391,8 +310,9 @@ public class IslandData {
      * @return BoundingBox of Island
      */
     public BoundingBox getIslandBoundingBox() {
-        BlockPos blockpos = quantize(new BlockPos(center.getX() - IslandGeneratorProvider.SIZE,-100,center.getZ() - IslandGeneratorProvider.SIZE));
-        BlockPos blockpos1 = quantize(new BlockPos(center.getX() + IslandGeneratorProvider.SIZE,350,center.getZ() + IslandGeneratorProvider.SIZE));
+        int size = Integer.parseInt(SkyblockAddonConfig.getForKey("island.size.radius"));
+        BlockPos blockpos = quantize(new BlockPos(center.getX() - size,-100,center.getZ() - size));
+        BlockPos blockpos1 = quantize(new BlockPos(center.getX() + size,350,center.getZ() + size));
         return BoundingBox.fromCorners(blockpos, blockpos1);
     }
 
@@ -534,4 +454,106 @@ public class IslandData {
         }
     }
 
+    /**
+     * Turn island data into a NBT Tag contain its data that can be used to create a new instance.
+     * @return NBT Tag that can be stored
+     */
+    @Override
+    public CompoundTag serializeNBT() {
+        CompoundTag tag = new CompoundTag();
+        if(owner != null) tag.putString("owner", owner.toString());
+        if(id != null) tag.putUUID("Id", id);
+        if(spawn == null) spawn = Vec3i.ZERO;
+
+        CompoundTag slocation = new CompoundTag();
+        slocation.putInt("x", spawn.getX());
+        slocation.putInt("y", spawn.getY());
+        slocation.putInt("z", spawn.getZ());
+        tag.put("spawn", slocation);
+
+        CompoundTag clocation = new CompoundTag();
+        clocation.putInt("x", center.getX());
+        clocation.putInt("y", center.getY());
+        clocation.putInt("z", center.getZ());
+        tag.put("center", clocation);
+
+        tag.putString("biome", biome);
+        tag.putBoolean("travelability", travelability);
+
+        CompoundTag permissionData = new CompoundTag();
+        CompoundTag groups = new CompoundTag();
+        groups.putInt("count", permissionGroups.size());
+        for(int i = 0; i < permissionGroups.size(); i++) {
+            groups.putString("group-" + i, permissionGroups.get(i).getName());
+            permissionData.put(permissionGroups.get(i).getName(), permissionGroups.get(i).serialize());
+        }
+
+        permissionData.put("groups", groups);
+        tag.put("permissions", permissionData);
+
+        return tag;
+    }
+
+    /**
+     * Load island data from CompoundTag
+     * @param tag CompoundTag containing island data
+     */
+    @Override
+    public void deserializeNBT(CompoundTag tag) {
+        try {
+            if (tag.contains("owner")) owner = UUID.fromString(tag.getString("owner"));
+            if (tag.contains("Id")) id = tag.getUUID("Id");
+
+            CompoundTag slocation = (CompoundTag) tag.get("spawn");
+            spawn = new Vec3i(slocation.getInt("x"), slocation.getInt("y"), slocation.getInt("z"));
+            CompoundTag clocation = (CompoundTag) tag.get("center");
+            center = new Vec3i(clocation.getInt("x"), clocation.getInt("y"), clocation.getInt("z"));
+
+            if (center.distToCenterSqr(0, 0, 0) <= 4) center = spawn; //Island center was set at 0, 0, 0 not possible!
+
+            biome = tag.getString("biome");
+            travelability = tag.getBoolean("travelability");
+
+            CompoundTag permissionData = (CompoundTag) tag.get("permissions");
+            CompoundTag groups = (CompoundTag) permissionData.get("groups");
+            int gCount = groups.getInt("count");
+            for (int i = 0; i < gCount; i++) {
+                PermissionGroup group = new PermissionGroup(permissionData.getCompound(groups.getString("group-" + i)));
+                if (!group.canBeRemoved()) {
+                    switch (group.getName()) {
+                        case "Admin" -> this.Admin = group;
+                        case "Members" -> this.Members = group;
+                        case "Default" -> this.Default = group;
+                    }
+                }
+
+                permissionGroups.add(group);
+            }
+            this.Owner = new PermissionGroup("Admin", Items.AIR, true); //Allow everything, no visible display item
+
+            //Load legacy member data into permission member group
+            if (tag.contains("members")) {
+                CompoundTag members = tag.getCompound("members");
+                for (int x = 0; x < members.getInt("count"); x++) {
+                    UUID member = UUID.fromString(members.getString("member-" + x));
+                    this.Members.addMember(member);
+                }
+            }
+        } catch(Exception ex) {
+            LOGGER.error(ex);
+            LOGGER.error("Failed to load island with id: {}", tag.getUUID("Id"));
+        }
+    }
+
+    /**
+     * Get the islands UUID
+     * @return UUID
+     */
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID islandId) {
+        id = islandId;
+    }
 }

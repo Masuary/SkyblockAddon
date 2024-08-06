@@ -29,6 +29,7 @@ import yorickbm.skyblockaddon.util.ServerHelper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class JoinIslandOverviewHandler extends ServerOnlyHandler<IslandGenerator> {
@@ -106,7 +107,7 @@ public class JoinIslandOverviewHandler extends ServerOnlyHandler<IslandGenerator
 
                 item = new ItemStack(Items.PLAYER_HEAD);
                 item.setHoverName(ServerHelper.formattedText(owner.getName(), ChatFormatting.BOLD));
-                item.getOrCreateTagElement("skyblockaddon").putString("islandid", data.getIslandIdByLocation(island.getCenter())); //Put biome in item NBT for click event
+                item.getOrCreateTagElement("skyblockaddon").putString("islandid", data.getIslandIdByLocation(island.getCenter()).toString()); //Put biome in item NBT for click event
 
                 CompoundTag tag = item.getOrCreateTag();
                 tag.putString("SkullOwner", owner.getName());
@@ -158,7 +159,7 @@ public class JoinIslandOverviewHandler extends ServerOnlyHandler<IslandGenerator
                 if (slot.getItem().isEmpty()) return false; //Empty slot clicked
                 player.closeContainer();
                 ServerHelper.playSongToPlayer(player, SoundEvents.AMETHYST_BLOCK_CHIME, 3f, 1f);
-                String islandId = Objects.requireNonNull(slot.getItem().getTagElement("skyblockaddon")).getString("islandid");
+                UUID islandId = UUID.fromString(Objects.requireNonNull(slot.getItem().getTagElement("skyblockaddon")).getString("islandid"));
                 IslandData island = this.data.getIslandById(islandId);
                 island.addIslandMember(player.getUUID());
                 data2.setIsland(islandId);

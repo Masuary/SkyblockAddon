@@ -62,7 +62,7 @@ public class GetIslandIdCommand {
                 ServerHelper.styledText(
                         SkyblockAddonLanguageConfig.getForKey("commands.admin.getId.success").formatted(targets.stream().findFirst().get().getGameProfile().getName()),
                     Style.EMPTY
-                            .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, i.getIslandId()))
+                            .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, i.getIslandId().toString()))
                             .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent(SkyblockAddonLanguageConfig.getForKey("chat.hover.copy")))),
                     ChatFormatting.GREEN
                 ),

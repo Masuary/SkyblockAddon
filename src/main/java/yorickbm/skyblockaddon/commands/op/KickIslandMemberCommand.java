@@ -56,7 +56,7 @@ public class KickIslandMemberCommand {
 
         Player target = targets.stream().findFirst().get();
         target.getCapability(PlayerIslandProvider.PLAYER_ISLAND).ifPresent(i -> player.getLevel().getCapability(IslandGeneratorProvider.ISLAND_GENERATOR).ifPresent(g -> {
-            IslandData island = (id == null) ? g.getIslandById(i.getIslandId()) : g.getIslandById(id.toString());
+            IslandData island = (id == null) ? g.getIslandById(i.getIslandId()) : g.getIslandById(id);
             if(island == null) {
                 command.sendFailure(new TextComponent(String.format(SkyblockAddonLanguageConfig.getForKey("commands.not.found"), (id == null) ? i.getIslandId() : id.toString())));
                 return;
@@ -67,7 +67,7 @@ public class KickIslandMemberCommand {
             }
 
             island.removeIslandMember(target.getUUID());
-            i.setIsland("");
+            i.setIsland(null);
 
             command.sendSuccess(ServerHelper.formattedText(String.format(SkyblockAddonLanguageConfig.getForKey("commands.admin.island.kick.success"), target.getGameProfile().getName(), (id == null) ? i.getIslandId() : id.toString()), ChatFormatting.GREEN), true);
 

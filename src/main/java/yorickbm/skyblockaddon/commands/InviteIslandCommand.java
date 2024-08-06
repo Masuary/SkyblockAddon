@@ -19,6 +19,7 @@ import yorickbm.skyblockaddon.configs.SkyblockAddonLanguageConfig;
 import yorickbm.skyblockaddon.util.ServerHelper;
 
 import java.util.Collection;
+import java.util.UUID;
 
 public class InviteIslandCommand {
     public InviteIslandCommand(CommandDispatcher<CommandSourceStack> dispatcher) {

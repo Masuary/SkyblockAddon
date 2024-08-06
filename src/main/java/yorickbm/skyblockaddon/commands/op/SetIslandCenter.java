@@ -5,30 +5,37 @@ import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.coordinates.Vec3Argument;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
-import net.minecraft.network.chat.ClickEvent;
-import net.minecraft.network.chat.HoverEvent;
-import net.minecraft.network.chat.Style;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.Vec3;
+import yorickbm.skyblockaddon.SkyblockAddon;
 import yorickbm.skyblockaddon.capabilities.providers.IslandGeneratorProvider;
+import yorickbm.skyblockaddon.configs.SkyblockAddonConfig;
 import yorickbm.skyblockaddon.configs.SkyblockAddonLanguageConfig;
+import yorickbm.skyblockaddon.util.BuildingBlock;
 import yorickbm.skyblockaddon.util.ServerHelper;
 
-import java.util.UUID;
+import java.util.ArrayList;
 
-public class WhereAmICommand {
-
-    public WhereAmICommand(CommandDispatcher<CommandSourceStack> dispatcher) {
+public class SetIslandCenter {
+    public SetIslandCenter(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
                 Commands.literal("island")
                         .then(
                                 Commands.literal("admin")
                                         .requires(p -> p.hasPermission(3))
-                                        .then(
-                                                Commands.literal("where")
-                                                    .executes((command) -> execute(command.getSource()))
+                                        .then(Commands.literal("center")
+                                                .executes( (command) -> execute(command.getSource()))
                                         )
                         )
         );
@@ -45,26 +52,17 @@ public class WhereAmICommand {
             return Command.SINGLE_SUCCESS;
         }
 
-        command.getLevel().getCapability(IslandGeneratorProvider.ISLAND_GENERATOR).ifPresent(g -> {
-            UUID islandIdOn = g.getIslandIdByLocation(new Vec3i(player.getX(), 121, player.getZ()));
-            if(islandIdOn == null) { //Not on an island so we do not affect permission
-                command.sendFailure(new TextComponent(SkyblockAddonLanguageConfig.getForKey("commands.admin.where.none")));
-                return;
+        player.getLevel().getCapability(IslandGeneratorProvider.ISLAND_GENERATOR).ifPresent(cap -> {
+            if(!cap.setSpawnLocation(player.getOnPos())) {
+                command.sendFailure(new TextComponent(SkyblockAddonLanguageConfig.getForKey("commands.set.center.fail")));
+              return;
             }
-
-            command.sendSuccess(
-                ServerHelper.styledText(
-                        SkyblockAddonLanguageConfig.getForKey("commands.admin.where.success").formatted(islandIdOn),
-                    Style.EMPTY
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, islandIdOn.toString()))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent(SkyblockAddonLanguageConfig.getForKey("chat.hover.copy")))),
-                    ChatFormatting.GREEN
-                ),
-                true
-            );
+            command.sendSuccess(new TextComponent(String.format(SkyblockAddonLanguageConfig.getForKey("commands.set.center.success"),
+                    player.getOnPos().getX(),
+                    player.getOnPos().getY(),
+                    player.getOnPos().getZ())).withStyle(ChatFormatting.GREEN), true);
         });
 
         return Command.SINGLE_SUCCESS;
     }
-
 }

@@ -44,16 +44,16 @@ public class JoinIslandCommand {
                 command.sendFailure(new TextComponent(SkyblockAddonLanguageConfig.getForKey("commands.accept.has.one")));
                 return;
             }
-            if(!playerIsland.inviteValid(islandId.toString())) {
+            if(!playerIsland.inviteValid(islandId)) {
                 command.sendFailure(new TextComponent(SkyblockAddonLanguageConfig.getForKey("commands.accept.invalid")));
                 return;
             }
 
             player.getLevel().getCapability(IslandGeneratorProvider.ISLAND_GENERATOR).ifPresent(g -> {
                 //Update island data
-                IslandData island = g.getIslandById(islandId.toString());
+                IslandData island = g.getIslandById(islandId);
                 island.addIslandMember(player.getUUID());
-                playerIsland.setIsland(islandId.toString());
+                playerIsland.setIsland(islandId);
 
                 //Inform player
                 ServerHelper.playSongToPlayer((ServerPlayer) player, SoundEvents.AMETHYST_BLOCK_CHIME, 3f, 1f);

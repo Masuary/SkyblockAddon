@@ -28,6 +28,7 @@ import yorickbm.skyblockaddon.util.ServerHelper;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class TeleportIslandOverviewHandler extends ServerOnlyHandler<IslandGenerator> {
@@ -106,7 +107,7 @@ public class TeleportIslandOverviewHandler extends ServerOnlyHandler<IslandGener
 
                 item = new ItemStack(Items.PLAYER_HEAD);
                 item.setHoverName(ServerHelper.formattedText(owner.getName(), ChatFormatting.BOLD));
-                item.getOrCreateTagElement(SkyblockAddon.MOD_ID).putString("islandid", data.getIslandIdByLocation(island.getCenter())); //Put biome in item NBT for click event
+                item.getOrCreateTagElement(SkyblockAddon.MOD_ID).putUUID("islandid", data.getIslandIdByLocation(island.getCenter())); //Put biome in item NBT for click event
 
                 CompoundTag tag = item.getOrCreateTag();
                 tag.putString("SkullOwner", owner.getName());
@@ -158,7 +159,7 @@ public class TeleportIslandOverviewHandler extends ServerOnlyHandler<IslandGener
                 if (slot.getItem().isEmpty()) return false; //Empty slot clicked
                 player.closeContainer();
                 ServerHelper.playSongToPlayer(player, SoundEvents.AMETHYST_BLOCK_CHIME, 3f, 1f);
-                String islandId = Objects.requireNonNull(slot.getItem().getTagElement(SkyblockAddon.MOD_ID)).getString("islandid");
+                UUID islandId = Objects.requireNonNull(slot.getItem().getTagElement(SkyblockAddon.MOD_ID)).getUUID("islandid");
                 this.data.getIslandById(islandId).teleport(player);
             }
         }

@@ -43,6 +43,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -53,7 +54,7 @@ public class SkyblockAddon {
     // Directly reference a log4j logger.
     private static final Logger LOGGER = LogManager.getLogger();
     public static final String MOD_ID = "skyblockaddon";
-    public static final String VERSION = "6.2";
+    public static final String VERSION = "7.0";
 
     public static final float UI_SOUND_VOL = 0.5f;
     public static final float EFFECT_SOUND_VOL = 0.2f;
@@ -84,6 +85,11 @@ public class SkyblockAddon {
 
     }
 
+    /**
+     * Load custom .NBT file for island structure
+     * @param server
+     * @return NBT data
+     */
     public static CompoundTag getIslandNBT(MinecraftServer server) {
         if(IslandNBTData == null) {
             try {
@@ -122,13 +128,6 @@ public class SkyblockAddon {
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
 
-
-//        if(!ModList.get().isLoaded("ftb2backup")) {
-//            WorldSaverThread saver = new WorldSaverThread();
-//            saver.setServer(event.getServer());
-//            saver.start();
-//        }
-
         //Custom island.nbt
         try {
             Resource rs = event.getServer().getResourceManager().getResource(new ResourceLocation(SkyblockAddon.MOD_ID, "structures/island.nbt"));
@@ -165,8 +164,8 @@ public class SkyblockAddon {
 
         player.getLevel().getCapability(IslandGeneratorProvider.ISLAND_GENERATOR).ifPresent(islandGenerator -> {
 
-            String islandIdOn = islandGenerator.getIslandIdByLocation(new Vec3i(player.getX(), 121, player.getZ()));
-            if(islandIdOn == null || islandIdOn.isEmpty()) return; //Not on an island so we do not affect permission
+            UUID islandIdOn = islandGenerator.getIslandIdByLocation(new Vec3i(player.getX(), 121, player.getZ()));
+            if(islandIdOn == null) return; //Not on an island so we do not affect permission
 
             IslandData data = islandGenerator.getIslandById(islandIdOn);
             island.set(data);
@@ -179,8 +178,8 @@ public class SkyblockAddon {
         AtomicReference<IslandData> island = new AtomicReference<>(null);
 
         Objects.requireNonNull(Objects.requireNonNull(player.getServer()).getLevel(Level.OVERWORLD)).getCapability(IslandGeneratorProvider.ISLAND_GENERATOR).ifPresent(islandGenerator -> {
-            String islandIdOn = islandGenerator.getIslandIdByLocation(new Vec3i(location.getX(), 121, location.getZ()));
-            if(islandIdOn == null || islandIdOn.isEmpty()) return; //Not on an island so we do not affect permission
+            UUID islandIdOn = islandGenerator.getIslandIdByLocation(new Vec3i(location.getX(), 121, location.getZ()));
+            if(islandIdOn == null ) return; //Not on an island so we do not affect permission
 
             IslandData data = islandGenerator.getIslandById(islandIdOn);
             island.set(data);

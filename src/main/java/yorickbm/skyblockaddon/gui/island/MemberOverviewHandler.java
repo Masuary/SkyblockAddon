@@ -171,7 +171,7 @@ public class MemberOverviewHandler extends ServerOnlyHandler<IslandData> {
                             Player member_player = player.getServer().getPlayerList().getPlayer(member);
                             if (member_player != null) {
                                 member_player.getCapability(PlayerIslandProvider.PLAYER_ISLAND).ifPresent(island -> {
-                                    island.setIsland("");
+                                    island.setIsland(null);
                                     member_player.teleportTo(player.getLevel().getSharedSpawnPos().getX(), player.getLevel().getSharedSpawnPos().getY(), player.getLevel().getSharedSpawnPos().getZ());
                                     member_player.sendMessage(ServerHelper.formattedText(SkyblockAddonLanguageConfig.getForKey("island.member.kick"), ChatFormatting.GREEN), member);
                                 });

@@ -10,6 +10,7 @@ import com.google.gson.stream.JsonReader;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.NotNull;
+import yorickbm.skyblockaddon.configs.SkyblockAddonConfig;
 
 import javax.annotation.Nonnull;
 import java.io.BufferedReader;
@@ -76,13 +77,12 @@ public final class UsernameCache {
         Loader() {
         }
 
-        private static final String USERNAME_API_URL = "https://api.mojang.com/user/profile/%s";
         private static final CharMatcher DASH_MATCHER = CharMatcher.is('-');
 
         @Override
         public @NotNull String load(@Nonnull UUID uuid) throws IOException {
             String uuidString = DASH_MATCHER.removeFrom(uuid.toString());
-            try (BufferedReader reader = Resources.asCharSource(new URL(String.format(USERNAME_API_URL, uuidString)), StandardCharsets.UTF_8).openBufferedStream()) {
+            try (BufferedReader reader = Resources.asCharSource(new URL(String.format(SkyblockAddonConfig.getForKey("mojang.API"), uuidString)), StandardCharsets.UTF_8).openBufferedStream()) {
                 JsonReader json = new JsonReader(reader);
                 String name = null;
 

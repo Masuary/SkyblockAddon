@@ -57,7 +57,7 @@ public class SetIslandOwnerCommand {
 
         Player target = targets.stream().findFirst().get();
         target.getCapability(PlayerIslandProvider.PLAYER_ISLAND).ifPresent(i -> player.getLevel().getCapability(IslandGeneratorProvider.ISLAND_GENERATOR).ifPresent(g -> {
-            IslandData island = (id == null) ? g.getIslandById(i.getIslandId()) : g.getIslandById(id.toString());
+            IslandData island = (id == null) ? g.getIslandById(i.getIslandId()) : g.getIslandById(id);
             if(island == null) {
                 command.sendFailure(new TextComponent(String.format(SkyblockAddonLanguageConfig.getForKey("commands.not.found"), (id == null) ? i.getIslandId() : id.toString())));
                 return;
@@ -70,8 +70,8 @@ public class SetIslandOwnerCommand {
             //Update ID just in case
             if(id != null) {
                 IslandData getOld = g.getIslandById(i.getIslandId());
-                getOld.removeIslandMember(target.getUUID()); //Remove from old island just in case
-                i.setIsland(id.toString());
+                if(getOld != null) getOld.removeIslandMember(target.getUUID()); //Remove from old island just in case
+                i.setIsland(id);
             }
 
             GameProfile oldOwner = island.getOwner(player.getServer()); //Collect old owner
