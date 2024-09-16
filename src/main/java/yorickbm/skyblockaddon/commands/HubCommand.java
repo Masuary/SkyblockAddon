@@ -23,7 +23,7 @@ public class HubCommand extends OverWorldCommandStack {
     public int execute(CommandSourceStack command, ServerPlayer player) {
         // Check if the player is in the Overworld
         if (player.getLevel().dimension() != Level.OVERWORLD) {
-            command.sendFailure(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.other.not.in.overworld"))
+            command.sendFailure(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.not.in.overworld"))
                     .withStyle(ChatFormatting.RED));
             return Command.SINGLE_SUCCESS;
         }
