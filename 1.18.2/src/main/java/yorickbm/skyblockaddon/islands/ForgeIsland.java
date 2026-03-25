@@ -44,7 +44,7 @@ public class ForgeIsland extends Island implements NBTSerializable {
     public ForgeIsland(Island island) {
         super.setId(island.getId());
         super.setOwner(island.getOwner());
-        super.setSpawn(island.getCenter());
+        super.setSpawn(island.getSpawn());
         super.setCenter(island.getCenter());
         super.setVisibility(island.isVisible());
         super.setSkullTexture(island.getSkullTexture());
