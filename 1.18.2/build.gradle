@@ -180,6 +180,9 @@ dependencies {
     compileOnly fg.deobf("curse.maven:building-gadgets-298187:4412996")
     compileOnly fileTree(dir: 'libs', include: ['*.jar'])
 
+    compileOnly fg.deobf("blank:masugui:1.0.0")
+    runtimeOnly fg.deobf("blank:masugui:1.0.0")
+
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
