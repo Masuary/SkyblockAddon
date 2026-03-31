@@ -74,6 +74,7 @@
   "island.member.group.set": "%s has been added to the group '%s'.",
   "island.member.kicked": "%s has been kicked from the group/island.",
   "island.setspawn.outside": "You can not set your spawn outside of your islands boundaries.",
+  "island.setspawn.success": "Your island spawn has been updated.",
 
   "commands.admin.purge.ask": "Click here to confirm purging %s island(s). This will take up a part of the servers resources.",
   "commands.admin.purge.done": "%s island(s) have been purged! There locations have been freed up to reuse.",

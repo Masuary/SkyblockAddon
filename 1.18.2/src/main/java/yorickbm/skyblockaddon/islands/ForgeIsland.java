@@ -256,7 +256,7 @@ public class ForgeIsland extends Island implements NBTSerializable {
             final ItemStack item2 = new ItemStack(Items.BROWN_MUSHROOM);
             item2.setHoverName(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("gui.group.nonmember.name")).withStyle(ChatFormatting.BOLD).withStyle(ChatFormatting.BLUE));
 
-            final IslandGroup defaultG2 = new ForgeIslandGroup(SkyblockAddonCore.MOD_UUID2, item2, true);
+            final IslandGroup defaultG2 = new ForgeIslandGroup(SkyblockAddonCore.MOD_UUID2, item2, false);
             super.islandGroups.put(defaultG2.getId(), defaultG2);
         }
 

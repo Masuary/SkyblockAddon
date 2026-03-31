@@ -11,6 +11,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
 import yorickbm.guilibrary.GUILibraryRegistry;
+import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.util.UsernameCache;
@@ -81,6 +82,8 @@ public final class IslandHubGui {
                 .onClick(p -> {
                     island.setSpawnPoint(new yorickbm.skyblockaddon.core.util.geometry.Vec3i(
                             p.blockPosition().getX(), p.blockPosition().getY(), p.blockPosition().getZ()));
+                    p.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("island.setspawn.success"))
+                            .withStyle(ChatFormatting.GREEN), p.getUUID());
                     open(p, data);
                 }));
 
@@ -130,7 +133,7 @@ public final class IslandHubGui {
                     .label(new TextComponent("Leave Island")).backgroundColor(0xFFAA4444).flat()
                     .onClick(p -> {
                         MasuGui.closeFor(p);
-                        island.kickMember(p, p.getUUID());
+                        ConfirmLeaveGui.open(p, data);
                     }));
         }
 

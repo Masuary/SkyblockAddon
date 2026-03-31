@@ -11,13 +11,14 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
 import yorickbm.guilibrary.GUILibraryRegistry;
+import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 
 public final class PermissionCategoriesGui {
 
-    private static final int WIDTH = 220;
+    private static final int WIDTH = 260;
     private static final int HEIGHT = 140;
 
     private PermissionCategoriesGui() {}
@@ -51,7 +52,7 @@ public final class PermissionCategoriesGui {
         gui.add(new Divider("header_div", 8, 18, WIDTH - 16)
                 .horizontal().color(0xFF3A3A3A));
 
-        int buttonWidth = 64;
+        int buttonWidth = 76;
         int buttonHeight = 18;
         int startX = 10;
         int startY = 24;
@@ -115,15 +116,20 @@ public final class PermissionCategoriesGui {
                     GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:groups", data);
                 }));
 
-        gui.add(new Button("remove_btn", 48, HEIGHT - 22, 64, 14)
-                .label(new TextComponent("Remove Group")).backgroundColor(0xFF882222).flat()
-                .onClick(p -> {
-                    MasuGui.closeFor(p);
-                    island.removeGroup(group.getId());
-                    p.sendMessage(new TextComponent("Group '" + group.getName() + "' removed.")
-                            .withStyle(ChatFormatting.RED), p.getUUID());
-                    GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:groups", data);
-                }));
+        boolean isDefaultGroup = group.getId().equals(SkyblockAddonCore.MOD_UUID)
+                || group.getId().equals(SkyblockAddonCore.MOD_UUID2);
+
+        if (!isDefaultGroup) {
+            gui.add(new Button("remove_btn", 48, HEIGHT - 22, 64, 14)
+                    .label(new TextComponent("Remove Group")).backgroundColor(0xFF882222).flat()
+                    .onClick(p -> {
+                        MasuGui.closeFor(p);
+                        island.removeGroup(group.getId());
+                        p.sendMessage(new TextComponent("Group '" + group.getName() + "' removed.")
+                                .withStyle(ChatFormatting.RED), p.getUUID());
+                        GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:groups", data);
+                    }));
+        }
 
         gui.add(new Button("members_btn", WIDTH - 10 - 56, HEIGHT - 22, 56, 14)
                 .label(new TextComponent("Members")).backgroundColor(0xFF383838).flat()

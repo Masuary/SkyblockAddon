@@ -11,15 +11,21 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.registries.ForgeRegistries;
 import yorickbm.guilibrary.GUILibraryRegistry;
+import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
+import yorickbm.skyblockaddon.components.ItemStackComponent;
+import yorickbm.skyblockaddon.core.registries.BiomeRegistry;
 import yorickbm.skyblockaddon.core.util.UsernameCache;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
+import yorickbm.skyblockaddon.islands.ForgeIslandGroup;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -107,6 +113,15 @@ public final class ScrollableListGui {
                         GUILibraryRegistry.openGUIForPlayer(p, backTarget, data);
                     }
                 }));
+
+        if ("groups".equals(variant)) {
+            gui.add(new Button("create_group_btn", GUI_WIDTH - 10 - 72, navY, 72, 14)
+                    .label(new TextComponent("Create Group")).backgroundColor(0xFF336633).flat()
+                    .onClick(p -> {
+                        MasuGui.closeFor(p);
+                        ConfirmCreateGroupGui.open(p, data);
+                    }));
+        }
 
         gui.openFor(player);
 
@@ -293,30 +308,48 @@ public final class ScrollableListGui {
             if (island != null) currentBiome = island.getBiome();
         }
 
-        String finalCurrentBiome = currentBiome;
-        return ForgeRegistries.BIOMES.getValues().stream()
-                .filter(b -> b.getRegistryName() != null && b.getRegistryName().toString().startsWith("minecraft:"))
-                .map(biome -> {
-                    String biomeName = biome.getRegistryName().toString();
-                    String displayName = biomeName.replace("minecraft:", "")
-                            .replace("_", " ");
-                    displayName = Arrays.stream(displayName.split(" "))
-                            .map(w -> w.substring(0, 1).toUpperCase() + w.substring(1))
-                            .collect(Collectors.joining(" "));
+        BiomeRegistry biomeRegistry = new BiomeRegistry(
+                FMLPaths.CONFIGDIR.get(),
+                "minecraft:dead_bush",
+                ForgeRegistries.BIOMES.getValues().stream()
+                        .filter(b -> b.getRegistryName() != null && b.getRegistryName().toString().startsWith("minecraft:"))
+                        .map(b -> b.getRegistryName().toString())
+                        .toList()
+        );
 
-                    boolean isCurrent = biomeName.equals(finalCurrentBiome);
-                    ItemStack item = new ItemStack(isCurrent ? Items.LIME_DYE : Items.PAPER);
-                    item.setHoverName(new TextComponent(displayName)
-                            .withStyle(isCurrent ? ChatFormatting.GREEN : ChatFormatting.WHITE));
-                    if (isCurrent) {
-                        EnhancedGuiHelper.addLore(item,
-                                new TextComponent("Current biome").withStyle(ChatFormatting.GREEN));
-                    }
-                    CompoundTag tag = item.getOrCreateTagElement("skyblockaddon");
-                    tag.putString("biome", biomeName);
-                    return item;
-                })
-                .collect(Collectors.toList());
+        String finalCurrentBiome = currentBiome;
+        List<ItemStack> items = new ArrayList<>();
+
+        while (biomeRegistry.hasNext()) {
+            ItemStackComponent component = new ItemStackComponent();
+            biomeRegistry.getNextData(component);
+
+            String biomeName = (String) component.getObject("biome", String.class);
+            String displayName = (String) component.getObject("name", String.class);
+
+            Optional<String> iconItem = biomeRegistry.getDataForComponent(component);
+            net.minecraft.world.item.Item itemType = Items.PAPER;
+            if (iconItem.isPresent()) {
+                net.minecraft.world.item.Item resolved = ForgeRegistries.ITEMS.getValue(new ResourceLocation(iconItem.get()));
+                if (resolved != null && resolved != Items.AIR) {
+                    itemType = resolved;
+                }
+            }
+
+            boolean isCurrent = biomeName.equals(finalCurrentBiome);
+            ItemStack item = new ItemStack(itemType);
+            item.setHoverName(new TextComponent(displayName)
+                    .withStyle(isCurrent ? ChatFormatting.GREEN : ChatFormatting.WHITE));
+            if (isCurrent) {
+                EnhancedGuiHelper.addLore(item,
+                        new TextComponent("Current biome").withStyle(ChatFormatting.GREEN));
+            }
+            CompoundTag tag = item.getOrCreateTagElement("skyblockaddon");
+            tag.putString("biome", biomeName);
+            items.add(item);
+        }
+
+        return items;
     }
 
     private static List<ItemStack> buildGroupItems(CompoundTag data) {

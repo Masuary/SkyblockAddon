@@ -25,6 +25,7 @@ public class EnhancedGuiListener {
         HANDLERS.put(modId + ":set_group", (p, d) -> ScrollableListGui.open(p, d, "set_group"));
         HANDLERS.put(modId + ":permissions", PermissionCategoriesGui::open);
         HANDLERS.put(modId + ":set_permission", PermissionTogglesGui::open);
+        HANDLERS.put(modId + ":confirm_leave", ConfirmLeaveGui::open);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)

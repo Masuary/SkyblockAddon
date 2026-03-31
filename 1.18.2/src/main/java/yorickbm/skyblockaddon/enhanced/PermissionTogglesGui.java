@@ -1,5 +1,7 @@
 package yorickbm.skyblockaddon.enhanced;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.masuary.masugui.api.MasuGui;
 import com.masuary.masugui.element.*;
 import com.masuary.masugui.element.Button;
@@ -9,15 +11,18 @@ import com.masuary.masugui.element.Panel;
 import com.masuary.masugui.fallback.FallbackType;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
 import yorickbm.guilibrary.GUILibraryRegistry;
+import yorickbm.skyblockaddon.core.JSON.ItemStackJson;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.permissions.Permission;
 import yorickbm.skyblockaddon.core.permissions.PermissionManager;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -83,16 +88,22 @@ public final class PermissionTogglesGui {
         for (int i = 0; i < permissions.size(); i++) {
             Permission perm = permissions.get(i);
             boolean enabled = group.canDo(perm.getId());
-            String permName = prettifyPermissionId(perm.getId());
+            String permName = extractDisplayName(perm);
 
-            gui.add(new Checkbox("perm_" + i, 14, y)
+            Checkbox checkbox = new Checkbox("perm_" + i, 14, y)
                     .checked(enabled)
                     .label(new TextComponent(permName))
                     .checkColor(0xFF00CC00).boxColor(0xFF444444)
                     .onToggle((p, checked) -> {
                         group.setPermission(perm.getId(), checked);
-                    }));
+                    });
 
+            List<Component> tooltipLines = buildTooltip(perm);
+            if (!tooltipLines.isEmpty()) {
+                checkbox.tooltip(tooltipLines);
+            }
+
+            gui.add(checkbox);
             y += CHECKBOX_HEIGHT + 2;
         }
 
@@ -107,6 +118,69 @@ public final class PermissionTogglesGui {
                 }));
 
         gui.openFor(player);
+    }
+
+    private static String extractDisplayName(Permission perm) {
+        ItemStackJson itemJson = perm.getItem();
+        if (itemJson != null && itemJson.getDisplay_name() != null && itemJson.getDisplay_name().length > 0) {
+            StringBuilder nameBuilder = new StringBuilder();
+            for (String jsonComponent : itemJson.getDisplay_name()) {
+                String text = extractTextFromJson(jsonComponent);
+                if (text != null) nameBuilder.append(text);
+            }
+            String name = nameBuilder.toString().trim();
+            if (!name.isEmpty()) return name;
+        }
+        return prettifyPermissionId(perm.getId());
+    }
+
+    private static List<Component> buildTooltip(Permission perm) {
+        List<Component> lines = new ArrayList<>();
+
+        String containsInfo = extractContainsInfo(perm);
+        if (containsInfo != null) {
+            lines.add(new TextComponent(containsInfo).withStyle(ChatFormatting.GRAY));
+        }
+
+        return lines;
+    }
+
+    private static String extractContainsInfo(Permission perm) {
+        ItemStackJson itemJson = perm.getItem();
+        if (itemJson == null || itemJson.getLore() == null) return null;
+
+        for (String[] loreLine : itemJson.getLore()) {
+            StringBuilder lineBuilder = new StringBuilder();
+            boolean isContainsLine = false;
+
+            for (String jsonComponent : loreLine) {
+                String text = extractTextFromJson(jsonComponent);
+                if (text != null) {
+                    if (text.contains("Contains:")) isContainsLine = true;
+                    lineBuilder.append(text);
+                }
+            }
+
+            if (isContainsLine) {
+                String full = lineBuilder.toString().trim();
+                int idx = full.indexOf("Contains:");
+                if (idx >= 0) {
+                    return full.substring(idx).trim();
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static String extractTextFromJson(String jsonComponent) {
+        try {
+            JsonElement element = JsonParser.parseString(jsonComponent);
+            if (element.isJsonObject() && element.getAsJsonObject().has("text")) {
+                return element.getAsJsonObject().get("text").getAsString();
+            }
+        } catch (Exception ignored) {}
+        return null;
     }
 
     private static String prettifyCategory(String categoryId) {
