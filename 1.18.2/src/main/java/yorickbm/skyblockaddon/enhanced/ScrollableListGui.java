@@ -52,7 +52,7 @@ public final class ScrollableListGui {
         int columns = COLUMNS;
         int cellSize = CELL_SIZE;
         if ("groups".equals(variant) || "set_group".equals(variant)) {
-            columns = 7;
+            columns = 2;
             cellSize = 22;
         }
 

@@ -120,7 +120,7 @@ public final class PermissionCategoriesGui {
                 || group.getId().equals(SkyblockAddonCore.MOD_UUID2);
 
         if (!isDefaultGroup) {
-            gui.add(new Button("remove_btn", 48, HEIGHT - 22, 64, 14)
+            gui.add(new Button("remove_btn", 48, HEIGHT - 22, 82, 14)
                     .label(new TextComponent("Remove Group")).backgroundColor(0xFF882222).flat()
                     .onClick(p -> {
                         MasuGui.closeFor(p);
