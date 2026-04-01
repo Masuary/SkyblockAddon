@@ -124,10 +124,7 @@ public final class PermissionCategoriesGui {
                     .label(new TextComponent("Remove Group")).backgroundColor(0xFF882222).flat()
                     .onClick(p -> {
                         MasuGui.closeFor(p);
-                        island.removeGroup(group.getId());
-                        p.sendMessage(new TextComponent("Group '" + group.getName() + "' removed.")
-                                .withStyle(ChatFormatting.RED), p.getUUID());
-                        GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:groups", data);
+                        ConfirmRemoveGroupGui.open(p, data, island, group);
                     }));
         }
 

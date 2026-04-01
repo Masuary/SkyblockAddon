@@ -51,12 +51,14 @@ public final class ScrollableListGui {
 
         int columns = COLUMNS;
         int cellSize = CELL_SIZE;
+        int guiWidth = GUI_WIDTH;
         if ("groups".equals(variant) || "set_group".equals(variant)) {
             columns = 2;
             cellSize = 22;
+            guiWidth = 160;
         }
 
-        int gridX = (GUI_WIDTH - columns * cellSize) / 2;
+        int gridX = (guiWidth - columns * cellSize) / 2;
         int itemCount = items.size();
         int gridRows = Math.max(1, (itemCount + columns - 1) / columns);
         int gridHeight = gridRows * cellSize;
@@ -78,27 +80,27 @@ public final class ScrollableListGui {
 
         MasuGui gui = MasuGui.create("scrollable_list_" + variant)
                 .title(new TextComponent(title))
-                .size(GUI_WIDTH, totalHeight)
+                .size(guiWidth, totalHeight)
                 .fallbackType(FallbackType.CHEST_6);
 
-        gui.add(new Panel("bg", 0, 0, GUI_WIDTH, totalHeight)
+        gui.add(new Panel("bg", 0, 0, guiWidth, totalHeight)
                 .color(0xE8181818).border(0x333333));
 
-        gui.add(new Button("close_btn", GUI_WIDTH - 16, 2, 12, 12)
+        gui.add(new Button("close_btn", guiWidth - 16, 2, 12, 12)
                 .label(new TextComponent("X")).backgroundColor(0xFFAA4444).flat()
                 .onClick(MasuGui::closeFor));
 
-        gui.add(new Label("title", GUI_WIDTH / 2, 6)
+        gui.add(new Label("title", guiWidth / 2, 6)
                 .text(new TextComponent(title).withStyle(ChatFormatting.GOLD))
                 .centered().scale(1.0f).shadow(true));
 
         if (subtitle != null) {
-            gui.add(new Label("subtitle", GUI_WIDTH / 2, 18)
+            gui.add(new Label("subtitle", guiWidth / 2, 18)
                     .text(new TextComponent(subtitle))
                     .color(0xFFAAAAAA).centered().scale(0.7f));
         }
 
-        gui.add(new Divider("header_div", 8, HEADER_HEIGHT - 2, GUI_WIDTH - 16)
+        gui.add(new Divider("header_div", 8, HEADER_HEIGHT - 2, guiWidth - 16)
                 .horizontal().color(0xFF3A3A3A));
 
         ItemGrid grid = new ItemGrid("list_grid", gridX, HEADER_HEIGHT, columns, displayRows)
@@ -111,7 +113,7 @@ public final class ScrollableListGui {
         }
         gui.add(grid);
 
-        gui.add(new Divider("nav_div", 8, navDivY, GUI_WIDTH - 16)
+        gui.add(new Divider("nav_div", 8, navDivY, guiWidth - 16)
                 .horizontal().color(0xFF3A3A3A));
 
         gui.add(new Button("back_btn", 10, navY, 32, 14)
@@ -124,7 +126,7 @@ public final class ScrollableListGui {
                 }));
 
         if ("groups".equals(variant)) {
-            gui.add(new Button("create_group_btn", GUI_WIDTH - 10 - 72, navY, 72, 14)
+            gui.add(new Button("create_group_btn", guiWidth - 10 - 72, navY, 72, 14)
                     .label(new TextComponent("Create Group")).backgroundColor(0xFF336633).flat()
                     .onClick(p -> {
                         MasuGui.closeFor(p);
