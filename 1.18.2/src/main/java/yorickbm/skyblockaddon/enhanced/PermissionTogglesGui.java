@@ -34,7 +34,7 @@ public final class PermissionTogglesGui {
     private static final int HEADER_HEIGHT = 30;
     private static final int NAV_HEIGHT = 18;
     private static final int MIN_HEIGHT = 120;
-    private static final int MAX_HEIGHT = 260;
+    private static final int MAX_HEIGHT = 300;
 
     private PermissionTogglesGui() {}
 
