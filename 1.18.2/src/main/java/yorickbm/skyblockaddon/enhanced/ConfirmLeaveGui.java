@@ -10,6 +10,8 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
+
+import java.util.Objects;
 import yorickbm.guilibrary.GUILibraryRegistry;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.util.UsernameCache;
@@ -55,7 +57,8 @@ public final class ConfirmLeaveGui {
                 .label(new TextComponent("Leave")).backgroundColor(0xFFAA3333).flat()
                 .onClick(p -> {
                     MasuGui.closeFor(p);
-                    island.kickMember(p, p.getUUID());
+                    Objects.requireNonNull(p.getServer()).getCommands()
+                            .performCommand(p.createCommandSourceStack(), "/island leave");
                 }));
 
         gui.add(new Button("cancel_btn", WIDTH / 2 + 8, HEIGHT - 26, 64, 16)
