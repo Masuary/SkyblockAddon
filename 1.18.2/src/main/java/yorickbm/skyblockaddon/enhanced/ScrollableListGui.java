@@ -359,7 +359,7 @@ public final class ScrollableListGui {
 
         return island.getGroups().stream()
                 .map(group -> {
-                    ItemStack item = new ItemStack(Items.BOOK);
+                    ItemStack item = ((ForgeIslandGroup) group).getItem().copy();
                     item.setHoverName(new TextComponent(group.getName()).withStyle(ChatFormatting.AQUA));
                     EnhancedGuiHelper.addLore(item,
                             new TextComponent(group.getMembers().size() + " members").withStyle(ChatFormatting.GRAY));
