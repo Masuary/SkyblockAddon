@@ -49,16 +49,24 @@ public final class ScrollableListGui {
         List<ItemStack> items = buildItems(player, data, variant);
         String backTarget = resolveBackTarget(variant);
 
+        int columns = COLUMNS;
+        int cellSize = CELL_SIZE;
+        if ("groups".equals(variant) || "set_group".equals(variant)) {
+            columns = 7;
+            cellSize = 22;
+        }
+
+        int gridX = (GUI_WIDTH - columns * cellSize) / 2;
         int itemCount = items.size();
-        int gridRows = Math.max(1, (itemCount + COLUMNS - 1) / COLUMNS);
-        int gridHeight = gridRows * CELL_SIZE;
+        int gridRows = Math.max(1, (itemCount + columns - 1) / columns);
+        int gridHeight = gridRows * cellSize;
 
         int contentHeight = HEADER_HEIGHT + gridHeight + 4 + NAV_HEIGHT + 6;
         int totalHeight = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, contentHeight));
 
         boolean needsScroll = contentHeight > MAX_HEIGHT;
         int displayRows = needsScroll
-                ? Math.max(1, (MAX_HEIGHT - HEADER_HEIGHT - NAV_HEIGHT - 10) / CELL_SIZE)
+                ? Math.max(1, (MAX_HEIGHT - HEADER_HEIGHT - NAV_HEIGHT - 10) / cellSize)
                 : gridRows;
 
         if (needsScroll) {
@@ -93,8 +101,9 @@ public final class ScrollableListGui {
         gui.add(new Divider("header_div", 8, HEADER_HEIGHT - 2, GUI_WIDTH - 16)
                 .horizontal().color(0xFF3A3A3A));
 
-        ItemGrid grid = new ItemGrid("list_grid", GRID_X, HEADER_HEIGHT, COLUMNS, displayRows)
+        ItemGrid grid = new ItemGrid("list_grid", gridX, HEADER_HEIGHT, columns, displayRows)
                 .items(items)
+                .cellSize(cellSize)
                 .hoverHighlight(0xFF55FFFF)
                 .onClick((p, idx) -> {});
         if (needsScroll) {
