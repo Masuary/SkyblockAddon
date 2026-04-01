@@ -145,7 +145,8 @@ public final class ScrollableListGui {
         List<ItemStack> defaultItems = buildDefaultGroupItems(island);
         List<ItemStack> customItems = buildCustomGroupItems(island);
 
-        int gridX = (GUI_WIDTH - GROUP_COLUMNS * CELL_SIZE) / 2;
+        int labelWidth = 42;
+        int gridX = labelWidth + (GUI_WIDTH - labelWidth - GROUP_COLUMNS * CELL_SIZE) / 2;
         int defaultRows = Math.max(1, (defaultItems.size() + GROUP_COLUMNS - 1) / GROUP_COLUMNS);
 
         int y = HEADER_HEIGHT;
@@ -190,6 +191,11 @@ public final class ScrollableListGui {
         gui.add(new Divider("header_div", 8, HEADER_HEIGHT - 2, GUI_WIDTH - 16)
                 .horizontal().color(0xFF3A3A3A));
 
+        int defaultLabelY = y + (defaultGridHeight - 7) / 2;
+        gui.add(new Label("default_label", 10, defaultLabelY)
+                .text(new TextComponent("Default"))
+                .color(0xFF888888).scale(0.7f));
+
         ItemGrid defaultGrid = new ItemGrid("default_grid", gridX, y, GROUP_COLUMNS, defaultRows)
                 .items(defaultItems)
                 .hoverHighlight(0xFF55FFFF)
@@ -202,15 +208,23 @@ public final class ScrollableListGui {
         int customY = dividerY + 4;
 
         if (hasCustomGroups) {
+            int customLabelY = customY + (customGridHeight - 7) / 2;
+            gui.add(new Label("custom_label", 10, customLabelY)
+                    .text(new TextComponent("Custom"))
+                    .color(0xFF888888).scale(0.7f));
+
             ItemGrid customGrid = new ItemGrid("custom_grid", gridX, customY, GROUP_COLUMNS, customRows)
                     .items(customItems)
                     .hoverHighlight(0xFF55FFFF)
                     .onClick((p, idx) -> {});
             gui.add(customGrid);
         } else {
+            gui.add(new Label("custom_label", 10, customY + 2)
+                    .text(new TextComponent("Custom"))
+                    .color(0xFF888888).scale(0.7f));
             gui.add(new Label("no_custom", GUI_WIDTH / 2, customY + 2)
                     .text(new TextComponent("No custom groups"))
-                    .color(0xFF666666).centered().scale(0.7f));
+                    .color(0xFF555555).centered().scale(0.7f));
         }
 
         gui.add(new Divider("nav_div", 8, navDivY, GUI_WIDTH - 16)
