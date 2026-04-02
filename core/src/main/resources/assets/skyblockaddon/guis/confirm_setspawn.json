@@ -1,0 +1,59 @@
+{
+  "title": [
+    "{\"text\": \"Set Island Spawn?\"}"
+  ],
+  "rows": 1,
+  "key": "confirm_setspawn",
+  "fillers": [
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"\"}"
+        ],
+        "item": "minecraft:GRAY_STAINED_GLASS_PANE"
+      },
+      "pattern": "EMPTY"
+    }
+  ],
+  "items": [
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"Confirm\",\"bold\": true,\"color\": \"green\"}"
+        ],
+        "item": "minecraft:LIME_DYE",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Set spawn to your current location.\",\"color\":\"dark_gray\"}"
+          ]
+        ],
+        "data": {}
+      },
+      "slot": 3,
+      "action": {
+        "onClick": "yorickbm.skyblockaddon.events.IslandEvents$SetSpawnPoint"
+      }
+    },
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"Cancel\",\"bold\": true,\"color\": \"red\"}"
+        ],
+        "item": "minecraft:BARRIER",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Go back to settings.\",\"color\":\"dark_gray\"}"
+          ]
+        ],
+        "data": {}
+      },
+      "slot": 5,
+      "action": {
+        "onClick": "yorickbm.guilibrary.events.ItemOpenMenuEvent",
+        "data": {
+          "gui": "skyblockaddon:settings"
+        }
+      }
+    }
+  ]
+}

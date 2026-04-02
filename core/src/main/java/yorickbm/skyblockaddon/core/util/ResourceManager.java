@@ -82,6 +82,7 @@ public class ResourceManager {
             generateFile(FMLPath, "guis/permissions.json", "guis/permissions.json");
             generateFile(FMLPath, "guis/set_permission.json", "guis/set_permission.json");
             generateFile(FMLPath, "guis/members_group.json", "guis/members_group.json");
+            generateFile(FMLPath, "guis/confirm_setspawn.json", "guis/confirm_setspawn.json");
         }
     }
 

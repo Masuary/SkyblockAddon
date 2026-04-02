@@ -77,15 +77,11 @@ public final class IslandHubGui {
                     island.teleportTo(p);
                 }));
 
-        gui.add(new Button("spawn_btn", 10, 66, 104, 18)
-                .label(new TextComponent("Set Spawn")).backgroundColor(0xFF383838).flat()
-                .onClick(p -> {
-                    island.setSpawnPoint(new yorickbm.skyblockaddon.core.util.geometry.Vec3i(
-                            p.blockPosition().getX(), p.blockPosition().getY(), p.blockPosition().getZ()));
-                    p.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("island.setspawn.success"))
-                            .withStyle(ChatFormatting.GREEN), p.getUUID());
-                    open(p, data);
-                }));
+        if (isAdmin) {
+            gui.add(new Button("spawn_btn", 10, 66, 104, 18)
+                    .label(new TextComponent("Set Spawn")).backgroundColor(0xFF383838).flat()
+                    .onClick(p -> ConfirmSetSpawnGui.open(p, data)));
+        }
 
         String visibilityLabel = island.isVisible() ? "Visibility: Public" : "Visibility: Private";
         gui.add(new Button("visibility_btn", 10, 88, 104, 18)

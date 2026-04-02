@@ -1,6 +1,7 @@
 package yorickbm.skyblockaddon.events.Gui;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.commands.Commands;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Style;
@@ -53,6 +54,16 @@ public class IslandGuiEvents {
     @SubscribeEvent
     public void onSetSpawnPointEvent(final IslandEvents.SetSpawnPoint event) {
         if(event.isCanceled()) return; //Skip if canceled
+
+        if(!event.getIsland().isOwner(event.getTarget().getUUID())
+                && !event.getTarget().hasPermissions(Commands.LEVEL_ADMINS)) {
+            event.getTarget().sendMessage(new TextComponent(
+                    SkyBlockAddonLanguage.getLocalizedString("island.setspawn.not.allowed")
+            ).withStyle(ChatFormatting.RED),event.getTarget().getUUID());
+
+            event.setResult(Event.Result.DENY);
+            return;
+        }
 
         if(!event.getIsland().getIslandBoundingBox().isInside(ForgeConverter.ForgeToInternalVec3i(event.getTarget().getOnPos()))) {
             event.getTarget().sendMessage(new TextComponent(
