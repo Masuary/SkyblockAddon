@@ -27,31 +27,10 @@
         ],
         "data": {}
       },
-      "slot": 10,
+      "slot": 11,
       "action": {
         "onClick": "yorickbm.skyblockaddon.events.IslandEvents$TeleportToIsland"
       }
-    },
-    {
-      "item": {
-        "display_name": [
-          "{\"text\": \"Members\",\"bold\": true,\"color\": \"blue\"}"
-        ],
-        "item": "minecraft:CHEST",
-        "lore": [
-          [
-            "{\"text\":\"\u00bb Overview all islands members and invite others.\",\"color\":\"dark_gray\"}"
-          ]
-        ]
-      },
-      "slot": 12,
-      "action": {
-        "onClick": "yorickbm.guilibrary.events.ItemOpenMenuEvent",
-        "data": {
-          "gui": "skyblockaddon:members"
-        }
-      },
-      "conditions": [ "is_admin" ]
     },
     {
       "item": {
@@ -72,6 +51,27 @@
           "gui": "skyblockaddon:members"
         }
       },
+      "conditions": [ "is_admin" ]
+    },
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"Members\",\"bold\": true,\"color\": \"blue\"}"
+        ],
+        "item": "minecraft:CHEST",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Overview all islands members and invite others.\",\"color\":\"dark_gray\"}"
+          ]
+        ]
+      },
+      "slot": 14,
+      "action": {
+        "onClick": "yorickbm.guilibrary.events.ItemOpenMenuEvent",
+        "data": {
+          "gui": "skyblockaddon:members"
+        }
+      },
       "conditions": [ "!is_admin" ]
     },
     {
@@ -86,7 +86,7 @@
           ]
         ]
       },
-      "slot": 14,
+      "slot": 15,
       "action": {
         "onClick": "yorickbm.guilibrary.events.ItemOpenMenuEvent",
         "data": {
@@ -95,28 +95,28 @@
       },
       "conditions": [ "is_admin" ]
     },
-    {
-      "item": {
-        "display_name": [
-          "{\"text\": \"Leave\",\"bold\": true,\"color\": \"blue\"}"
-        ],
-        "item": "minecraft:BARRIER",
-        "lore": [
-          [
-            "{\"text\":\"\u00bb Leave the island.\n\",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Beware, if you are the last member, the island will be removed!\",\"italic\":true,\"color\":\"red\"}"
-          ]
-        ],
-        "data": {}
-      },
-      "slot": 16,
-      "action": {
-        "onClick": "yorickbm.skyblockaddon.events.IslandEvents$LeaveIsland"
-      },
-      "conditions": [ "is_part" ]
-    },
+//    {
+//      "item": {
+//        "display_name": [
+//          "{\"text\": \"Leave\",\"bold\": true,\"color\": \"blue\"}"
+//        ],
+//        "item": "minecraft:BARRIER",
+//        "lore": [
+//          [
+//            "{\"text\":\"\u00bb Leave the island.\n\",\"color\":\"dark_gray\"}"
+//          ],
+//          [
+//            "{\"text\":\"\u2666 Beware, if you are the last member, the island will be removed!\",\"italic\":true,\"color\":\"red\"}"
+//          ]
+//        ],
+//        "data": {}
+//      },
+//      "slot": 16,
+//      "action": {
+//        "onClick": "yorickbm.skyblockaddon.events.IslandEvents$LeaveIsland"
+//      },
+//      "conditions": [ "is_part" ]
+//    },
     {
       "item": {
         "display_name": [

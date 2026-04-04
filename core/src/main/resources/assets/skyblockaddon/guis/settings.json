@@ -81,10 +81,7 @@
       },
       "slot": 14,
       "action": {
-        "onClick": "yorickbm.guilibrary.events.ItemOpenMenuEvent",
-        "data": {
-          "gui": "skyblockaddon:confirm_setspawn"
-        }
+        "onClick": "yorickbm.skyblockaddon.events.IslandEvents$SetSpawnPoint"
       }
     },
     {

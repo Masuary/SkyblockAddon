@@ -224,7 +224,13 @@
           "!the_vault:vault_anvil",
           "!the_vault:spectator_terminal",
           "!the_vault:identification_stand",
-          "!the_vault:treasure_pedestal"
+          "!the_vault:treasure_pedestal",
+          "!the_vault:greed_cauldron",
+          "!the_vault:augment_station",
+          "!the_vault:reclamation_altar",
+          "!the_vault:relic_crafting_table",
+          "!the_vault:player_customisation_station",
+          "!the_vault:unique_wardrobe"
         ],
         "entities": []
       }
@@ -1297,7 +1303,7 @@
           ],
           [
             "{\"text\":\"\u2666 Contains: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"Vault Altar, Greed Altar, Inscription Table, Crystal Workbench, Catalyst Infusion Table\",\"color\":\"white\"}"
+            "{\"text\":\"Vault Altar, Greed Altar, Greed Cauldron, Inscription Table, Crystal Workbench, Catalyst Infusion Table\",\"color\":\"white\"}"
           ]
         ]
       },
@@ -1311,6 +1317,7 @@
         "blocks": [
           "the_vault:vault_altar",
           "the_vault:vault_greed_altar",
+          "the_vault:greed_cauldron",
           "the_vault:inscription_table",
           "the_vault:crystal_workbench",
           "the_vault:catalyst_infusion_table"
@@ -1338,7 +1345,7 @@
           ],
           [
             "{\"text\":\"\u2666 Contains: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"Vault Forge, Artisan Station, Vault Sealer, Imbuement Altar, Tool Station, Vault Enchanter\",\"color\":\"white\"}"
+            "{\"text\":\"Vault Forge, Artisan Station, Vault Sealer, Imbuement Altar, Tool Station, Vault Enchanter, Augment Station\",\"color\":\"white\"}"
           ]
         ]
       },
@@ -1353,7 +1360,8 @@
           "the_vault:vault_sealer",
           "the_vault:imbuement_altar",
           "the_vault:tool_station",
-          "the_vault:vault_enchanter"
+          "the_vault:vault_enchanter",
+          "the_vault:augment_station"
         ],
         "items": [],
         "entities": []
@@ -1379,7 +1387,7 @@
           ],
           [
             "{\"text\":\"\u2666 Contains: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"Vault Jewel Application Station, Jewel Crafting Table, Unboxing Station, Trinket Forge\",\"color\":\"white\"}"
+            "{\"text\":\"Vault Jewel Application Station, Jewel Crafting Table, Unboxing Station, Trinket Forge, Relic Crafting Table\",\"color\":\"white\"}"
           ]
         ]
       },
@@ -1392,7 +1400,8 @@
           "the_vault:vault_jewel_application_station",
           "the_vault:jewel_crafting_table",
           "the_vault:unboxing_station",
-          "the_vault:trinket_forge"
+          "the_vault:trinket_forge",
+          "the_vault:relic_crafting_table"
         ],
         "items": [],
         "entities": []
@@ -1558,7 +1567,7 @@
           ],
           [
             "{\"text\":\"\u2666 Contains: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"Spirit Extractor, Wardrobe, Skill Altar, Personal Vault, Ascension Forge\",\"color\":\"white\"}"
+            "{\"text\":\"Spirit Extractor, Wardrobe, Unique Wardrobe, Skill Altar, Personal Vault, Ascension Forge, Customisation Station\",\"color\":\"white\"}"
           ]
         ]
       },
@@ -1568,9 +1577,11 @@
         "blocks": [
           "the_vault:spirit_extractor",
           "the_vault:wardrobe",
+          "the_vault:unique_wardrobe",
           "the_vault:skill_altar",
           "the_vault:personal_vault",
-          "the_vault:ascension_forge"
+          "the_vault:ascension_forge",
+          "the_vault:player_customisation_station"
         ],
         "items": [],
         "entities": []
@@ -1735,7 +1746,7 @@
           ],
           [
             "{\"text\":\"\u2666 Contains: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"Recycler, Diffuser, Harvester, Charm Controller\",\"color\":\"white\"}"
+            "{\"text\":\"Recycler, Diffuser, Harvester, Charm Controller, Reclamation Altar\",\"color\":\"white\"}"
           ]
         ]
       },
@@ -1746,7 +1757,8 @@
           "the_vault:vault_recycler",
           "the_vault:vault_diffuser",
           "the_vault:vault_harvester",
-          "the_vault:vault_charm_controller"
+          "the_vault:vault_charm_controller",
+          "the_vault:reclamation_altar"
         ],
         "items": [],
         "entities": []
