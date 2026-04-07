@@ -13,5 +13,7 @@ public class MixinConnector implements IMixinConnector {
         Mixins.addConfigurations("/mixins/skyblockaddon.mixin.json");
         Mixins.addConfiguration("/mixins/quark.mixin.json");
         Mixins.addConfiguration("/mixins/buildinggadgets.mixin.json");
+        Mixins.addConfiguration("/mixins/the_vault.mixin.json");
+        Mixins.addConfiguration("/mixins/buildscape.mixin.json");
     }
 }
