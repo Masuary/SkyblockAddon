@@ -7,6 +7,11 @@ group = 'yorickbm.skyblockaddon.core'
 version = '8.0'
 archivesBaseName = 'SkyBlockAddon-Core'
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
 repositories {
     mavenCentral()
 }

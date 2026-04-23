@@ -164,9 +164,6 @@
           "!create:powered_toggle_latch",
           "!minecraft:daylight_detector",
           "!minecraft:note_block",
-          "!laserio:.*",
-          "!industrialforegoing:.*",
-          "!pneumaticcraft:.*",
           "!minecraft:lever",
           "!.*:.*_button",
           "!.*:.*_button_.*",
@@ -179,7 +176,6 @@
           "!create:linked_controller",
           "!create:redstone_link",
           "!the_vault:vault_altar",
-          "!the_vault:vault_greed_altar",
           "!the_vault:inscription_table",
           "!the_vault:crystal_workbench",
           "!the_vault:catalyst_infusion_table",
@@ -210,8 +206,6 @@
           "!the_vault:animatrix_block",
           "!the_vault:.*_crate_.*",
           "!the_vault:.*_crate",
-          "!the_vault:cryo_chamber",
-          "!the_vault:eternal_pedestal",
           "!the_vault:artifact_projector_block",
           "!the_vault:vault_recycler",
           "!the_vault:vault_diffuser",
@@ -229,7 +223,9 @@
           "!the_vault:reclamation_altar",
           "!the_vault:relic_crafting_table",
           "!the_vault:player_customisation_station",
-          "!the_vault:unique_wardrobe"
+          "!the_vault:unique_wardrobe",
+          "!the_vault:modifier_discovery",
+          "!the_vault:alchemy_archive"
         ],
         "entities": []
       }
@@ -1024,105 +1020,6 @@
       }
     },
     {
-      "id": "interact_laser_io",
-      "item": {
-        "display_name": [
-          "{\"text\": \"Interact with Laser IO\", \"color\":\"blue\", \"bold\":\"true\"}"
-        ],
-        "item": "laserio:laser_node",
-        "lore": [
-          [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
-          ]
-        ]
-      },
-      "category": "Automation",
-      "triggers": [
-        "onRightClickBlock"
-      ],
-      "data": {
-        "skyblockaddon": [],
-        "items": [],
-        "blocks": [
-          "laserio:.*"
-        ],
-        "entities": []
-      }
-    },
-    {
-      "id": "interact_industrial_foregoing",
-      "item": {
-        "display_name": [
-          "{\"text\": \"Interact with Industrial Foregoing\", \"color\":\"blue\", \"bold\":\"true\"}"
-        ],
-        "item": "industrialforegoing:mob_crusher",
-        "lore": [
-          [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
-          ]
-        ]
-      },
-      "category": "Automation",
-      "triggers": [
-        "onRightClickBlock"
-      ],
-      "data": {
-        "skyblockaddon": [],
-        "items": [],
-        "blocks": [
-          "industrialforegoing:.*"
-        ],
-        "entities": []
-      }
-    },
-    {
-      "id": "interact_pneumaticcraft",
-      "item": {
-        "display_name": [
-          "{\"text\": \"Interact with PneumaticCraft\", \"color\":\"blue\", \"bold\":\"true\"}"
-        ],
-        "item": "pneumaticcraft:pressure_tube",
-        "lore": [
-          [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
-          ]
-        ]
-      },
-      "category": "Automation",
-      "triggers": [
-        "onRightClickBlock"
-      ],
-      "data": {
-        "skyblockaddon": [],
-        "items": [],
-        "blocks": [
-          "pneumaticcraft:.*"
-        ],
-        "entities": []
-      }
-    },
-    {
       "id": "redstone_delays",
       "item": {
         "display_name": [
@@ -1366,7 +1263,7 @@
           ],
           [
             "{\"text\":\"\u2666 Contains: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"Vault Altar, Greed Altar, Greed Cauldron, Inscription Table, Crystal Workbench, Catalyst Infusion Table\",\"color\":\"white\"}"
+            "{\"text\":\"Vault Altar, Greed Cauldron, Inscription Table, Crystal Workbench, Catalyst Infusion Table\",\"color\":\"white\"}"
           ]
         ]
       },
@@ -1379,7 +1276,6 @@
         "items": [],
         "blocks": [
           "the_vault:vault_altar",
-          "the_vault:vault_greed_altar",
           "the_vault:greed_cauldron",
           "the_vault:inscription_table",
           "the_vault:crystal_workbench",
@@ -1408,7 +1304,7 @@
           ],
           [
             "{\"text\":\"\u2666 Contains: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"Vault Forge, Artisan Station, Vault Sealer, Imbuement Altar, Tool Station, Vault Enchanter, Augment Station\",\"color\":\"white\"}"
+            "{\"text\":\"Vault Forge, Artisan Station, Vault Sealer, Imbuement Altar, Tool Station, Vault Enchanter, Modifier Discovery, Augment Station\",\"color\":\"white\"}"
           ]
         ]
       },
@@ -1424,6 +1320,7 @@
           "the_vault:imbuement_altar",
           "the_vault:tool_station",
           "the_vault:vault_enchanter",
+          "the_vault:modifier_discovery",
           "the_vault:augment_station"
         ],
         "items": [],
@@ -1560,7 +1457,7 @@
           ],
           [
             "{\"text\":\"\u2666 Contains: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"Alchemy Table, Vault Coffee Machine\",\"color\":\"white\"}"
+            "{\"text\":\"Alchemy Table, Alchemy Archive, Vault Coffee Machine\",\"color\":\"white\"}"
           ]
         ]
       },
@@ -1569,6 +1466,7 @@
       "data": {
         "blocks": [
           "the_vault:alchemy_table",
+          "the_vault:alchemy_archive",
           "the_vault:vault_coffee_machine"
         ],
         "items": [],
@@ -1715,41 +1613,6 @@
         "blocks": [
           "the_vault:.*_crate_.*",
           "the_vault:.*_crate"
-        ],
-        "items": [],
-        "entities": []
-      }
-    },
-    {
-      "id": "vh_eternals",
-      "item": {
-        "display_name": [
-          "{\"text\": \"Eternals\", \"color\":\"yellow\", \"bold\":\"true\"}"
-        ],
-        "item": "the_vault:eternal_pedestal",
-        "lore": [
-          [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Contains: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"Cryo Chamber, Eternal Pedestal\",\"color\":\"white\"}"
-          ]
-        ]
-      },
-      "category": "Vaulthunters",
-      "triggers": ["onRightClickBlock"],
-      "data": {
-        "blocks": [
-          "the_vault:cryo_chamber",
-          "the_vault:eternal_pedestal"
         ],
         "items": [],
         "entities": []
