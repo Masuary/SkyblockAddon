@@ -761,7 +761,8 @@
         "blocks": [
           "sophisticatedstorage:.*"
         ],
-        "entities": []
+        "entities": [],
+        "defaults": true
       }
     },
     {
