@@ -33,7 +33,6 @@ import yorickbm.skyblockaddon.core.util.RegistrySelector;
 import yorickbm.skyblockaddon.core.util.ResourceManager;
 import yorickbm.skyblockaddon.core.util.ThreadManager;
 import yorickbm.skyblockaddon.core.util.UsernameCache;
-import yorickbm.skyblockaddon.core.util.exceptions.TerralithFoundException;
 import yorickbm.skyblockaddon.events.*;
 import yorickbm.skyblockaddon.events.Gui.GuiEvents;
 import yorickbm.skyblockaddon.events.Gui.IslandGuiEvents;
@@ -79,21 +78,10 @@ public class SkyBlockAddon {
         if(SkyblockAddonConfig.getForKey("permissions.debug").equalsIgnoreCase("TRUE")) log.info(msg);
     }
 
-    /**
-     * Inter Mod Communications.
-     * Checks against Terralith
-     */
     private void processIMC(InterModProcessEvent event) {
-        // some example code to receive and process InterModComms from other mods
         LOGGER.info("Got IMC {}", event.getIMCStream().
                 map(m -> m.messageSupplier().get()).
                 collect(Collectors.toList()));
-
-        // Determine if Terralith is found
-        if (ModList.get().isLoaded("terralith")) {
-            LOGGER.error("Beware, skyblockaddon mod is loaded together with Terralith!");
-            throw new TerralithFoundException();
-        }
     }
 
     /**

@@ -102,7 +102,6 @@
           "quark:pickarang"
         ],
         "blocks": [
-          "!storagedrawers:.*",
           "!the_vault:animal_pen"
         ],
         "entities": [
@@ -147,14 +146,13 @@
           "!.*:.*_chest",
           "!.*:chest",
           "!the_vault:.*_chest_placeable",
-          "!colossalchests:.*",
           "!minecraft:shulker_box",
           "!minecraft:.*_shulker_box",
           "!sophisticatedbackpacks:.*",
           "!.*:.*_door",
           "!.*:.*_trapdoor",
           "!easy_villagers:.*",
-          "!storagedrawers:.*",
+          "!sophisticatedstorage:.*",
           "!ae2:.*",
           "!refinedstorage:.*",
           "!.*:.*_spawn_egg",
@@ -166,8 +164,9 @@
           "!create:powered_toggle_latch",
           "!minecraft:daylight_detector",
           "!minecraft:note_block",
-          "!blockcarpentry:frame_daylight_detector",
-          "!blockcarpentry:illusion_daylight_detector",
+          "!laserio:.*",
+          "!industrialforegoing:.*",
+          "!pneumaticcraft:.*",
           "!minecraft:lever",
           "!.*:.*_button",
           "!.*:.*_button_.*",
@@ -482,39 +481,6 @@
       }
     },
     {
-      "id": "open_colossalchests",
-      "item": {
-        "display_name": [
-          "{\"text\": \"Interact with Colossal Chests\", \"color\":\"blue\", \"bold\":\"true\"}"
-        ],
-        "item": "colossalchests:interface_wood",
-        "lore": [
-          [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
-          ]
-        ]
-      },
-      "category": "Storage",
-      "triggers": [
-        "onRightClickBlock"
-      ],
-      "data": {
-        "skyblockaddon": [],
-        "items": [],
-        "blocks": [
-          "colossalchests:.*"
-        ],
-        "entities": []
-      }
-    },
-    {
       "id": "open_shulker_box",
       "item": {
         "display_name": [
@@ -769,12 +735,12 @@
       }
     },
     {
-      "id": "interact_storage_drawers",
+      "id": "interact_sophisticated_storage",
       "item": {
         "display_name": [
-          "{\"text\": \"Interact with Storage Drawers\", \"color\":\"blue\", \"bold\":\"true\"}"
+          "{\"text\": \"Interact with Sophisticated Storage\", \"color\":\"blue\", \"bold\":\"true\"}"
         ],
-        "item": "storagedrawers:oak_full_drawers_1",
+        "item": "sophisticatedstorage:oak_chest",
         "lore": [
           [
             "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
@@ -797,7 +763,7 @@
         "skyblockaddon": [],
         "items": [],
         "blocks": [
-          "storagedrawers:.*"
+          "sophisticatedstorage:.*"
         ],
         "entities": []
       }
@@ -1058,6 +1024,105 @@
       }
     },
     {
+      "id": "interact_laser_io",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Interact with Laser IO\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "laserio:laser_node",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Automation",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "laserio:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "interact_industrial_foregoing",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Interact with Industrial Foregoing\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "industrialforegoing:mob_crusher",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Automation",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "industrialforegoing:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "interact_pneumaticcraft",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Interact with PneumaticCraft\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "pneumaticcraft:pressure_tube",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Automation",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "pneumaticcraft:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
       "id": "redstone_delays",
       "item": {
         "display_name": [
@@ -1131,9 +1196,7 @@
         "items": [],
         "blocks": [
           "minecraft:daylight_detector",
-          "minecraft:note_block",
-          "blockcarpentry:frame_daylight_detector",
-          "blockcarpentry:illusion_daylight_detector"
+          "minecraft:note_block"
         ],
         "entities": []
       }

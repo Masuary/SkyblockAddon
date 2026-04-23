@@ -171,7 +171,6 @@ dependencies {
 
     compileOnly fg.deobf("curse.maven:quark-243121:3840125")
     compileOnly fg.deobf("curse.maven:supplementaries-412082:4548315")
-    compileOnly fg.deobf("curse.maven:ColossalChests-237875:4502141")
     compileOnly fg.deobf("curse.maven:camera-289310:3970106")
     compileOnly fg.deobf("curse.maven:ftbessentials-410811:4560421")
     compileOnly fg.deobf("curse.maven:easy_villagers-400514:3887794")
