@@ -736,7 +736,7 @@
         "display_name": [
           "{\"text\": \"Interact with Sophisticated Storage\", \"color\":\"blue\", \"bold\":\"true\"}"
         ],
-        "item": "sophisticatedstorage:oak_chest",
+        "item": "sophisticatedstorage:controller",
         "lore": [
           [
             "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
