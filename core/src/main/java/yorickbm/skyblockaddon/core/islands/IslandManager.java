@@ -124,14 +124,18 @@ public class IslandManager {
      * @return - Island block position falls in
      */
     public Island getIslandByPos(Vec3i pos) {
-        final Optional<UUID> islandId = CACHE_islandByBoundingBox.asMap().entrySet().stream()
-                .filter(entry -> entry.getKey().isInside(pos))
-                .map(Map.Entry::getValue)
-                .findFirst().orElse(Optional.empty());
-        if (islandId.isPresent()) return getIslandByUUID(islandId.get());
+        if (CACHE_islandByBoundingBox != null) {
+            final Optional<UUID> islandId = CACHE_islandByBoundingBox.asMap().entrySet().stream()
+                    .filter(entry -> entry.getKey().isInside(pos))
+                    .map(Map.Entry::getValue)
+                    .findFirst().orElse(Optional.empty());
+            if (islandId.isPresent()) return getIslandByUUID(islandId.get());
+        }
 
         final Optional<Island> island = islandsByUUID.values().stream().filter(isl -> isl.getIslandBoundingBox().isInside(pos)).findFirst();
-        island.ifPresent(value -> CACHE_islandByBoundingBox.put(value.getIslandBoundingBox(), Optional.of(value.getId()))); //Store island into cache
+        if (island.isPresent() && CACHE_islandByBoundingBox != null) {
+            CACHE_islandByBoundingBox.put(island.get().getIslandBoundingBox(), Optional.of(island.get().getId()));
+        }
         return island.orElse(null);
     }
 

@@ -391,7 +391,7 @@ public final class ScrollableListGui {
         return switch (variant) {
             case "travel" -> buildTravelItems(player);
             case "members" -> buildMemberItems(data);
-            case "biomes" -> buildBiomeItems(data);
+            case "biomes" -> buildBiomeItems(player, data);
             case "members_group" -> buildGroupMemberItems(data);
             default -> List.of();
         };
@@ -433,7 +433,7 @@ public final class ScrollableListGui {
                 .collect(Collectors.toList());
     }
 
-    private static List<ItemStack> buildBiomeItems(CompoundTag data) {
+    private static List<ItemStack> buildBiomeItems(ServerPlayer player, CompoundTag data) {
         String currentBiome = "";
         if (data.contains("island_id")) {
             Island island = IslandManager.getInstance().getIslandByUUID(data.getUUID("island_id"));
@@ -475,6 +475,9 @@ public final class ScrollableListGui {
             if (isCurrent) {
                 EnhancedGuiHelper.addLore(item,
                         new TextComponent("Current biome").withStyle(ChatFormatting.GREEN));
+            }
+            for (TextComponent loreLine : yorickbm.skyblockaddon.util.BiomeLore.build(biomeName, player.getLevel())) {
+                EnhancedGuiHelper.addLore(item, loreLine);
             }
             CompoundTag tag = item.getOrCreateTagElement("skyblockaddon");
             tag.putString("biome", biomeName);
