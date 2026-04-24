@@ -444,7 +444,7 @@ public final class ScrollableListGui {
                 FMLPaths.CONFIGDIR.get(),
                 "minecraft:dead_bush",
                 ForgeRegistries.BIOMES.getValues().stream()
-                        .filter(b -> b.getRegistryName() != null && b.getRegistryName().toString().startsWith("minecraft:"))
+                        .filter(b -> b.getRegistryName() != null)
                         .map(b -> b.getRegistryName().toString())
                         .toList()
         );

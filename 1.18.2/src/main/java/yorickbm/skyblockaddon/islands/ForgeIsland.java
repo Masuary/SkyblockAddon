@@ -48,6 +48,7 @@ public class ForgeIsland extends Island implements NBTSerializable {
         super.setCenter(island.getCenter());
         super.setVisibility(island.isVisible());
         super.setSkullTexture(island.getSkullTexture());
+        super.setBiome(island.getBiome());
         setChunks(((ForgeIsland)island).getModifiedChunks());
 
         island.getGroups().forEach(super::addGroup);
@@ -150,10 +151,11 @@ public class ForgeIsland extends Island implements NBTSerializable {
      * @param serverlevel - Over-world of server
      */
     public void updateBiome(final String biome, final ServerLevel serverlevel) {
-        setBiome(biome.split(":")[1]); //Set biome for configuration to part without mod id
+        if (biome == null || biome.isEmpty() || biome.equals("Unknown") || !biome.contains(":")) return;
+
+        setBiome(biome); //Store full namespaced id so modded biomes persist correctly
 
         final BoundingBox boundingbox = ForgeConverter.InternalToForgeBoundingBox(getIslandBoundingBox());
-        final MutableInt mutableint = new MutableInt(0);
         final Holder<Biome> holder = serverlevel.registryAccess()
                 .registryOrThrow(Registry.BIOME_REGISTRY)
                 .getOrCreateHolder(ResourceKey.create(ForgeRegistries.BIOMES.getRegistryKey(), new ResourceLocation(biome)));
@@ -164,12 +166,54 @@ public class ForgeIsland extends Island implements NBTSerializable {
                 if (chunkaccess == null) {
                     continue; //Skip unloaded chunks
                 }
-                chunkaccess.fillBiomesFromNoise(
-                        BiomeUtil.makeResolver(mutableint, chunkaccess, boundingbox, holder, (p_262543_) -> true),
-                        serverlevel.getChunkSource().getGenerator().climateSampler());
+                applyConfiguredBiomeToChunk(chunkaccess, serverlevel, holder, boundingbox);
                 BiomeUtil.updateChunk(serverlevel.getChunk(k, j), serverlevel);
             }
         }
+    }
+
+    /**
+     * Reapply this island's configured biome to a freshly loaded chunk if it doesn't already match.
+     * Called from ChunkEvent.Load so that chunks unloaded at the time of biome configuration still
+     * pick up the correct biome once they come back. Deliberately does NOT send a client packet -
+     * the chunk-load path relies on vanilla's natural chunk send to carry the modified biome arrays.
+     *
+     * @return true if the biome was rewritten, false if skipped.
+     */
+    public boolean reapplyBiomeIfNeeded(final ChunkAccess chunk, final ServerLevel serverlevel) {
+        final String biomeId = getBiome();
+        if (biomeId == null || biomeId.isEmpty() || biomeId.equals("Unknown")) return false;
+
+        final Holder<Biome> targetHolder;
+        try {
+            targetHolder = serverlevel.registryAccess()
+                    .registryOrThrow(Registry.BIOME_REGISTRY)
+                    .getOrCreateHolder(ResourceKey.create(ForgeRegistries.BIOMES.getRegistryKey(), new ResourceLocation(biomeId)));
+        } catch (Exception ex) {
+            return false;
+        }
+
+        final Optional<ResourceKey<Biome>> targetKey = targetHolder.unwrapKey();
+        if (targetKey.isEmpty()) return false;
+
+        final ChunkPos pos = chunk.getPos();
+        final Holder<Biome> existing = chunk.getNoiseBiome(
+                QuartPos.fromBlock(pos.getMiddleBlockX()),
+                QuartPos.fromBlock(155),
+                QuartPos.fromBlock(pos.getMiddleBlockZ()));
+        if (existing.is(targetKey.get())) return false;
+
+        final BoundingBox islandBbox = ForgeConverter.InternalToForgeBoundingBox(getIslandBoundingBox());
+        applyConfiguredBiomeToChunk(chunk, serverlevel, targetHolder, islandBbox);
+        return true;
+    }
+
+    private static void applyConfiguredBiomeToChunk(final ChunkAccess chunk, final ServerLevel serverlevel, final Holder<Biome> targetBiomeHolder, final BoundingBox islandBbox) {
+        final MutableInt counter = new MutableInt(0);
+        chunk.fillBiomesFromNoise(
+                BiomeUtil.makeResolver(counter, chunk, islandBbox, targetBiomeHolder, (p) -> true),
+                serverlevel.getChunkSource().getGenerator().climateSampler());
+        chunk.setUnsaved(true);
     }
 
     public List<ChunkPos> getModifiedChunks() {
@@ -233,7 +277,8 @@ public class ForgeIsland extends Island implements NBTSerializable {
         setId(tag.getUUID("Id"));
         if (tag.getString("owner").length() > 3) setOwner(UUID.fromString(tag.getString("owner")));
 
-        setBiome(tag.getString("biome"));
+        final String storedBiome = tag.getString("biome");
+        setBiome(storedBiome.isEmpty() || storedBiome.contains(":") ? storedBiome : "minecraft:" + storedBiome);
         setVisibility(tag.getBoolean("travelability"));
         setSkullTexture(tag.getString("skullTexture"));
         setSpawn(NBTUtil.NBTToVec3i(tag.getCompound("spawn")));

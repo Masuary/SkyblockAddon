@@ -16,16 +16,18 @@ public class BiomeRegistry extends SkyblockAddonRegistry<DataComponent> implemen
     private List<Map.Entry<String, String>> entries;
 
     public BiomeRegistry(Path FMLPath, String defaultItem, List<String> forgeBiomes) {
+        final Set<String> availableBiomes = new HashSet<>(forgeBiomes);
+        this.biomes = new LinkedHashMap<>();
         try {
             final BiomeRegistryJson data = JSONEncoder.loadFromFile(FMLPath.resolve(SkyblockAddonCore.MOD_ID + "/registries/BiomeRegistry.json"), BiomeRegistryJson.class);
-            this.biomes = data.toMap();
-            this.entries = new ArrayList<>(this.biomes.entrySet());
+            data.toMap().forEach((biomeId, iconItem) -> {
+                if (availableBiomes.contains(biomeId)) this.biomes.put(biomeId, iconItem);
+            });
         } catch (final Exception e) {
-            //On failure load Minecraft Biome Registry with DEAD_BUSH as item.
-            this.biomes = new HashMap<>();
-            forgeBiomes.stream().filter(v -> v.startsWith("minecraft:")).forEach(v -> this.biomes.put(v, "minecraft:dead_bush"));
-            this.entries = new ArrayList<>(this.biomes.entrySet());
+            //JSON missing or unreadable - fall back to default icon for every registered biome
+            forgeBiomes.forEach(v -> this.biomes.put(v, defaultItem));
         }
+        this.entries = new ArrayList<>(this.biomes.entrySet());
     }
 
     @Override

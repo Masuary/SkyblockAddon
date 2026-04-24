@@ -103,13 +103,8 @@ public class RegistryEvents extends GuiDrawFillerEvent {
                     "minecraft:DEATH_BUSH",
                     ForgeRegistries.BIOMES.getValues()
                             .stream()
-                            .filter(p ->
-                                    Objects.requireNonNull(p.getRegistryName())
-                                            .toString().startsWith("minecraft:")
-                            )
-                            .map(b ->
-                                    b.getRegistryName().toString()
-                            )
+                            .filter(p -> p.getRegistryName() != null)
+                            .map(b -> b.getRegistryName().toString())
                             .toList()
             );
 

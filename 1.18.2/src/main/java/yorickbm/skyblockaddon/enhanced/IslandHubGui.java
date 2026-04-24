@@ -7,6 +7,7 @@ import com.masuary.masugui.element.Label;
 import com.masuary.masugui.element.Panel;
 import com.masuary.masugui.fallback.FallbackType;
 import net.minecraft.ChatFormatting;
+import net.minecraft.commands.Commands;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
@@ -32,7 +33,12 @@ public final class IslandHubGui {
         if (island == null) return;
 
         String ownerName = UsernameCache.getBlocking(island.getOwner());
-        boolean isAdmin = island.isOwner(player.getUUID());
+        boolean hasAdminGroupPermission = island.getGroupForEntityUUID(player.getUUID())
+                .map(g -> g.canDo("admin_menu"))
+                .orElse(true);
+        boolean isAdmin = island.isOwner(player.getUUID())
+                || player.hasPermissions(Commands.LEVEL_ADMINS)
+                || hasAdminGroupPermission;
         boolean isPart = island.isPartOf(player.getUUID());
 
         MasuGui gui = MasuGui.create("island_hub")
@@ -51,7 +57,8 @@ public final class IslandHubGui {
                 .text(new TextComponent(ownerName + "'s Island").withStyle(ChatFormatting.GOLD))
                 .centered().scale(1.0f).shadow(true));
 
-        String biome = island.getBiome() != null ? island.getBiome() : "Unknown";
+        String rawBiome = island.getBiome() != null ? island.getBiome() : "Unknown";
+        String biome = rawBiome.contains(":") ? rawBiome.substring(rawBiome.indexOf(':') + 1) : rawBiome;
         String visibility = island.isVisible() ? "Public" : "Private";
         gui.add(new Label("info", WIDTH / 2, 18)
                 .text(new TextComponent("Biome: " + biome + "  |  " + visibility))

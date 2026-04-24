@@ -35,5 +35,7 @@ public class ChunkEvents {
         if(island == null) return;
 
         if(island.storeChunk(chunk)) LOGGER.debug("Chunk {} added to island {}", pos, island.getId());
+
+        if(island.reapplyBiomeIfNeeded(chunk, serverLevel)) LOGGER.debug("Reapplied biome to chunk {} for island {}", pos, island.getId());
     }
 }

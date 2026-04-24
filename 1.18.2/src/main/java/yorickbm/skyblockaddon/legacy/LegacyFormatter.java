@@ -63,7 +63,10 @@ public class LegacyFormatter {
             final Vec3i center = new Vec3i(centerTag.getInt("x"), centerTag.getInt("y"), centerTag.getInt("z"));
             final ForgeIsland island = new ForgeIsland(UUID.fromString(islandId), center);
 
-            if(islandTag.contains("biome")) island.setBiome(islandTag.getString("biome"));
+            if(islandTag.contains("biome")) {
+                final String legacyBiome = islandTag.getString("biome");
+                island.setBiome(legacyBiome.isEmpty() || legacyBiome.contains(":") ? legacyBiome : "minecraft:" + legacyBiome);
+            }
             if(islandTag.contains("travelability")) island.setVisibility(islandTag.getBoolean("travelability"));
             if(islandTag.contains("owner")) island.setOwner(UUID.fromString(islandTag.getString("owner")));
 
