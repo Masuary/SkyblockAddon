@@ -70,6 +70,7 @@ public class SkyBlockAddon {
 
         MinecraftForge.EVENT_BUS.register(new ChunkEvents());
         MinecraftForge.EVENT_BUS.register(new yorickbm.skyblockaddon.enhanced.EnhancedGuiListener());
+        MinecraftForge.EVENT_BUS.register(new PneumaticCraftProtectionEvents());
 
         if(SkyblockAddonConfig.getForKey("island.particles.border").equalsIgnoreCase("TRUE")) MinecraftForge.EVENT_BUS.register(new ParticleEvents());
     }
