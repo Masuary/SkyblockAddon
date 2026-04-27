@@ -62,7 +62,10 @@ public class PneumaticCraftProtectionEvents {
         }
         if (droneClass == null || entity == null || !droneClass.isInstance(entity)) return null;
         try {
-            return (UUID) droneGetOwnerUuid.invoke(entity);
+            final UUID resolvedOwner = (UUID) droneGetOwnerUuid.invoke(entity);
+            if (resolvedOwner == null) return null;
+            if (resolvedOwner.equals(entity.getUUID())) return null;
+            return resolvedOwner;
         } catch (Throwable ignored) {
             return null;
         }
