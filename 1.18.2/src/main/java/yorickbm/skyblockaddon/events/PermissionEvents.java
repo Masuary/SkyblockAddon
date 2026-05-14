@@ -22,6 +22,7 @@ import net.minecraftforge.event.entity.living.LivingSpawnEvent;
 import net.minecraftforge.event.entity.player.*;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -244,7 +245,7 @@ public class PermissionEvents {
 
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onRightClickBlock(final PlayerInteractEvent.RightClickBlock event) {
         final AtomicReference<Island> standingOn = new AtomicReference<>();
         if(!InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) {

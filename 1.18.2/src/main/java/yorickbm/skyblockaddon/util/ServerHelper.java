@@ -97,13 +97,16 @@ public class ServerHelper {
      * @return true if the block is interactable (has GUI/capabilities or overrides use)
      */
     public static boolean isBlockInteractable(final Level world, final BlockPos pos, final Player player, final InteractionHand hand, final BlockHitResult vector) {
-        // If player is sneaking and has an item, assume placing block, not interacting
-        if (player.isShiftKeyDown() && !player.getItemInHand(hand).isEmpty()) {
-            return false;
-        }
-
         final BlockState state = world.getBlockState(pos);
         final BlockEntity be = world.getBlockEntity(pos);
+
+        // Blocks with no BlockEntity are usually pure placement targets (dirt, stone, etc.).
+        // Treat sneak + held item against such a block as a placement attempt.
+        // Mod blocks with a BE frequently implement sneak-interactions (e.g. Vault Wardrobe
+        // swap-on-sneak), so we deliberately do NOT short-circuit when a BE is present.
+        if (be == null && player.isShiftKeyDown() && !player.getItemInHand(hand).isEmpty()) {
+            return false;
+        }
 
         // Check common capabilities (inventory, energy, fluid)
         if (be != null) {
