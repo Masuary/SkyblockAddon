@@ -64,7 +64,8 @@ public final class PermissionCategoriesGui {
                 {"redstone", "Redstone"},
                 {"storage", "Storage"},
                 {"interactables", "Interactables"},
-                {"vaulthunters", "Vault Hunters"}
+                {"vaulthunters", "Vault Hunters"},
+                {"mods", "Mods"}
         };
 
         int col = 0;
@@ -92,8 +93,8 @@ public final class PermissionCategoriesGui {
         }
 
         if (isOp) {
-            int x = startX;
-            int y = startY + (row + (col > 0 ? 1 : 0)) * (buttonHeight + gap);
+            int x = startX + col * (buttonWidth + gap);
+            int y = startY + row * (buttonHeight + gap);
             gui.add(new Button("cat_admin", x, y, buttonWidth * 2 + gap, buttonHeight)
                     .label(new TextComponent("Admin Controls")).backgroundColor(0xFF553355).flat()
                     .onClick(p -> {
