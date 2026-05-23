@@ -120,6 +120,8 @@ public class ServerHelper {
         try {
             final InteractionResult result = state.use(world, fakePlayer, hand, vector);
             return result != InteractionResult.PASS;
+        } catch (final Exception ignored) {
+            return true;
         } finally {
             fakePlayer.closeContainer();
             fakePlayer.kill();
