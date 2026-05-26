@@ -19,6 +19,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -29,6 +30,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.common.util.FakePlayerFactory;
@@ -115,16 +117,30 @@ public class ServerHelper {
             if (be.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, null).isPresent()) return true;
         }
 
-        // Use a FakePlayer to test the block's use() method without side effects
+        // Use a FakePlayer to test the block's use() method.
+        // FakePlayer.die() is a no-op in Forge, so we must manually clean up any side effects
+        // (e.g. Create's SeatBlock.use() spawns a SeatEntity and mounts the FakePlayer on it).
         final FakePlayer fakePlayer = FakePlayerFactory.getMinecraft((ServerLevel) world);
+        final ServerLevel serverLevel = (ServerLevel) world;
+        final AABB cleanupArea = new AABB(pos).inflate(1.0);
+        final List<Entity> entitiesBefore = serverLevel.getEntities((Entity) null, cleanupArea, e -> !(e instanceof Player));
         try {
             final InteractionResult result = state.use(world, fakePlayer, hand, vector);
             return result != InteractionResult.PASS;
         } catch (final Exception ignored) {
             return true;
         } finally {
+            if (fakePlayer.getVehicle() != null) {
+                fakePlayer.stopRiding();
+            }
             fakePlayer.closeContainer();
             fakePlayer.kill();
+            final List<Entity> entitiesAfter = serverLevel.getEntities((Entity) null, cleanupArea, e -> !(e instanceof Player));
+            for (final Entity created : entitiesAfter) {
+                if (!entitiesBefore.contains(created)) {
+                    created.discard();
+                }
+            }
         }
     }
 
