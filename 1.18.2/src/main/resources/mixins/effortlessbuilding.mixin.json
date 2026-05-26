@@ -6,8 +6,9 @@
   "injectors": {
     "defaultRequire": 1
   },
-  "server": [
-    "EffortlessBuildingMixinConfig"
+  "mixins": [
+    "EffortlessBuildingMixinConfig",
+    "EffortlessBuildingBatchMixinConfig"
   ],
   "refmap": "skyblockaddon.refmap.json"
 }
