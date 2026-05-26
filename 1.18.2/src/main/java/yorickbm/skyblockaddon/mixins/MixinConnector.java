@@ -15,5 +15,6 @@ public class MixinConnector implements IMixinConnector {
         Mixins.addConfiguration("/mixins/buildinggadgets.mixin.json");
         Mixins.addConfiguration("/mixins/the_vault.mixin.json");
         Mixins.addConfiguration("/mixins/buildscape.mixin.json");
+        Mixins.addConfiguration("/mixins/effortlessbuilding.mixin.json");
     }
 }
