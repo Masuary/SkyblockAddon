@@ -227,8 +227,14 @@ public class ForgeIsland extends Island implements NBTSerializable {
         return Collections.unmodifiableList(playerLoadedChunks);
     }
     public boolean storeChunk(final ChunkAccess chunk) {
-        if(playerLoadedChunks.contains(chunk.getPos())) return false;
-        return playerLoadedChunks.add(chunk.getPos());
+        return storeChunk(chunk.getPos());
+    }
+    public boolean storeChunk(final ChunkPos pos) {
+        if(playerLoadedChunks.contains(pos)) return false;
+        return playerLoadedChunks.add(pos);
+    }
+    public boolean removeChunk(final ChunkPos pos) {
+        return playerLoadedChunks.remove(pos);
     }
     public void setChunks(Collection<ChunkPos> data) {
         this.playerLoadedChunks.addAll(data);
