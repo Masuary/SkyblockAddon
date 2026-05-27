@@ -13,8 +13,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.util.FakePlayer;
 import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -31,13 +29,11 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @Mixin(value = BuildModifiers.class, remap = false)
 public abstract class EffortlessBuildingBatchMixinConfig {
-    private static final Logger LOGGER = LogManager.getLogger("SkyblockAddon-EB");
 
     @Inject(method = "onBlockPlaced", at = @At("HEAD"), cancellable = true, remap = false)
     private static void onBatchPlaceBlocks(Player player, List<BlockPos> startCoordinates,
                                            Direction sideHit, Vec3 hitVec, boolean placeStartPos,
                                            CallbackInfo ci) {
-        LOGGER.info("EB BuildModifiers.onBlockPlaced mixin fired with {} positions by {}", startCoordinates.size(), player.getName().getString());
         if (player instanceof FakePlayer) return;
         if (!(player instanceof ServerPlayer serverPlayer)) return;
         if (!(player.getLevel() instanceof ServerLevel serverLevel)) return;
@@ -66,7 +62,6 @@ public abstract class EffortlessBuildingBatchMixinConfig {
     @Inject(method = "onBlockBroken", at = @At("HEAD"), cancellable = true, remap = false)
     private static void onBatchBreakBlocks(Player player, List<BlockPos> startCoordinates, boolean breakStartPos,
                                            CallbackInfo ci) {
-        LOGGER.info("EB BuildModifiers.onBlockBroken mixin fired with {} positions by {}", startCoordinates.size(), player.getName().getString());
         if (player instanceof FakePlayer) return;
         if (!(player instanceof ServerPlayer serverPlayer)) return;
         if (!(player.getLevel() instanceof ServerLevel serverLevel)) return;
