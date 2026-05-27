@@ -6,6 +6,7 @@ import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -158,15 +159,24 @@ public class InteractionHandler {
                 }
             }
 
-            if(!clickedState.isAir() && !blocksData.isEmpty()) {
-                final Block clickedBlock = clickedState.getBlock();
-                final String block = Objects.requireNonNull(clickedBlock.getRegistryName()).toString();
+            if(!blocksData.isEmpty()) {
+                final Block subjectBlock;
+                if("onPlaceBlock".equals(trigger)) {
+                    subjectBlock = (handItem.getItem() instanceof BlockItem heldBlockItem) ? heldBlockItem.getBlock() : null;
+                } else if(!clickedState.isAir()) {
+                    subjectBlock = clickedState.getBlock();
+                } else {
+                    subjectBlock = null;
+                }
 
-                final MatchResult rslt = PermissionManager.checkMatch(blocksData, block);
-                SkyBlockAddon.CustomDebugMessages(LOGGER, "b) " + block + " is " + rslt + " on " + perm.getId() + " in group " + group.get().getName());
-                switch(rslt) {
-                    case SKIP, ALLOW-> { }
-                    case BLOCK ->  blockAllowed = false;
+                if(subjectBlock != null) {
+                    final String block = Objects.requireNonNull(subjectBlock.getRegistryName()).toString();
+                    final MatchResult rslt = PermissionManager.checkMatch(blocksData, block);
+                    SkyBlockAddon.CustomDebugMessages(LOGGER, "b) " + block + " is " + rslt + " on " + perm.getId() + " in group " + group.get().getName());
+                    switch(rslt) {
+                        case SKIP, ALLOW -> { }
+                        case BLOCK -> blockAllowed = false;
+                    }
                 }
             }
 
