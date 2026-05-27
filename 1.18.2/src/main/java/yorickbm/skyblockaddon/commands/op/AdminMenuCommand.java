@@ -22,7 +22,12 @@ import java.util.UUID;
 
 public class AdminMenuCommand extends OverWorldCommandStack {
     public AdminMenuCommand(final CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Cmds.literal("island")
+        register(dispatcher, "island");
+        register(dispatcher, "is"); // Alias
+    }
+
+    private void register(final CommandDispatcher<CommandSourceStack> dispatcher, final String rootLiteral) {
+        dispatcher.register(Cmds.literal(rootLiteral)
                 .then(Cmds.literal("admin")
                         .requires(source -> source.getEntity() instanceof ServerPlayer && source.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Cmds.literal("menu")

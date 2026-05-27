@@ -36,6 +36,7 @@ import yorickbm.skyblockaddon.util.*;
 import java.util.*;
 
 public class ForgeIsland extends Island implements NBTSerializable {
+    private static final Logger LOGGER = LogManager.getLogger();
     private final List<ChunkPos> playerLoadedChunks = new ArrayList<>();
 
     public ForgeIsland() {
@@ -52,9 +53,15 @@ public class ForgeIsland extends Island implements NBTSerializable {
         setChunks(((ForgeIsland)island).getModifiedChunks());
 
         island.getGroups().forEach(super::addGroup);
-        island.getMembers().stream()
-                .filter(m -> island.getGroupForEntityUUID(m).isPresent())
-                .forEach(m -> super.addMember(m, island.getGroupForEntityUUID(m).get().getId()));
+        island.getMembers().forEach(m -> {
+            final UUID groupId = island.getGroupForEntityUUID(m)
+                    .map(IslandGroup::getId)
+                    .filter(gid -> !gid.equals(SkyblockAddonCore.MOD_UUID2))
+                    .orElse(SkyblockAddonCore.MOD_UUID);
+            if(!super.addMember(m, groupId)) {
+                LOGGER.warn("Failed to copy member {} into island {} during snapshot", m, getId());
+            }
+        });
     }
     public ForgeIsland(UUID uuid, Vec3i vec) {
         super.setId(UUID.randomUUID());

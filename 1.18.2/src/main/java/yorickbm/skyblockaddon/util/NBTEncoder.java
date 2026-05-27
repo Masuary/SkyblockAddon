@@ -6,10 +6,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -60,10 +61,12 @@ public class NBTEncoder {
             }
         }
 
-        //List files into list
+        //List files into list (skipping in-progress temp files)
         final List<Path> nbtFiles = new ArrayList<>();
         try {
-            Files.list(folderPath).forEach(nbtFiles::add);
+            Files.list(folderPath)
+                    .filter(p -> p.getFileName().toString().endsWith(".nbt"))
+                    .forEach(nbtFiles::add);
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
@@ -73,7 +76,7 @@ public class NBTEncoder {
                 final CompoundTag NBT = NbtIo.readCompressed(fileInputStream);
                 objects.add(NBT);
             } catch (final Exception e) {
-                LOGGER.error("Failed to load '"+path.toFile().getName()+"'");
+                LOGGER.error("Failed to load '"+path.toFile().getName()+"'", e);
             }
         }
 
@@ -97,10 +100,12 @@ public class NBTEncoder {
             }
         }
 
-        //List files into list
+        //List files into list (skipping in-progress temp files)
         final List<Path> nbtFiles = new ArrayList<>();
         try {
-            Files.list(folderPath).forEach(nbtFiles::add);
+            Files.list(folderPath)
+                    .filter(p -> p.getFileName().toString().endsWith(".nbt"))
+                    .forEach(nbtFiles::add);
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
@@ -112,7 +117,7 @@ public class NBTEncoder {
                 instance.deserializeNBT(NBT);
                 objects.add(instance);
             } catch (final Exception e) {
-                LOGGER.error("Failed to load '"+path.toFile().getName()+"'");
+                LOGGER.error("Failed to load '"+path.toFile().getName()+"'", e);
             }
         }
         return objects;
@@ -121,32 +126,38 @@ public class NBTEncoder {
     /**
      * Save a collection of clazz to nbt files.
      *
+     * Each file is written via temp-file + atomic rename so a crash mid-write cannot leave a
+     * truncated/corrupt file on disk. Stale `.tmp` siblings from a prior aborted save are
+     * cleaned up before the new attempt.
+     *
      * @param collection - Collection of clazz
      */
     public static <T extends NBTSerializable> void saveToFile(final Collection<T> collection, final Path filePath) throws RuntimeException {
+        //Create folder if it doesn't exist
+        if (!filePath.toFile().exists()) {
+            final boolean rslt = filePath.toFile().mkdirs();
+            if (!rslt) {
+                throw new RuntimeException("Failed to create container at '" + filePath.toFile().getAbsolutePath() + "'.");
+            }
+        }
+
         for (final T data : collection) {
+            final Path path = filePath.resolve(data.getId().toString() + ".nbt");
+            final Path tempPath = filePath.resolve(data.getId().toString() + ".nbt.tmp");
             try {
-                final Path path = filePath.resolve(data.getId().toString() + ".nbt");
-
-                //Create folder if it doesn't exist
-                if (!filePath.toFile().exists()) {
-                    final boolean rslt = filePath.toFile().mkdirs();
-                    if (!rslt) {
-                        throw new RuntimeException("Failed to create container at '" + filePath.toFile().getAbsolutePath() + "'.");
-                    }
+                Files.deleteIfExists(tempPath);
+                try (final OutputStream out = Files.newOutputStream(tempPath)) {
+                    NbtIo.writeCompressed(data.serializeNBT(), out);
                 }
-
-                //Create file if it does not exist
-                if (!Files.exists(path)) {
-                    Files.createFile(path);
+                try {
+                    Files.move(tempPath, path, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+                } catch (final IOException atomicMoveFailed) {
+                    // Some filesystems (e.g. cross-device) don't support ATOMIC_MOVE; fall back to plain replace.
+                    Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING);
                 }
-
-                //Write NBT to file
-                final FileOutputStream fileOutputStream = new FileOutputStream(path.toFile());
-                NbtIo.writeCompressed(data.serializeNBT(), fileOutputStream);
-                fileOutputStream.close();
             } catch (final IOException e) {
-                throw new RuntimeException(e);
+                try { Files.deleteIfExists(tempPath); } catch (final IOException ignored) {}
+                throw new RuntimeException("Failed to save NBT for " + data.getId(), e);
             }
         }
     }

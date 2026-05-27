@@ -40,6 +40,8 @@ public class IslandManager {
      * @param lastLocation Vec3i object
      */
     public void initializeData(List<? extends Island> islands, List<Vec3i> reusableLocations, Vec3i lastLocation) {
+        this.islandsByUUID.clear();
+        this.reusableLocations.clear();
         islands.forEach(island -> islandsByUUID.put(island.getId(), island)); //Store islands in map
         this.reusableLocations.addAll(reusableLocations);
         this.lastLocation = lastLocation;
@@ -55,20 +57,35 @@ public class IslandManager {
                 .build(new CacheLoader<>() {
                     @Override
                     public Optional<UUID> load(@Nonnull final UUID key) {
-                        final Optional<Island> island = islandsByUUID.values().stream().filter(isl -> isl.isPartOf(key)).findFirst();
-                        return island.map(Island::getId);
+                        return safeFindIslandId(isl -> isl.isPartOf(key));
                     }
                 });
 
         CACHE_islandByBoundingBox = CacheBuilder.newBuilder()
                 .expireAfterAccess(24, TimeUnit.HOURS)
+                .maximumSize(Math.max(256L, (long) Math.floor(maxServerPlayers * 4.0)))
                 .build(new CacheLoader<>() {
                     @Override
                     public Optional<UUID> load(@Nonnull final BoundingBox key) {
-                        final Optional<Island> island = islandsByUUID.values().stream().filter(isl -> isl.getIslandBoundingBox().isInside(key.getCenter())).findFirst();
-                        return island.map(Island::getId);
+                        return safeFindIslandId(isl -> isl.getIslandBoundingBox().isInside(key.getCenter()));
                     }
                 });
+    }
+
+    /**
+     * Stream over {@code islandsByUUID} defensively. The map is mutated from the server thread
+     * but {@code CacheLoader.load} may run from any caller's thread, so a concurrent modification
+     * can surface as {@link java.util.ConcurrentModificationException} mid-iteration. We catch it,
+     * log it, and return empty so the caller falls back to a fresh slow-path lookup rather than
+     * crashing the player join / command handler.
+     */
+    private Optional<UUID> safeFindIslandId(final java.util.function.Predicate<Island> match) {
+        try {
+            return islandsByUUID.values().stream().filter(match).findFirst().map(Island::getId);
+        } catch (final java.util.ConcurrentModificationException cme) {
+            org.apache.logging.log4j.LogManager.getLogger().warn("CME during island lookup; returning empty for this attempt", cme);
+            return Optional.empty();
+        }
     }
 
     /**
@@ -79,10 +96,12 @@ public class IslandManager {
      */
     public void loadIslandIntoReverseCache(UUID uuid) {
         try {
-            final Optional<UUID> island = CACHE_islandByPlayerUUID.get(uuid);
-            if (island.isEmpty()) return; //Got no island
-            getIslandByUUID(island.get()).getName(); //Load owners name into cache
-            CACHE_islandByBoundingBox.put(getIslandByUUID(island.get()).getIslandBoundingBox(), island); //Store into bounding box cache
+            final Optional<UUID> islandId = CACHE_islandByPlayerUUID.get(uuid);
+            if (islandId.isEmpty()) return; //Got no island
+            final Island island = getIslandByUUID(islandId.get());
+            if (island == null) return; //Cache pointed at a now-removed island; tolerate.
+            island.getName(); //Load owners name into cache
+            CACHE_islandByBoundingBox.put(island.getIslandBoundingBox(), islandId); //Store into bounding box cache
         } catch (final ExecutionException e) {
             throw new RuntimeException(e);
         }
@@ -158,20 +177,17 @@ public class IslandManager {
     public void clearIslandCache(Island island) {
         CACHE_islandByBoundingBox.invalidate(island.getIslandBoundingBox());
         Stream.concat(island.getMembers().stream(), Stream.of(island.getOwner()))
-                .forEach(uuid -> {
-                    CACHE_islandByPlayerUUID.invalidate(uuid);
-                    CACHE_islandByPlayerUUID.put(uuid, Optional.empty());
-                });
+                .forEach(CACHE_islandByPlayerUUID::invalidate);
         islandsByUUID.remove(island.getId());
     }
 
     /**
-     * Clear player from cache
-     * @param uuid
+     * Clear player from cache. Just invalidates the entry - leaving an explicit Optional.empty()
+     * cached would force every subsequent lookup through the 12h-TTL slow path even after the
+     * player rejoins or gets re-invited.
      */
     public void clearCacheForPlayer(UUID uuid) {
         CACHE_islandByPlayerUUID.invalidate(uuid);
-        CACHE_islandByPlayerUUID.put(uuid, Optional.empty());
     }
 
     /**

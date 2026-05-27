@@ -227,9 +227,6 @@ public class IslandGuiEvents {
         final CompoundTag modData = event.getClickedItem().getOrCreateTag();
         final CompoundTag guiData = event.getHolder().getData().getCompound(SkyblockAddonCore.MOD_ID);
 
-        LOGGER.info(modData);
-        LOGGER.info(guiData);
-
         if(!guiData.contains("player_id") || !modData.contains("group_id")) {
             event.setResult(Event.Result.DENY);
             return;

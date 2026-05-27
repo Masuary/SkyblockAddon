@@ -324,11 +324,10 @@ public final class ScrollableListGui {
                     if (island != null) {
                         IslandGroup targetGroup = island.getGroup(itemData.getUUID("group_id"));
                         if (targetGroup != null) {
-                            island.getGroupForEntityUUID(data.getUUID("player_id"))
-                                    .ifPresent(oldGroup -> oldGroup.removeMember(data.getUUID("player_id")));
-                            targetGroup.addMember(data.getUUID("player_id"));
-                            player.sendMessage(new TextComponent("Player assigned to group: " + targetGroup.getName())
-                                    .withStyle(ChatFormatting.GREEN), player.getUUID());
+                            if (island.addMember(data.getUUID("player_id"), targetGroup.getId())) {
+                                player.sendMessage(new TextComponent("Player assigned to group: " + targetGroup.getName())
+                                        .withStyle(ChatFormatting.GREEN), player.getUUID());
+                            }
                         }
                     }
                     GUILibraryRegistry.openGUIForPlayer(player, "skyblockaddon:members", data);

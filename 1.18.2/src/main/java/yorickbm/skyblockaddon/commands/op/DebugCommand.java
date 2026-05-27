@@ -11,7 +11,12 @@ import yorickbm.skyblockaddon.configs.SkyblockAddonConfig;
 
 public class DebugCommand {
     public DebugCommand(final CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Cmds.literal("island")
+        register(dispatcher, "island");
+        register(dispatcher, "is"); // Alias
+    }
+
+    private void register(final CommandDispatcher<CommandSourceStack> dispatcher, final String rootLiteral) {
+        dispatcher.register(Cmds.literal(rootLiteral)
                 .then(Cmds.literal("admin")
                         .requires(source -> source.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .then(Cmds.literal("debug")

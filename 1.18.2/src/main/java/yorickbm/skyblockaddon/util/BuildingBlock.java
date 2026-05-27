@@ -16,8 +16,10 @@ public class BuildingBlock {
 
     public void place(final ServerLevel serverLevel, final Vec3i spawnLocation) {
         serverLevel.setBlockAndUpdate(pos.offset(spawnLocation), state);
-        //serverLevel.levelEvent(LevelEvent.PARTICLES_DESTROY_BLOCK, pos.offset(spawnLocation), Block.getId(state));
-        //serverLevel.levelEvent(state.getSoundType().getPlaceSound().hashCode(), pos.offset(spawnLocation), Block.getId(state));
+    }
+
+    public BlockPos getPos() {
+        return pos;
     }
 
     public BlockState getState() {
