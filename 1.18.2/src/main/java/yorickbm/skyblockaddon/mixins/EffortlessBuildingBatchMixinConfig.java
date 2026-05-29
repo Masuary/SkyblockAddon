@@ -37,6 +37,7 @@ public abstract class EffortlessBuildingBatchMixinConfig {
         if (player instanceof FakePlayer) return;
         if (!(player instanceof ServerPlayer serverPlayer)) return;
         if (!(player.getLevel() instanceof ServerLevel serverLevel)) return;
+        if (serverLevel.dimension() != Level.OVERWORLD) return;
         if (serverPlayer.hasPermissions(Commands.LEVEL_ADMINS)) return;
 
         for (final BlockPos pos : startCoordinates) {
@@ -65,6 +66,7 @@ public abstract class EffortlessBuildingBatchMixinConfig {
         if (player instanceof FakePlayer) return;
         if (!(player instanceof ServerPlayer serverPlayer)) return;
         if (!(player.getLevel() instanceof ServerLevel serverLevel)) return;
+        if (serverLevel.dimension() != Level.OVERWORLD) return;
         if (serverPlayer.hasPermissions(Commands.LEVEL_ADMINS)) return;
 
         for (final BlockPos pos : startCoordinates) {

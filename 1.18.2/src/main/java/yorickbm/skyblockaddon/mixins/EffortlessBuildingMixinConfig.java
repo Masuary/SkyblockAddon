@@ -39,6 +39,7 @@ public abstract class EffortlessBuildingMixinConfig {
                                      CallbackInfoReturnable<Boolean> cir) {
         if (player instanceof FakePlayer) return;
         if (!(player instanceof ServerPlayer serverPlayer) || !(world instanceof ServerLevel serverLevel)) return;
+        if (serverLevel.dimension() != Level.OVERWORLD) return;
         if (serverPlayer.hasPermissions(Commands.LEVEL_ADMINS)) return;
 
         final Island targetIsland = IslandManager.getInstance().getIslandByPos(ForgeConverter.ForgeToInternalVec3i(pos));
@@ -60,6 +61,7 @@ public abstract class EffortlessBuildingMixinConfig {
                                      CallbackInfoReturnable<Boolean> cir) {
         if (player instanceof FakePlayer) return;
         if (!(player instanceof ServerPlayer serverPlayer) || !(world instanceof ServerLevel serverLevel)) return;
+        if (serverLevel.dimension() != Level.OVERWORLD) return;
         if (serverPlayer.hasPermissions(Commands.LEVEL_ADMINS)) return;
 
         final Island targetIsland = IslandManager.getInstance().getIslandByPos(ForgeConverter.ForgeToInternalVec3i(pos));
