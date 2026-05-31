@@ -22,6 +22,7 @@ import yorickbm.skyblockaddon.islands.ForgeIsland;
 import yorickbm.skyblockaddon.islands.ForgeIslandGroup;
 import yorickbm.skyblockaddon.util.ForgeConverter;
 import yorickbm.skyblockaddon.util.FunctionRegistry;
+import yorickbm.skyblockaddon.util.IslandGroupAssignments;
 import yorickbm.skyblockaddon.util.ServerHelper;
 
 import java.util.Objects;
@@ -234,8 +235,15 @@ public class IslandGuiEvents {
 
         final UUID groupUUID = modData.getUUID("group_id");
         final UUID playerUUID = guiData.getUUID("player_id");
+        final var targetGroup = event.getIsland().getGroup(groupUUID);
 
-        event.getIsland().addMember(playerUUID, groupUUID);
+        final boolean assigned = event.getIsland().isPartOf(playerUUID)
+                ? event.getIsland().addMember(playerUUID, groupUUID)
+                : IslandGroupAssignments.assignWithoutMembership(event.getIsland(), playerUUID, targetGroup);
+        if(!assigned) {
+            event.setResult(Event.Result.DENY);
+            return;
+        }
         event.getHolder().close();
 
         event.getTarget().sendMessage(
@@ -243,7 +251,7 @@ public class IslandGuiEvents {
                         SkyBlockAddonLanguage.getLocalizedString("island.member.group.set")
                                 .formatted(
                                         UsernameCache.getBlocking(playerUUID),
-                                        event.getIsland().getGroup(groupUUID).getName()
+                                        targetGroup.getName()
                                 )
                 ).withStyle(ChatFormatting.GREEN),
                 event.getTarget().getUUID());

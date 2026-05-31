@@ -146,6 +146,25 @@ public abstract class Island {
     }
 
     /**
+     * Assign an entity to an island permission group without changing island membership.
+     * This is used for non-members that should have custom permissions on this island.
+     *
+     * @param entity - Entity to assign
+     * @param id - Group ID
+     * @return - If the group assignment has been changed
+     */
+    public boolean assignGroup(final UUID entity, final UUID id) {
+        if(getOwner().equals(entity)) return false;
+
+        final IslandGroup group = this.islandGroups.get(id);
+        if(group == null) return false;
+
+        this.islandGroups.forEach(((uuid, islandGroup) -> islandGroup.removeMember(entity)));
+        group.addMember(entity);
+        return true;
+    }
+
+    /**
      * Safely add new member to island
      * Automatically runs owner & group checks
      * @param entity - Entity to add
@@ -158,12 +177,7 @@ public abstract class Island {
         if(this.getOwner().equals(SkyblockAddonCore.MOD_UUID)) {
             setOwner(entity);
         } else {
-            this.islandGroups.forEach(((uuid, islandGroup) -> islandGroup.removeMember(entity))); //Remove entity from all groups
-
-            final IslandGroup group = this.islandGroups.get(id);
-            if(group == null) return false;
-
-            group.addMember(entity);
+            if(!this.assignGroup(entity, id)) return false;
             if(!id.equals(SkyblockAddonCore.MOD_UUID2) && !this.members.contains(entity)) this.members.add(entity);
         }
         return true;

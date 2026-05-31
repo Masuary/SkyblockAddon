@@ -18,6 +18,7 @@ import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
+import yorickbm.skyblockaddon.util.IslandGroupAssignments;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -88,7 +89,7 @@ public class IslandAddGroupMemberCommand extends OverWorldCommandStack {
             command.sendFailure(new TextComponent(String.format(SkyBlockAddonLanguage.getLocalizedString("commands.group.not.found"), groupId)));
             return Command.SINGLE_SUCCESS;
         }
-        if(!island.addMember(target.getUUID(), group.getId())) {
+        if(!IslandGroupAssignments.assignWithoutMembership(island, target.getUUID(), group)) {
             command.sendFailure(new TextComponent(String.format(SkyBlockAddonLanguage.getLocalizedString("commands.group.not.found"), group.getName())));
             return Command.SINGLE_SUCCESS;
         }

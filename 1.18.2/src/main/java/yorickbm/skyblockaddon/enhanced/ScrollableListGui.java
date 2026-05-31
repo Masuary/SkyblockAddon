@@ -27,6 +27,7 @@ import yorickbm.skyblockaddon.core.registries.BiomeRegistry;
 import yorickbm.skyblockaddon.core.util.UsernameCache;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
 import yorickbm.skyblockaddon.islands.ForgeIslandGroup;
+import yorickbm.skyblockaddon.util.IslandGroupAssignments;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -324,7 +325,11 @@ public final class ScrollableListGui {
                     if (island != null) {
                         IslandGroup targetGroup = island.getGroup(itemData.getUUID("group_id"));
                         if (targetGroup != null) {
-                            if (island.addMember(data.getUUID("player_id"), targetGroup.getId())) {
+                            UUID playerId = data.getUUID("player_id");
+                            boolean assigned = island.isPartOf(playerId)
+                                    ? island.addMember(playerId, targetGroup.getId())
+                                    : IslandGroupAssignments.assignWithoutMembership(island, playerId, targetGroup);
+                            if (assigned) {
                                 player.sendMessage(new TextComponent("Player assigned to group: " + targetGroup.getName())
                                         .withStyle(ChatFormatting.GREEN), player.getUUID());
                             }

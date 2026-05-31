@@ -23,6 +23,8 @@ dependencies {
     //Google cache dependency
     implementation 'com.google.guava:guava:32.1.2-jre' // latest stable version
 
+    compileOnly 'org.apache.logging.log4j:log4j-api:2.17.1'
+
     // JUnit for testing
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
