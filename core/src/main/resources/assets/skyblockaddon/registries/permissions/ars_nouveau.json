@@ -1,0 +1,93 @@
+{
+  "mod": "ars_nouveau",
+  "permissions": [
+    {
+      "id": "ars_nouveau_interact",
+      "priority": 20,
+      "order": 1,
+      "item": {
+        "display_name": [
+          "{\"text\": \"Ars Nouveau Blocks\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "ars_nouveau:arcane_core",
+        "lore": [
+          [
+            {
+              "text": "» Click to toggle the status of this permission for %data_group_name%.",
+              "color": "dark_gray"
+            }
+          ],
+          [
+            {
+              "text": " ",
+              "color": "dark_gray"
+            }
+          ],
+          [
+            {
+              "text": "♦ Status: ",
+              "color": "dark_gray"
+            },
+            {
+              "text": "%data_status% ",
+              "color": "white"
+            }
+          ]
+        ]
+      },
+      "category": "Mods",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "block": [
+          "ars_nouveau:.*"
+        ]
+      }
+    },
+    {
+      "id": "ars_nouveau_portal",
+      "priority": 20,
+      "order": 2,
+      "item": {
+        "display_name": [
+          "{\"text\": \"Use Ars Nouveau Warp Portals\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "ars_nouveau:warp_scroll",
+        "lore": [
+          [
+            {
+              "text": "» Click to toggle the status of this permission for %data_group_name%.",
+              "color": "dark_gray"
+            }
+          ],
+          [
+            {
+              "text": " ",
+              "color": "dark_gray"
+            }
+          ],
+          [
+            {
+              "text": "♦ Status: ",
+              "color": "dark_gray"
+            },
+            {
+              "text": "%data_status% ",
+              "color": "white"
+            }
+          ]
+        ]
+      },
+      "category": "Mods",
+      "triggers": [
+        "onEnterPortal"
+      ],
+      "data": {
+        "block": [
+          "ars_nouveau:portal"
+        ]
+      }
+    }
+  ]
+}

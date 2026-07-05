@@ -1,15 +1,21 @@
 package yorickbm.skyblockaddon.islands;
 
+import com.mojang.logging.LogUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import org.slf4j.Logger;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
+import yorickbm.skyblockaddon.core.permissions.PermissionStateMigrator;
 import yorickbm.skyblockaddon.util.NBTSerializable;
 import yorickbm.skyblockaddon.util.NBTUtil;
 
 import java.util.UUID;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ForgeIslandGroup extends IslandGroup implements NBTSerializable {
+    private static final Logger LOGGER = LogUtils.getLogger();
     private ItemStack item;
 
     public ForgeIslandGroup() {
@@ -20,6 +26,15 @@ public class ForgeIslandGroup extends IslandGroup implements NBTSerializable {
     public ForgeIslandGroup(UUID modUuid, ItemStack item, boolean b) {
         super(modUuid, b);
         this.item = item;
+    }
+
+    public ForgeIslandGroup(final ForgeIslandGroup group) {
+        super(group.getId(), false);
+        this.item = group.item.copy();
+        this.members.clear();
+        this.members.addAll(group.members);
+        this.permissions.clear();
+        this.permissions.putAll(group.permissions);
     }
 
     @Override
@@ -60,6 +75,7 @@ public class ForgeIslandGroup extends IslandGroup implements NBTSerializable {
             permissions.putBoolean(permission.getKey(), permission.getValue());
         }
         tag.put("permissions", permissions);
+        tag.putInt("permissionSchemaVersion", PermissionStateMigrator.CURRENT_SCHEMA_VERSION);
 
         return tag;
     }
@@ -76,8 +92,14 @@ public class ForgeIslandGroup extends IslandGroup implements NBTSerializable {
         this.item = NBTUtil.NBTToItemStack(tag.getCompound("item"));
 
         final CompoundTag permissions = tag.getCompound("permissions");
+        final Set<String> storedPermissionIds = new HashSet<>(permissions.getAllKeys());
         for(final String key : permissions.getAllKeys()) {
             this.permissions.put(key, permissions.getBoolean(key));
+        }
+        if (tag.getInt("permissionSchemaVersion") < PermissionStateMigrator.CURRENT_SCHEMA_VERSION) {
+            final int migratedCount = PermissionStateMigrator.migrate(this.permissions, storedPermissionIds);
+            LOGGER.info("Migrated {} permission states for island group {} to schema {}",
+                    migratedCount, this.uuid, PermissionStateMigrator.CURRENT_SCHEMA_VERSION);
         }
     }
 }

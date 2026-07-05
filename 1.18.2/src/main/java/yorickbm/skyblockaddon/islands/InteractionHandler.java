@@ -6,6 +6,7 @@ import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.DoorBlock;
@@ -126,19 +127,20 @@ public class InteractionHandler {
 
         final String itemName = handItem.isEmpty() ? "" : Objects.requireNonNull(handItem.getItem().getRegistryName()).toString();
         final BlockState clickedState = world.getBlockState(position);
-        final String blockName = clickedState.isAir() ? "" : Objects.requireNonNull(clickedState.getBlock().getRegistryName()).toString();
+        final String blockName;
+        if ("onPlaceBlock".equals(trigger) && handItem.getItem() instanceof BlockItem blockItem) {
+            blockName = Objects.requireNonNull(ForgeRegistries.BLOCKS.getKey(blockItem.getBlock())).toString();
+        } else {
+            blockName = clickedState.isAir()
+                    ? ""
+                    : Objects.requireNonNull(ForgeRegistries.BLOCKS.getKey(clickedState.getBlock())).toString();
+        }
 
         final Map<String, String> ctx = new LinkedHashMap<>();
         if (!blockName.isEmpty()) ctx.put("block", blockName);
         if (!itemName.isEmpty()) ctx.put("item", itemName);
 
-        final boolean runFail = evaluatePermissions(group.get(), trigger, ctx);
-
-        if (runFail) {
-            ServerHelper.forceUnpowerOrTogglePoweredBlock(world, position);
-        }
-
-        return runFail;
+        return evaluatePermissions(group.get(), trigger, ctx);
     }
 
     /**

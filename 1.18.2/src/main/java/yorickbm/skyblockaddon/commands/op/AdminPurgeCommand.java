@@ -10,6 +10,7 @@ import net.minecraft.commands.arguments.UuidArgument;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import org.apache.logging.log4j.LogManager;
@@ -31,9 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class AdminPurgeCommand extends OverWorldCommandStack {
@@ -179,8 +177,7 @@ public class AdminPurgeCommand extends OverWorldCommandStack {
                     LOGGER.debug("Finished purging");
 
                     if (bar != null) {
-                        final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-                        scheduler.schedule(bar::kill, 800, TimeUnit.MILLISECONDS);
+                        command.getServer().tell(new TickTask(command.getServer().getTickCount() + 16, bar::kill));
                     }
 
                     final String doneMsg = SkyBlockAddonLanguage.getLocalizedString("commands.admin.purge.done")

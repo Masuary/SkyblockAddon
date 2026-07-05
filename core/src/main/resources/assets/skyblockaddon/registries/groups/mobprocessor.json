@@ -1,0 +1,10 @@
+{
+  "mod": "mobprocessor",
+  "groups": {
+    "mob_processor": {
+      "block": [
+        "mobprocessor:mob_processor"
+      ]
+    }
+  }
+}

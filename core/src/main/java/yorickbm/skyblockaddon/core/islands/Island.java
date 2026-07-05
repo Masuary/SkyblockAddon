@@ -91,9 +91,11 @@ public abstract class Island {
         if(!islandGroups.containsKey(uuid)) return false;
 
         final IslandGroup groupToRemove = islandGroups.get(uuid);
-        if(!groupToRemove.getMembers().isEmpty()) { //Move them all to default group
-            new ArrayList<>(groupToRemove.getMembers()).forEach(p -> {
-                if(this.members.contains(p)) this.getMembersGroup().addMember(p);
+        if(!groupToRemove.getMembers().isEmpty()) {
+            new ArrayList<>(groupToRemove.getMembers()).forEach(entity -> {
+                if(this.members.contains(entity)) {
+                    this.assignGroup(entity, SkyblockAddonCore.MOD_UUID);
+                }
             });
         }
 
@@ -135,7 +137,7 @@ public abstract class Island {
      */
     public void removeMember(final UUID entity, final UUID id) {
         this.members.remove(entity);
-        this.removeGroupMember(entity, id);
+        this.islandGroups.values().forEach(group -> group.removeMember(entity));
     }
 
     /**
@@ -144,9 +146,125 @@ public abstract class Island {
      * @param id - Group UUID
      */
     public void removeGroupMember(final UUID entity, final UUID id) {
-        this.islandGroups.get(id).removeMember(entity);
+        final IslandGroup group = this.islandGroups.get(id);
+        if(group == null) return;
+
+        group.removeMember(entity);
         if(this.members.contains(entity) && !this.isInAnyGroup(entity)) {
-            this.addMember(entity, SkyblockAddonCore.MOD_UUID); //Add back into default group since he/she is an island member
+            this.assignGroup(entity, SkyblockAddonCore.MOD_UUID);
+        }
+    }
+
+    /**
+     * Assign an entity to a permission group without changing island membership.
+     *
+     * @param entity Entity to assign
+     * @param id Target group ID
+     * @return If the group assignment was changed
+     */
+    public boolean assignGroup(final UUID entity, final UUID id) {
+        if(getOwner().equals(entity)) return false;
+
+        final IslandGroup group = this.islandGroups.get(id);
+        if(group == null) return false;
+
+        this.islandGroups.values().forEach(islandGroup -> islandGroup.removeMember(entity));
+        group.addMember(entity);
+        return true;
+    }
+
+    /**
+     * Repairs recoverable membership inconsistencies from legacy or malformed data.
+     * Custom-group assignments win over the default members group. The visitors
+     * group is a fallback policy group and never stores canonical island members.
+     */
+    public MembershipRepairReport repairMembershipIntegrity() {
+        int removedOwnerReferences = 0;
+        int removedDuplicateMembers = 0;
+        int recoveredMembers = 0;
+        int repairedAssignments = 0;
+
+        while (members.remove(getOwner())) removedOwnerReferences++;
+        for (final IslandGroup group : islandGroups.values()) {
+            while (group.hasMember(getOwner())) {
+                group.removeMember(getOwner());
+                removedOwnerReferences++;
+            }
+        }
+
+        final LinkedHashSet<UUID> uniqueMembers = new LinkedHashSet<>();
+        for (final UUID member : members) {
+            if (member == null || !uniqueMembers.add(member)) removedDuplicateMembers++;
+        }
+        members.clear();
+        members.addAll(uniqueMembers);
+
+        final IslandGroup visitorsGroup = getDefaultGroup();
+        if (visitorsGroup != null) {
+            for (final UUID visitorReference : new ArrayList<>(visitorsGroup.getMembers())) {
+                visitorsGroup.removeMember(visitorReference);
+                repairedAssignments++;
+            }
+        }
+
+        for (final IslandGroup group : islandGroups.values()) {
+            if (group == visitorsGroup) continue;
+            for (final UUID groupMember : new ArrayList<>(group.getMembers())) {
+                if (groupMember == null || groupMember.equals(getOwner())) {
+                    group.removeMember(groupMember);
+                    repairedAssignments++;
+                } else if (!members.contains(groupMember)) {
+                    members.add(groupMember);
+                    recoveredMembers++;
+                }
+            }
+        }
+
+        final IslandGroup membersGroup = getMembersGroup();
+        if (membersGroup == null) {
+            throw new IllegalStateException("Island " + getId() + " has no default members group");
+        }
+
+        for (final UUID member : new ArrayList<>(members)) {
+            final List<IslandGroup> assignments = islandGroups.values().stream()
+                    .filter(group -> group != visitorsGroup && group.hasMember(member))
+                    .sorted(Comparator
+                            .comparingInt((IslandGroup group) -> group == membersGroup ? 1 : 0)
+                            .thenComparing(group -> group.getId().toString()))
+                    .toList();
+            final IslandGroup selectedGroup = assignments.isEmpty() ? membersGroup : assignments.get(0);
+
+            for (final IslandGroup group : islandGroups.values()) {
+                if (group != selectedGroup && group.hasMember(member)) {
+                    group.removeMember(member);
+                    repairedAssignments++;
+                }
+            }
+            if (!selectedGroup.hasMember(member)) {
+                selectedGroup.addMember(member);
+                repairedAssignments++;
+            }
+        }
+
+        return new MembershipRepairReport(
+                removedOwnerReferences,
+                removedDuplicateMembers,
+                recoveredMembers,
+                repairedAssignments
+        );
+    }
+
+    public record MembershipRepairReport(
+            int removedOwnerReferences,
+            int removedDuplicateMembers,
+            int recoveredMembers,
+            int repairedAssignments
+    ) {
+        public boolean changed() {
+            return removedOwnerReferences > 0
+                    || removedDuplicateMembers > 0
+                    || recoveredMembers > 0
+                    || repairedAssignments > 0;
         }
     }
 
@@ -163,13 +281,8 @@ public abstract class Island {
         if(this.getOwner().equals(SkyblockAddonCore.MOD_UUID)) {
             setOwner(entity);
         } else {
-            this.islandGroups.forEach(((uuid, islandGroup) -> islandGroup.removeMember(entity))); //Remove entity from all groups
-
-            final IslandGroup group = this.islandGroups.get(id);
-            if(group == null) return false;
-
-            group.addMember(entity);
-            if(id.equals(SkyblockAddonCore.MOD_UUID) && !this.members.contains(entity)) this.members.add(entity);
+            if(!this.assignGroup(entity, id)) return false;
+            if(!this.members.contains(entity)) this.members.add(entity);
         }
         return true;
     }
@@ -340,6 +453,7 @@ public abstract class Island {
     }
 
     public void setChunks(final Collection<ChunkRef> chunks) {
+        loadedChunks.clear();
         loadedChunks.addAll(chunks);
     }
 

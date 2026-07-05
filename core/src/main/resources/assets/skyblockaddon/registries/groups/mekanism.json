@@ -13,13 +13,11 @@
         "mekanism:rotary_condensentrator", "mekanism:antiprotonic_nucleosynthesizer",
         "mekanism:electric_pump", "mekanism:digital_miner",
         "mekanism:formulaic_assemblicator", "mekanism:seismic_vibrator",
-        "mekanism:fluid_tank", "mekanism:gas_tank",
-        "mekanism:basic_factory", "mekanism:advanced_factory", "mekanism:elite_factory",
-        "mekanism:ultimate_factory", "mekanism:creative_factory",
+        "mekanism:(basic|advanced|elite|ultimate|creative)_(fluid|chemical)_tank",
+        "mekanism:(basic|advanced|elite|ultimate)_(smelting|enriching|crushing|compressing|combining|purifying|injecting|infusing|sawing)_factory",
         "mekanism:isotopic_centrifuge", "mekanism:nutritional_liquifier",
-        "mekanism:industrial_turbine", "mekanism:boiler_casing",
-        "mekanism:fission_reactor_casing", "mekanism:fission_reactor_logic_adapter",
-        "mekanism:thermoelectric_boiler"
+        "mekanism:dynamic_tank", "mekanism:dynamic_valve",
+        "mekanism:boiler_casing", "mekanism:boiler_valve"
       ]
     },
     "mekanism_qio_blocks": {
@@ -30,7 +28,13 @@
       ]
     },
     "mekanism_blocks": {
-      "block": ["#mekanism_machine_blocks", "#mekanism_qio_blocks"]
+      "block": ["#mekanism_machine_blocks", "#mekanism_qio_blocks", "#mekanism_generator_blocks"]
+    },
+    "mekanism_generator_blocks": {
+      "block": [
+        "mekanismgenerators:(turbine_.*|electromagnetic_coil|rotational_complex|saturating_condenser)",
+        "mekanismgenerators:(fission_.*|fusion_.*|reactor_glass)"
+      ]
     }
   }
 }

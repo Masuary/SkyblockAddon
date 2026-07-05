@@ -1,0 +1,40 @@
+{
+  "mod": "occultism",
+  "permissions": [
+    {
+      "id": "mod_occultism",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Occultism\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "occultism:storage_controller",
+        "lore": [
+          [
+            "{\"text\":\"» Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"♦ Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Mods",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "occultism:.*"
+        ],
+        "entities": []
+      },
+      "priority": 20,
+      "order": 1
+    }
+  ]
+}

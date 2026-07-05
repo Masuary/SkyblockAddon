@@ -1333,6 +1333,85 @@
       }
     },
     {
+      "id": "redstone_detectors",
+      "priority": 10,
+      "order": 2,
+      "item": {
+        "display_name": [
+          "{\"text\": \"Detectors\", \"color\": \"red\", \"bold\": \"true\"}"
+        ],
+        "item": "minecraft:daylight_detector",
+        "lore": [
+          [
+            {
+              "text": "» Click to toggle the status of this permission for %data_group_name%.",
+              "color": "dark_gray"
+            }
+          ],
+          [
+            {
+              "text": " ",
+              "color": "dark_gray"
+            }
+          ],
+          [
+            {
+              "text": "♦ Status: ",
+              "color": "dark_gray"
+            },
+            {
+              "text": "%data_status% ",
+              "color": "white"
+            }
+          ],
+          {
+            "join": {
+              "prefix": {
+                "text": "♦ Contains: ",
+                "color": "dark_gray"
+              },
+              "separator": {
+                "text": ", ",
+                "color": "gray"
+              },
+              "entries": [
+                {
+                  "text": "Daylight Detector",
+                  "color": "white",
+                  "conditions": [
+                    "mod:minecraft"
+                  ]
+                },
+                {
+                  "text": "Note Block",
+                  "color": "white",
+                  "conditions": [
+                    "mod:minecraft"
+                  ]
+                },
+                {
+                  "text": "BlockCarpentry Detector variants",
+                  "color": "white",
+                  "conditions": [
+                    "mod:blockcarpentry"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "category": "Redstone",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "block": [
+          "#redstone_detectors"
+        ]
+      }
+    },
+    {
       "id": "redstone_buttons_and_levers",
       "priority": 10,
       "order": 3,

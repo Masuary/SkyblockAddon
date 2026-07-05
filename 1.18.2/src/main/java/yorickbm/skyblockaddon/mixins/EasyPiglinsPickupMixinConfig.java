@@ -1,5 +1,6 @@
 package yorickbm.skyblockaddon.mixins;
 
+import de.maxhenkel.easypiglins.events.PiglinEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
@@ -20,7 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
-@Mixin(targets = "de.maxhenkel.easypiglins.events.PiglinEvents", remap = false)
+@Mixin(value = PiglinEvents.class, remap = false)
 public class EasyPiglinsPickupMixinConfig {
 
     @Inject(method = "onClick", at = @At("HEAD"), cancellable = true, remap = false)

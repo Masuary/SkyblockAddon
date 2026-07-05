@@ -17,6 +17,7 @@ import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldProvider;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.registries.interfaces.SkyblockAddonRegistry;
+import yorickbm.skyblockaddon.core.util.DataComponent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,7 +28,7 @@ import java.util.stream.Collectors;
 public class RegistryEvents extends GuiDrawFillerEvent {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    protected SkyblockAddonRegistry registry;
+    protected SkyblockAddonRegistry<DataComponent> registry;
     Map<String, String> replacements = new HashMap<>();
 
     public RegistryEvents(final ServerInterface instance, final GUIFiller filler, final int slots) {
@@ -42,7 +43,7 @@ public class RegistryEvents extends GuiDrawFillerEvent {
                 (fillerRows * 2)); // Remove 2 slots per each row
     }
 
-    public SkyblockAddonRegistry getRegistry() {
+    public SkyblockAddonRegistry<DataComponent> getRegistry() {
         return this.registry;
     }
 
@@ -106,11 +107,9 @@ public class RegistryEvents extends GuiDrawFillerEvent {
             super(instance, filler, slots);
             super.registry = new yorickbm.skyblockaddon.core.registries.BiomeRegistry(
                     FMLPaths.CONFIGDIR.get(),
-                    "minecraft:DEATH_BUSH",
                     ForgeRegistries.BIOMES.getValues()
                             .stream()
-                            .filter(p -> Objects.requireNonNull(p.getRegistryName()).toString().startsWith("minecraft:"))
-                            .map(b -> b.getRegistryName().toString())
+                            .map(biome -> Objects.requireNonNull(biome.getRegistryName()).toString())
                             .toList()
             );
             super.initRegistryPagination();

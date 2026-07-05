@@ -1,0 +1,10 @@
+{
+  "mod": "industrialforegoing",
+  "groups": {
+    "industrialforegoing_blocks": {
+      "block": [
+        "industrialforegoing:.*"
+      ]
+    }
+  }
+}

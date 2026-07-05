@@ -1,0 +1,40 @@
+{
+  "mod": "immersiveengineering",
+  "permissions": [
+    {
+      "id": "mod_immersiveengineering",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Immersive Engineering\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "immersiveengineering:hammer",
+        "lore": [
+          [
+            "{\"text\":\"» Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"♦ Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Mods",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "immersiveengineering:.*"
+        ],
+        "entities": []
+      },
+      "priority": 20,
+      "order": 1
+    }
+  ]
+}

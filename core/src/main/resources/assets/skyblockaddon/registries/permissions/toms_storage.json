@@ -1,0 +1,40 @@
+{
+  "mod": "toms_storage",
+  "permissions": [
+    {
+      "id": "open_Tom",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Interact with Toms Simple Storage Network\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "toms_storage:ts.inventory_connector",
+        "lore": [
+          [
+            "{\"text\":\"» Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"♦ Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Storage",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "toms_storage:ts.*"
+        ],
+        "entities": []
+      },
+      "priority": 20,
+      "order": 1
+    }
+  ]
+}

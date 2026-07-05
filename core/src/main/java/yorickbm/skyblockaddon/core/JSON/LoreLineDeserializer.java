@@ -5,10 +5,11 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonParseException;
-import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
 
 public class LoreLineDeserializer implements JsonDeserializer<LoreLineJson> {
@@ -19,8 +20,10 @@ public class LoreLineDeserializer implements JsonDeserializer<LoreLineJson> {
 
         if (json.isJsonArray()) {
             JsonArray array = json.getAsJsonArray();
-            List<LoreSegmentJson> segments = context.deserialize(array, new TypeToken<List<LoreSegmentJson>>() {
-            }.getType());
+            List<LoreSegmentJson> segments = new ArrayList<>(array.size());
+            for (JsonElement element : array) {
+                segments.add(context.deserialize(parseSegment(element), LoreSegmentJson.class));
+            }
             line.setSegments(segments);
         } else if (json.isJsonObject()) {
             JsonObject obj = json.getAsJsonObject();
@@ -35,5 +38,32 @@ public class LoreLineDeserializer implements JsonDeserializer<LoreLineJson> {
         }
 
         return line;
+    }
+
+    private JsonElement parseSegment(final JsonElement element) {
+        if (element.isJsonObject()) return element;
+        if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()) {
+            throw new JsonParseException("Lore segment must be an object or a legacy JSON string, got: " + element);
+        }
+
+        final String rawComponent = escapeControlCharacters(element.getAsString());
+        final JsonElement parsed;
+        try {
+            parsed = JsonParser.parseString(rawComponent);
+        } catch (JsonParseException exception) {
+            throw new JsonParseException("Invalid legacy lore component: " + element, exception);
+        }
+
+        if (!parsed.isJsonObject()) {
+            throw new JsonParseException("Legacy lore component must contain a JSON object, got: " + element);
+        }
+        return parsed;
+    }
+
+    private String escapeControlCharacters(final String value) {
+        return value
+                .replace("\r", "\\r")
+                .replace("\n", "\\n")
+                .replace("\t", "\\t");
     }
 }

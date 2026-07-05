@@ -3,13 +3,14 @@ package yorickbm.guilibrary.util.JSON;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 public class JSONEncoder {
     public static <T extends JSONSerializable> T loadFromFile(final Path filePath, final Class<T> clazz) throws Exception {
-        final String content = new String(Files.readAllBytes(filePath));
+        final String content = Files.readString(filePath, StandardCharsets.UTF_8);
         final T instance = clazz.getDeclaredConstructor().newInstance();
         instance.fromJSON(content);
         return instance;
@@ -28,10 +29,11 @@ public class JSONEncoder {
 
         //List files into list
         final List<Path> files = new ArrayList<>();
-        try {
-            Files.list(folderPath)
+        try (var paths = Files.list(folderPath)) {
+            paths
                     .filter(Files::isRegularFile)
                     .filter(path -> path.toString().endsWith(".json"))
+                    .sorted()
                     .forEach(files::add);
         } catch (final IOException e) {
             throw new RuntimeException(e);

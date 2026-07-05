@@ -22,17 +22,18 @@ import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
 import yorickbm.skyblockaddon.islands.IslandStructurePlacer;
 
-import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
-import java.util.WeakHashMap;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class IslandCreateCommand extends OverWorldCommandStack {
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final Map<UUID, Long> cooldowns = Collections.synchronizedMap(new WeakHashMap<>());
+    private static final Map<UUID, Long> cooldowns = new ConcurrentHashMap<>();
+    private static final Set<UUID> creationsInProgress = ConcurrentHashMap.newKeySet();
 
     public IslandCreateCommand(final CommandDispatcher<CommandSourceStack> dispatcher) {
         register(dispatcher, "island");
@@ -54,11 +55,6 @@ public class IslandCreateCommand extends OverWorldCommandStack {
     @Override
     public int execute(final CommandSourceStack command, final ServerPlayer executor) {
         if(super.execute(command, executor) == 0) return Command.SINGLE_SUCCESS;
-        if(this.hasActiveCooldown(executor)) {
-            command.sendFailure(new TextComponent(String.format(SkyBlockAddonLanguage.getLocalizedString("commands.create.cooldown"), (this.getCooldownSecondsLeft(executor) + "s"))));
-            return Command.SINGLE_SUCCESS;
-        };
-
         command.getLevel().getCapability(SkyblockAddonWorldProvider.SKYBLOCKADDON_WORLD_CAPABILITY).ifPresent(cap -> {
             final Island island = IslandManager.getInstance().getIslandByEntityUUID(executor.getUUID());
             if(island != null) {
@@ -66,11 +62,16 @@ public class IslandCreateCommand extends OverWorldCommandStack {
                 return;
             }
 
-            executor.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.create.generating")).withStyle(ChatFormatting.GREEN), executor.getUUID());
+            final long reservationTimestamp = System.currentTimeMillis();
+            if (!tryReserveCreation(executor.getUUID(), reservationTimestamp)) {
+                command.sendFailure(new TextComponent(String.format(
+                        SkyBlockAddonLanguage.getLocalizedString("commands.create.cooldown"),
+                        this.getCooldownSecondsLeft(executor) + "s"
+                )));
+                return;
+            }
 
-            //Reserve the cooldown slot now so a double-click during gen is rejected by hasActiveCooldown().
-            //Refunded below if the parse or placement fails.
-            cooldowns.put(executor.getUUID(), System.currentTimeMillis());
+            executor.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.create.generating")).withStyle(ChatFormatting.GREEN), executor.getUUID());
 
             final MinecraftServer server = command.getServer();
             final ServerLevel level = command.getLevel();
@@ -87,7 +88,7 @@ public class IslandCreateCommand extends OverWorldCommandStack {
                 } catch (final Exception parseException) {
                     LOGGER.error("Failed to parse island structure for {}", executorId, parseException);
                     server.execute(() -> {
-                        cooldowns.remove(executorId);
+                        releaseCreationReservation(executorId, reservationTimestamp);
                         command.sendFailure(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.create.failure")));
                     });
                     return;
@@ -114,40 +115,55 @@ public class IslandCreateCommand extends OverWorldCommandStack {
                 } catch (final TimeoutException timeout) {
                     LOGGER.error("Timed out waiting for island reservation for {}", executorId);
                     server.execute(() -> {
-                        cooldowns.remove(executorId);
+                        releaseCreationReservation(executorId, reservationTimestamp);
                         command.sendFailure(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.create.failure")));
                     });
                     return;
                 } catch (final Exception reservationException) {
                     LOGGER.error("Failed to reserve island location for {}", executorId, reservationException);
                     server.execute(() -> {
-                        cooldowns.remove(executorId);
+                        releaseCreationReservation(executorId, reservationTimestamp);
                         command.sendFailure(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.create.failure")));
                     });
                     return;
                 }
                 if(reservation == null) {
                     server.execute(() -> {
-                        cooldowns.remove(executorId);
+                        releaseCreationReservation(executorId, reservationTimestamp);
                         command.sendFailure(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.create.already")));
                     });
                     return;
                 }
 
-                //Step 3 (off-thread): pre-load every chunk the structure will touch. The actual
-                //worldgen work runs on Minecraft's worldgen worker pool; the server tick is only
-                //touched briefly for the FULL-status upgrades. Without this step, level.getChunk
-                //in placeReservedIsland would block the server tick for ~1.5s in unexplored areas.
+                //Step 3: initiate all Minecraft chunk work on the server thread, then wait for
+                //the returned futures off-thread. Without preload, placement can block the tick
+                //for ~1.5s in unexplored areas.
                 final long chunkLoadStart = System.nanoTime();
+                final CompletableFuture<Void> chunkPreloadFuture = new CompletableFuture<>();
+                server.execute(() -> {
+                    try {
+                        final CompletableFuture<?>[] chunkFutures = reservation.chunks.stream()
+                                .map(cp -> level.getChunkSource().getChunkFuture(
+                                        cp.x,
+                                        cp.z,
+                                        net.minecraft.world.level.chunk.ChunkStatus.FULL,
+                                        true
+                                ))
+                                .toArray(CompletableFuture[]::new);
+                        CompletableFuture.allOf(chunkFutures).whenComplete((ignored, throwable) -> {
+                            if (throwable == null) chunkPreloadFuture.complete(null);
+                            else chunkPreloadFuture.completeExceptionally(throwable);
+                        });
+                    } catch (final Throwable throwable) {
+                        chunkPreloadFuture.completeExceptionally(throwable);
+                    }
+                });
                 try {
-                    final CompletableFuture<?>[] chunkFutures = reservation.chunks.stream()
-                            .map(cp -> level.getChunkSource().getChunkFuture(cp.x, cp.z, net.minecraft.world.level.chunk.ChunkStatus.FULL, true))
-                            .toArray(CompletableFuture[]::new);
-                    CompletableFuture.allOf(chunkFutures).get(60, TimeUnit.SECONDS);
+                    chunkPreloadFuture.get(60, TimeUnit.SECONDS);
                 } catch (final TimeoutException timeout) {
                     LOGGER.error("Timed out pre-loading island chunks for {} ({}s)", executorId, 60);
                     server.execute(() -> {
-                        cooldowns.remove(executorId);
+                        releaseCreationReservation(executorId, reservationTimestamp);
                         IslandManager.getInstance().islandSpaceReusable(yorickbm.skyblockaddon.util.ForgeConverter.ForgeToInternalVec3i(reservation.islandLocation));
                         command.sendFailure(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.create.failure")));
                     });
@@ -155,7 +171,7 @@ public class IslandCreateCommand extends OverWorldCommandStack {
                 } catch (final Exception chunkException) {
                     LOGGER.error("Failed to pre-load island chunks for {}", executorId, chunkException);
                     server.execute(() -> {
-                        cooldowns.remove(executorId);
+                        releaseCreationReservation(executorId, reservationTimestamp);
                         IslandManager.getInstance().islandSpaceReusable(yorickbm.skyblockaddon.util.ForgeConverter.ForgeToInternalVec3i(reservation.islandLocation));
                         command.sendFailure(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.create.failure")));
                     });
@@ -172,14 +188,26 @@ public class IslandCreateCommand extends OverWorldCommandStack {
                         vec = placer.placeReservedIsland(level, parsed, reservation);
                     } catch (final Exception placementException) {
                         LOGGER.error("Failed to place island for {}", executorId, placementException);
-                        cooldowns.remove(executorId);
+                        releaseCreationReservation(executorId, reservationTimestamp);
                         IslandManager.getInstance().islandSpaceReusable(yorickbm.skyblockaddon.util.ForgeConverter.ForgeToInternalVec3i(reservation.islandLocation));
                         command.sendFailure(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.create.failure")));
                         return;
                     }
 
-                    final ForgeIsland newIsland = new ForgeIsland(executorId, vec);
-                    IslandManager.getInstance().registerIsland(newIsland, executorId);
+                    final ForgeIsland newIsland;
+                    try {
+                        newIsland = new ForgeIsland(executorId, vec);
+                        IslandManager.getInstance().registerIsland(newIsland, executorId);
+                        creationsInProgress.remove(executorId);
+                    } catch (final RuntimeException registrationException) {
+                        LOGGER.error("Failed to register generated island for {}", executorId, registrationException);
+                        releaseCreationReservation(executorId, reservationTimestamp);
+                        IslandManager.getInstance().islandSpaceReusable(
+                                yorickbm.skyblockaddon.util.ForgeConverter.ForgeToInternalVec3i(reservation.islandLocation)
+                        );
+                        command.sendFailure(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.create.failure")));
+                        return;
+                    }
 
                     executor.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.create.success")).withStyle(ChatFormatting.GREEN), executorId);
                     newIsland.teleportTo(executor);
@@ -195,25 +223,26 @@ public class IslandCreateCommand extends OverWorldCommandStack {
         return Command.SINGLE_SUCCESS;
     }
 
-    private boolean hasActiveCooldown(final ServerPlayer player) {
-        final UUID uuid = player.getUUID();
-        final long currentTime = System.currentTimeMillis();
-
-        final String cooldownStr = SkyblockAddonConfig.getForKey("island.create.cooldown");
-        long cooldownSeconds;
-        try {
-            cooldownSeconds = Long.parseLong(cooldownStr);
-        } catch (NumberFormatException e) {
-            cooldownSeconds = SkyblockAddonCore.DEFAULT_CREATE_COOLDOWN; //Default value
+    private boolean tryReserveCreation(final UUID playerId, final long now) {
+        if (!creationsInProgress.add(playerId)) return false;
+        final long cooldownTimeMs = getCooldownMilliseconds();
+        while (true) {
+            final Long existing = cooldowns.get(playerId);
+            if (existing == null) {
+                if (cooldowns.putIfAbsent(playerId, now) == null) return true;
+                continue;
+            }
+            if (now - existing < cooldownTimeMs) {
+                creationsInProgress.remove(playerId);
+                return false;
+            }
+            if (cooldowns.replace(playerId, existing, now)) return true;
         }
+    }
 
-        final long cooldownTimeMs = cooldownSeconds * 1000;
-
-        final Long lastUsed = cooldowns.get(uuid);
-        if (lastUsed != null && (currentTime - lastUsed) < cooldownTimeMs) {
-            return true;
-        }
-        return false;
+    private void releaseCreationReservation(final UUID playerId, final long reservationTimestamp) {
+        creationsInProgress.remove(playerId);
+        cooldowns.remove(playerId, reservationTimestamp);
     }
 
     private long getCooldownSecondsLeft(final ServerPlayer player) {
@@ -226,18 +255,19 @@ public class IslandCreateCommand extends OverWorldCommandStack {
 
         final long currentTime = System.currentTimeMillis();
 
-        final String cooldownStr = SkyblockAddonConfig.getForKey("island.create.cooldown");
-        long cooldownSeconds;
-        try {
-            cooldownSeconds = Long.parseLong(cooldownStr);
-        } catch (final NumberFormatException e) {
-            cooldownSeconds = SkyblockAddonCore.DEFAULT_CREATE_COOLDOWN;
-        }
-
-        final long cooldownTimeMs = cooldownSeconds * 1000;
+        final long cooldownTimeMs = getCooldownMilliseconds();
         final long timeLeftMs = (lastUsed + cooldownTimeMs) - currentTime;
 
         // Round up
         return Math.max(0, (timeLeftMs + 999) / 1000);
+    }
+
+    private long getCooldownMilliseconds() {
+        final String configuredCooldown = SkyblockAddonConfig.getForKey("island.create.cooldown");
+        try {
+            return Math.max(0L, Long.parseLong(configuredCooldown)) * 1000L;
+        } catch (final NumberFormatException exception) {
+            return SkyblockAddonCore.DEFAULT_CREATE_COOLDOWN * 1000L;
+        }
     }
 }

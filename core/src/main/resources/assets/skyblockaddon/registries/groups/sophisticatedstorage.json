@@ -1,0 +1,33 @@
+{
+  "mod": "sophisticatedstorage",
+  "groups": {
+    "sophisticatedstorage_link": {
+      "block": [
+        "sophisticatedstorage:controller",
+        "sophisticatedstorage:storage_link"
+      ]
+    },
+    "sophisticatedstorage_storage": {
+      "block": [
+        "sophisticatedstorage:.*chest.*",
+        "sophisticatedstorage:.*barrel.*",
+        "sophisticatedstorage:.*shulker.*"
+      ]
+    },
+    "chests": {
+      "block": [
+        "!sophisticatedstorage:.*"
+      ]
+    },
+    "shulkers": {
+      "block": [
+        "!sophisticatedstorage:.*"
+      ]
+    },
+    "barrels": {
+      "block": [
+        "!sophisticatedstorage:.*"
+      ]
+    }
+  }
+}

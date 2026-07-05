@@ -21,3 +21,5 @@ Thumbs.db
 /SkyblockAddon.wiki
 /core/src/main/resources/assets/skyblockaddon/registries/legacy
 *.zip
+__pycache__/
+*.pyc

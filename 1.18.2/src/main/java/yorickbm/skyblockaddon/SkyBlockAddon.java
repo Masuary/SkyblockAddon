@@ -30,7 +30,6 @@ import yorickbm.skyblockaddon.core.events.IslandEventBus;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.permissions.PermissionManager;
-import yorickbm.skyblockaddon.core.util.RegistrySelector;
 import yorickbm.skyblockaddon.core.util.ResourceManager;
 import yorickbm.skyblockaddon.core.util.ThreadManager;
 import yorickbm.skyblockaddon.core.util.UsernameCache;
@@ -42,7 +41,8 @@ import yorickbm.skyblockaddon.events.Gui.RegistryGuiEvents;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
+import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 // The value here should match an entry in the META-INF/mods.toml file
@@ -64,11 +64,17 @@ public class SkyBlockAddon {
         MinecraftForge.EVENT_BUS.register(new ModEvents());
         MinecraftForge.EVENT_BUS.register(new PlayerEvents());
         MinecraftForge.EVENT_BUS.register(new PermissionEvents());
+        if (ModList.get().isLoaded("pneumaticcraft")) {
+            MinecraftForge.EVENT_BUS.register(new PneumaticCraftProtectionEvents());
+        }
 
         MinecraftForge.EVENT_BUS.register(new DefaultEventHandler());
         MinecraftForge.EVENT_BUS.register(new GuiEvents());
         MinecraftForge.EVENT_BUS.register(new IslandGuiEvents());
         MinecraftForge.EVENT_BUS.register(new RegistryGuiEvents());
+        if (ModList.get().isLoaded("masugui")) {
+            MinecraftForge.EVENT_BUS.register(new yorickbm.skyblockaddon.enhanced.EnhancedGuiListener());
+        }
 
         MinecraftForge.EVENT_BUS.register(new ChunkEvents());
 
@@ -87,15 +93,18 @@ public class SkyBlockAddon {
      * Inter Mod Communications.
      * Checks against Terralith
      */
-    private void processIMC(InterModProcessEvent event) {
-        // some example code to receive and process InterModComms from other mods
+    private void processIMC(final InterModProcessEvent event) {
+        rejectIncompatibleTerralith(ModList.get()::isLoaded);
+
         LOGGER.info("Got IMC {}", event.getIMCStream().
                 map(m -> m.messageSupplier().get()).
                 collect(Collectors.toList()));
+    }
 
-        // Determine if Terralith is found
-        if (ModList.get().isLoaded("terralith")) {
-            LOGGER.error("Beware, skyblockaddon mod is loaded together with Terralith!");
+    static void rejectIncompatibleTerralith(final Predicate<String> isModLoaded) {
+        Objects.requireNonNull(isModLoaded, "isModLoaded");
+        if (isModLoaded.test("terralith")) {
+            LOGGER.error("SkyblockAddon cannot start with Terralith because it can replace void-world generation");
             throw new TerralithFoundException();
         }
     }
@@ -105,16 +114,7 @@ public class SkyBlockAddon {
      */
     public void onCommonSetup(final FMLCommonSetupEvent event) {
         //Register Resources
-        RegistrySelector selector = new RegistrySelector(Map.of(
-                "PermissionRegistry", () -> {
-                    if (ModList.get().isLoaded("the_vault")) {
-                        return "registries/permissions/vaulthunters.json";
-                    } else {
-                        return "registries/permissions/default.json";
-                    }
-                }
-        ));
-        ResourceManager.commonSetup(FMLPaths.CONFIGDIR.get(), selector, mod -> ModList.get().isLoaded(mod));
+        ResourceManager.commonSetup(FMLPaths.CONFIGDIR.get());
 
         //Register username cache
         UsernameCache.initCache(500);
@@ -134,12 +134,7 @@ public class SkyBlockAddon {
                     .loadFromDirectory(groupsDir, isModLoaded);
         }
 
-        if (oldPermsFile.toFile().isFile()) {
-            // Backward compat: user has customised old single-file config
-            PermissionManager.getInstance().loadPermissions(oldPermsFile);
-        } else if (newPermsDir.toFile().isDirectory()) {
-            PermissionManager.getInstance().loadPermissions(newPermsDir, isModLoaded);
-        }
+        PermissionManager.getInstance().loadPermissions(oldPermsFile, newPermsDir, isModLoaded);
 
         //Init Version Checker
         VersionChecker.startVersionCheck();
@@ -165,30 +160,37 @@ public class SkyBlockAddon {
      */
     @SubscribeEvent
     public void onServerShutDown(final ServerStoppedEvent event) {
-        try {
-            ChunkTaskScheduler.clear();
-            ThreadManager.terminateAllThreads();
-        } catch (final NoClassDefFoundError ex) {
-            //Seems to be thrown
-        }
+        ChunkTaskScheduler.clear();
+        ThreadManager.terminateAllThreads();
     }
 
-    private static CompoundTag IslandNBTData = null;
+    private static volatile CompoundTag islandNbtData;
+
     public static CompoundTag getIslandNBT(final MinecraftServer server) {
-        if (IslandNBTData == null) {
+        CompoundTag loadedTemplate = islandNbtData;
+        if (loadedTemplate != null) return loadedTemplate;
+
+        synchronized (SkyBlockAddon.class) {
+            loadedTemplate = islandNbtData;
+            if (loadedTemplate != null) return loadedTemplate;
+
             try {
                 final File islandFile = new File(FMLPaths.CONFIGDIR.get().resolve(SkyblockAddonCore.MOD_ID) + "/island.nbt");
-                IslandNBTData = NbtIo.readCompressed(islandFile);
-            } catch (final IOException e) {
-                LOGGER.error("Could not load external island.nbt file, using mod's internal island.nbt file.");
+                loadedTemplate = NbtIo.readCompressed(islandFile);
+            } catch (final IOException externalException) {
+                LOGGER.warn("Could not load external island.nbt; using the bundled template", externalException);
                 try {
-                    final Resource rs = server.getResourceManager().getResource(new ResourceLocation(SkyblockAddonCore.MOD_ID, "structures/island.nbt"));
-                    IslandNBTData = NbtIo.readCompressed(rs.getInputStream());
-                } catch (final IOException ex) {
-                    LOGGER.error("Could not load mod's internal island.nbt file!!!");
+                    final Resource rs = server.getResourceManager().getResource(
+                            ResourceLocation.fromNamespaceAndPath(SkyblockAddonCore.MOD_ID, "structures/island.nbt")
+                    );
+                    loadedTemplate = NbtIo.readCompressed(rs.getInputStream());
+                } catch (final IOException bundledException) {
+                    bundledException.addSuppressed(externalException);
+                    throw new IllegalStateException("Could not load external or bundled island.nbt", bundledException);
                 }
             }
+            islandNbtData = loadedTemplate;
+            return loadedTemplate;
         }
-        return IslandNBTData;
     }
 }

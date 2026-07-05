@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import xyz.vsngamer.elevatorid.network.TeleportHandler;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.islands.InteractionHandler;
@@ -18,7 +19,7 @@ import yorickbm.skyblockaddon.islands.InteractionHandler;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
-@Mixin(targets = "xyz.vsngamer.elevatorid.network.TeleportHandler", remap = false)
+@Mixin(value = TeleportHandler.class, remap = false)
 public class ElevatoridMixinConfig {
 
     @Inject(method = "handle", at = @At("HEAD"), cancellable = true, remap = false)

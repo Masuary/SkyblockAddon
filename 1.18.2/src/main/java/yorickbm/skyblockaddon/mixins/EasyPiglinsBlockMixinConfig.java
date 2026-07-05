@@ -1,5 +1,6 @@
 package yorickbm.skyblockaddon.mixins;
 
+import de.maxhenkel.easypiglins.blocks.BartererBlock;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.TextComponent;
@@ -22,7 +23,7 @@ import yorickbm.skyblockaddon.islands.InteractionHandler;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-@Mixin(targets = "de.maxhenkel.easypiglins.blocks.BartererBlock", remap = false)
+@Mixin(value = BartererBlock.class, remap = false)
 public class EasyPiglinsBlockMixinConfig {
 
     @Inject(method = "m_6227_", at = @At("HEAD"), cancellable = true, remap = false)

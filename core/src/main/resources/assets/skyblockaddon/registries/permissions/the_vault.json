@@ -469,7 +469,7 @@
       "category": "Vaulthunters",
       "triggers": [
         "onRightClickBlock",
-        "place_blocks"
+        "onPlaceBlock"
       ],
       "data": {
         "block": [
@@ -1156,6 +1156,60 @@
       "data": {
         "block": [
           "#vault_artifact"
+        ]
+      }
+    },
+    {
+      "id": "vh_eternals",
+      "priority": 20,
+      "item": {
+        "display_name": [
+          "{\"text\": \"Eternals\", \"color\": \"yellow\", \"bold\": \"true\"}"
+        ],
+        "item": "the_vault:eternal_pedestal",
+        "lore": [
+          [
+            {
+              "text": "» Click to toggle the status of this permission for %data_group_name%.",
+              "color": "dark_gray"
+            }
+          ],
+          [
+            {
+              "text": " ",
+              "color": "dark_gray"
+            }
+          ],
+          [
+            {
+              "text": "♦ Status: ",
+              "color": "dark_gray"
+            },
+            {
+              "text": "%data_status% ",
+              "color": "white"
+            }
+          ],
+          [
+            {
+              "text": "♦ Contains: ",
+              "color": "dark_gray"
+            },
+            {
+              "text": "Cryo Chamber, Eternal Pedestal",
+              "color": "white"
+            }
+          ]
+        ]
+      },
+      "category": "Vaulthunters",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "block": [
+          "the_vault:cryo_chamber",
+          "the_vault:eternal_pedestal"
         ]
       }
     },

@@ -50,6 +50,7 @@ public class ModEvents {
         new AdminPurgeCommand(event.getDispatcher());
         new AdminSkullCommand(event.getDispatcher());
         new AdminLoadIslandCommand(event.getDispatcher());
+        new AdminPermissionCommand(event.getDispatcher());
         new AdminCleanChunksCommand(event.getDispatcher());
 
         ConfigCommand.register(event.getDispatcher());
@@ -76,7 +77,10 @@ public class ModEvents {
             return;
 
         if (event.getObject() instanceof final ServerLevel level) {
-            event.addCapability(new ResourceLocation(SkyblockAddonCore.MOD_ID, "properties"), new SkyblockAddonWorldProvider(event.getObject().getServer()));
+            event.addCapability(
+                    ResourceLocation.fromNamespaceAndPath(SkyblockAddonCore.MOD_ID, "properties"),
+                    new SkyblockAddonWorldProvider(event.getObject().getServer())
+            );
         }
     }
 

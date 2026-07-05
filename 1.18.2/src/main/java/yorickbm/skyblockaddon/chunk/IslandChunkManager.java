@@ -60,59 +60,65 @@ public class IslandChunkManager {
     }
 
     public static void processChunk(ChunkAccess chunk, ServerLevel level, Task task) {
-        new Thread(() -> {
+        LOGGER.debug("Processing chunk {} for task {}", chunk.getPos(), task.getId());
+        List<BlockPos> nonAirBlocks = new ArrayList<>();
 
-            LOGGER.debug("Processing chunk {} for task {}", chunk.getPos(), task.getId());
-            List<BlockPos> nonAirBlocks = new ArrayList<>();
+        int minY = level.getMinBuildHeight();
+        int maxY = level.getMaxBuildHeight() - 1;
 
-            int minY = level.getMinBuildHeight();
-            int maxY = level.getMaxBuildHeight();
-
-            for (int x = 0; x < CHUNK_SIZE; x++) {
-                for (int z = 0; z < CHUNK_SIZE; z++) {
-                    for (int y = maxY; y >= minY; y--) {
-                        BlockPos pos = new BlockPos(
-                                x + chunk.getPos().getMinBlockX(),
-                                y,
-                                z + chunk.getPos().getMinBlockZ()
-                        );
-                        if (!chunk.getBlockState(pos).isAir()) {
-                            nonAirBlocks.add(pos);
-                        }
+        for (int x = 0; x < CHUNK_SIZE; x++) {
+            for (int z = 0; z < CHUNK_SIZE; z++) {
+                for (int y = maxY; y >= minY; y--) {
+                    BlockPos pos = new BlockPos(
+                            x + chunk.getPos().getMinBlockX(),
+                            y,
+                            z + chunk.getPos().getMinBlockZ()
+                    );
+                    if (!chunk.getBlockState(pos).isAir()) {
+                        nonAirBlocks.add(pos);
                     }
                 }
             }
+        }
 
-            if (nonAirBlocks.isEmpty()) {
-                task.CompleteSubTask(false);
-                LOGGER.debug("Finished processing (empty) chunk {} for task {}", chunk.getPos(), task.getId());
-                return;
-            }
+        if (nonAirBlocks.isEmpty()) {
+            task.CompleteSubTask(false);
+            LOGGER.debug("Finished processing (empty) chunk {} for task {}", chunk.getPos(), task.getId());
+            return;
+        }
 
-            // Now schedule block removals in batches of 100
-            int batchSize = Integer.parseInt(SkyblockAddonConfig.getForKey("purge.blocks"));
-            for (int i = 0; i < nonAirBlocks.size(); i += batchSize) {
-                final int start = i;
-                final int end = Math.min(i + batchSize, nonAirBlocks.size());
+        final int batchSize = getPurgeBatchSize();
+        for (int i = 0; i < nonAirBlocks.size(); i += batchSize) {
+            final int start = i;
+            final int end = Math.min(i + batchSize, nonAirBlocks.size());
 
-                ChunkTaskScheduler.queue(() -> {
-                    for (int j = start; j < end; j++) {
-                        BlockPos pos = nonAirBlocks.get(j);
-                        chunk.setBlockState(pos, Blocks.AIR.defaultBlockState(), false); // silent
-                    }
+            ChunkTaskScheduler.queue(() -> {
+                for (int j = start; j < end; j++) {
+                    BlockPos pos = nonAirBlocks.get(j);
+                    chunk.setBlockState(pos, Blocks.AIR.defaultBlockState(), false); // silent
+                }
 
-                    // After last batch, send chunk update to players
-                    if (end >= nonAirBlocks.size()) {
-                        ((ServerChunkCache) level.getChunkSource()).chunkMap.getPlayers(chunk.getPos(), false)
-                                .forEach(player -> ((ServerGamePacketListenerImpl) player.connection)
-                                        .send(new ClientboundLevelChunkWithLightPacket((LevelChunk) chunk, level.getLightEngine(), null, null, false)));
+                // After last batch, send chunk update to players
+                if (end >= nonAirBlocks.size()) {
+                    ((ServerChunkCache) level.getChunkSource()).chunkMap.getPlayers(chunk.getPos(), false)
+                            .forEach(player -> ((ServerGamePacketListenerImpl) player.connection)
+                                    .send(new ClientboundLevelChunkWithLightPacket((LevelChunk) chunk, level.getLightEngine(), null, null, false)));
 
-                        task.CompleteSubTask(false);
-                        task.getBar().sendToast(new TextComponent("Cleared chunk " + chunk.getPos() + ""));
-                    }
-                });
-            }
-        }, "AsyncChunkScan-" + chunk.getPos().x + "," + chunk.getPos().z).start();
+                    task.CompleteSubTask(false);
+                    task.getBar().sendToast(new TextComponent("Cleared chunk " + chunk.getPos() + ""));
+                }
+            });
+        }
+    }
+
+    private static int getPurgeBatchSize() {
+        final String configuredBatchSize = SkyblockAddonConfig.getForKey("purge.blocks");
+        try {
+            return Math.max(1, Integer.parseInt(configuredBatchSize));
+        } catch (final NumberFormatException exception) {
+            LOGGER.warn("Invalid purge.blocks value '{}'; using 100", configuredBatchSize);
+            return 100;
+        }
     }
 
     public static class Task {

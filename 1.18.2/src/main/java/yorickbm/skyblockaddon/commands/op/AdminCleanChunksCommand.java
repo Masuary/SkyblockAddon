@@ -15,11 +15,11 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkStatus;
-import net.minecraft.world.level.chunk.LevelChunkSection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldCapability;
 import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldProvider;
+import yorickbm.skyblockaddon.chunk.ChunkContent;
 import yorickbm.skyblockaddon.commands.interfaces.Cmds;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
@@ -127,14 +127,19 @@ public class AdminCleanChunksCommand {
             for (final ChunkPos cp : snapshot) {
                 totalChecked++;
 
-                final CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> loadFuture;
-                try {
-                    loadFuture = overworld.getChunkSource().getChunkFuture(cp.x, cp.z, ChunkStatus.FULL, true);
-                } catch (final Throwable t) {
-                    LOGGER.warn("cleanchunks: failed to submit load for chunk {} of island {}", cp, island.getId(), t);
-                    failedThisIsland++;
-                    continue;
-                }
+                final CompletableFuture<Either<ChunkAccess, ChunkHolder.ChunkLoadingFailure>> loadFuture =
+                        new CompletableFuture<>();
+                server.execute(() -> {
+                    try {
+                        overworld.getChunkSource().getChunkFuture(cp.x, cp.z, ChunkStatus.FULL, true)
+                                .whenComplete((result, throwable) -> {
+                                    if (throwable == null) loadFuture.complete(result);
+                                    else loadFuture.completeExceptionally(throwable);
+                                });
+                    } catch (final Throwable throwable) {
+                        loadFuture.completeExceptionally(throwable);
+                    }
+                });
 
                 final ChunkAccess chunk;
                 try {
@@ -156,7 +161,7 @@ public class AdminCleanChunksCommand {
                 final CompletableFuture<Boolean> scanFuture = new CompletableFuture<>();
                 server.execute(() -> {
                     try {
-                        scanFuture.complete(chunkHasAnyContent(chunk));
+                        scanFuture.complete(ChunkContent.hasAnyContent(chunk));
                     } catch (final Throwable t) {
                         scanFuture.completeExceptionally(t);
                     }
@@ -225,15 +230,4 @@ public class AdminCleanChunksCommand {
         server.execute(() -> src.sendSuccess(new TextComponent(summary).withStyle(ChatFormatting.GREEN), false));
     }
 
-    /**
-     * True iff the chunk has any non-air content anywhere. Trivial check (24 section.hasOnlyAir()
-     * calls per chunk) - in a void world there is no natural terrain to disambiguate from, so
-     * "non-empty section" === "player or mod content".
-     */
-    private static boolean chunkHasAnyContent(final ChunkAccess chunk) {
-        for (final LevelChunkSection section : chunk.getSections()) {
-            if (section != null && !section.hasOnlyAir()) return true;
-        }
-        return false;
-    }
 }

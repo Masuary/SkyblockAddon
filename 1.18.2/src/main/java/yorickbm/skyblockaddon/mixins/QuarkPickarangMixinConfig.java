@@ -19,9 +19,6 @@ import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.islands.InteractionHandler;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Mixin(value = {PickarangItem.class}, remap = false)
@@ -29,23 +26,18 @@ public abstract class QuarkPickarangMixinConfig {
 
     @Inject(method = {"m_7203_"}, at = {@At("HEAD")}, cancellable = true)
     private void use(final Level worldIn, final Player playerIn, @NotNull final InteractionHand handIn, final CallbackInfoReturnable<InteractionResultHolder<ItemStack>> cir) {
+        if (!(playerIn instanceof ServerPlayer serverPlayer) || !(worldIn instanceof ServerLevel serverLevel)) {
+            return;
+        }
 
         final AtomicReference<Island> standingOn = new AtomicReference<>();
         if(InteractionHandler.verifyEntity(playerIn, standingOn).asBoolean()) return;
 
         final ItemStack handItem = playerIn.getItemInHand(handIn);
-        if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) playerIn, (ServerLevel) worldIn, playerIn.getOnPos(), handItem, "onQuarkPickarangMixin")) {
+        if(InteractionHandler.checkPlayerInteraction(standingOn, serverPlayer, serverLevel, playerIn.getOnPos(), handItem, "onQuarkPickarangMixin")) {
             playerIn.displayClientMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("toolbar.overlay.nothere")).withStyle(ChatFormatting.DARK_RED), true);
-            playerIn.containerMenu.broadcastChanges(); //Force sync
-            cir.setReturnValue(InteractionResultHolder.success(handItem)); //Force success
-
-            //Re-add item since it sometimes disappears.
-            final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-            scheduler.schedule(() -> {
-                playerIn.containerMenu.broadcastChanges(); //Force sync
-                playerIn.getInventory().placeItemBackInInventory(handItem);
-            }, 45, TimeUnit.MILLISECONDS); // 1 ish tick delay
-
+            serverPlayer.containerMenu.broadcastFullState();
+            cir.setReturnValue(InteractionResultHolder.success(handItem));
         }
     }
 }

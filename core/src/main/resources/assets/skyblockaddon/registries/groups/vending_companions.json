@@ -1,0 +1,4 @@
+{
+  "mod": "vending_companions",
+  "groups": {"vault_companions": {"block": ["vending_companions:companion_vending_machine"]}}
+}

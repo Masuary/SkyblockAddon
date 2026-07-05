@@ -4,11 +4,14 @@ plugins {
 }
 
 group = 'yorickbm.skyblockaddon.core'
-version = '8.0'
-archivesBaseName = 'SkyBlockAddon-Core'
+version = '10.0.0'
+base {
+    archivesName = 'SkyBlockAddon-Core'
+}
 
 java {
-    toolchain.languageVersion = JavaLanguageVersion.of(17)
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 repositories {
@@ -28,10 +31,18 @@ dependencies {
     // JUnit for testing
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly 'org.apache.logging.log4j:log4j-api:2.15.0'
 }
 
 test {
     useJUnitPlatform()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
+    options.compilerArgs.add('-Xlint:unchecked')
 }
 
 publishing {
@@ -39,7 +50,7 @@ publishing {
         mavenJava(MavenPublication) {
             from components.java
             groupId = project.group
-            artifactId = project.archivesBaseName
+            artifactId = project.base.archivesName.get()
             version = project.version
         }
     }

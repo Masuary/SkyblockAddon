@@ -5,14 +5,14 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.LevelChunkSection;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import yorickbm.skyblockaddon.chunk.ChunkContent;
 import yorickbm.skyblockaddon.chunk.ChunkTaskScheduler;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
@@ -85,25 +85,24 @@ public class ChunkEvents {
         if (!(event.getWorld() instanceof final ServerLevel serverLevel)) return;
         if (serverLevel.dimension() != Level.OVERWORLD) return; //Islands live in the overworld only.
 
-        final ChunkAccess chunk = (ChunkAccess) event.getChunk();
-        final ChunkPos pos = chunk.getPos();
+        final ChunkPos chunkPos = event.getChunk().getPos();
+        serverLevel.getServer().execute(() -> processLoadedChunk(serverLevel, chunkPos));
+    }
+
+    private void processLoadedChunk(final ServerLevel serverLevel, final ChunkPos chunkPos) {
+        final LevelChunk chunk = serverLevel.getChunkSource().getChunkNow(chunkPos.x, chunkPos.z);
+        if (chunk == null) return;
 
         final ForgeIsland island = (ForgeIsland) IslandManager.getInstance().getIslandByPos(ForgeConverter.ForgeToInternalVec3i(chunk.getPos().getMiddleBlockPosition(155)));
         if (island == null) return;
 
-        if (chunkHasAnyContent(chunk) && island.storeChunk(chunk)) {
-            LOGGER.debug("Chunk {} added to island {} (load-time fallback, non-air content detected)", pos, island.getId());
+        if (ChunkContent.hasAnyContent(chunk) && island.storeChunk(chunk)) {
+            LOGGER.debug("Chunk {} added to island {} (load-time fallback, non-air content detected)", chunkPos, island.getId());
         }
 
         if (island.reapplyBiomeIfNeeded(chunk, serverLevel)) {
-            LOGGER.debug("Reapplied biome to chunk {} for island {}", pos, island.getId());
+            LOGGER.debug("Reapplied biome to chunk {} for island {}", chunkPos, island.getId());
         }
     }
 
-    private static boolean chunkHasAnyContent(final ChunkAccess chunk) {
-        for (final LevelChunkSection section : chunk.getSections()) {
-            if (section != null && !section.hasOnlyAir()) return true;
-        }
-        return false;
-    }
 }

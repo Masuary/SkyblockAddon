@@ -32,6 +32,11 @@ public class GUIItemJson implements JSONSerializable {
         return builder.build();
     }
 
+    public void validate() {
+        if (item == null) throw new IllegalArgumentException("GUI item in slot " + slot + " has no item data");
+        action.validate();
+    }
+
 
     @Override
     public String toJSON() {

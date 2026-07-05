@@ -7,7 +7,7 @@ public class SkyblockAddonCore {
     public static final UUID MOD_UUID = UUID.fromString("36916271-8ff4-483c-9379-bde032a01270");
     public static final UUID MOD_UUID2 = UUID.fromString("36916271-8ff4-483c-9379-bde032a01271");
     public static final String MOD_ID = "skyblockaddon";
-    public static final String VERSION = "8.2";
+    public static final String VERSION = "10.0.0";
 
     public static final int ISLAND_SIZE = 400;
     public static final int ISLAND_BUFFER = 200;

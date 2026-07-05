@@ -3,7 +3,6 @@ package yorickbm.skyblockaddon.util;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -19,16 +18,15 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.common.util.FakePlayerFactory;
@@ -40,14 +38,19 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import yorickbm.skyblockaddon.core.util.ThreadManager;
 
-import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ServerHelper {
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final HashMap<UUID, UUID> spawnerTracker = new HashMap<>();
-    private static final HashMap<UUID, UUID> terminatorTracker = new HashMap<>();
+    private static final GameProfile INTERACTION_PROBE_PROFILE = new GameProfile(
+            UUID.fromString("c7fb8f7d-370d-46df-8fb0-d5f561a82ef2"),
+            "[SkyblockAddon]"
+    );
+    private static final ConcurrentHashMap<UUID, UUID> spawnerTracker = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<UUID, UUID> terminatorTracker = new ConcurrentHashMap<>();
 
     public static void playSongToPlayer(final ServerPlayer player, final SoundEvent event, final float vol, final float pitch) {
         ServerHelper.SendPacket(player, new ClientboundSoundPacket(event, SoundSource.PLAYERS, player.position().x, player.position().y, player.position().z, vol, pitch));
@@ -97,6 +100,9 @@ public class ServerHelper {
      * @return true if the block is interactable (has GUI/capabilities or overrides use)
      */
     public static boolean isBlockInteractable(final Level world, final BlockPos pos, final Player player, final InteractionHand hand, final BlockHitResult vector) {
+        if (!(world instanceof ServerLevel serverLevel)) {
+            return false;
+        }
         final BlockState state = world.getBlockState(pos);
         final BlockEntity be = world.getBlockEntity(pos);
 
@@ -114,14 +120,46 @@ public class ServerHelper {
             if (be.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, null).isPresent()) return true;
         }
 
-        // Use a FakePlayer to test the block's use() method without side effects
-        final FakePlayer fakePlayer = FakePlayerFactory.getMinecraft((ServerLevel) world);
+        // Probe use() with a FakePlayer and remove side effects created by the probe.
+        final FakePlayer fakePlayer = FakePlayerFactory.get(serverLevel, INTERACTION_PROBE_PROFILE);
+        final AABB cleanupArea = new AABB(pos).inflate(1.0);
+        final Set<UUID> entityIdsBefore = serverLevel.getEntities(
+                (Entity) null,
+                cleanupArea,
+                entity -> !(entity instanceof Player)
+        ).stream().map(Entity::getUUID).collect(java.util.stream.Collectors.toUnmodifiableSet());
+        fakePlayer.getInventory().clearContent();
+        fakePlayer.setItemInHand(hand, player.getItemInHand(hand).copy());
+        fakePlayer.setShiftKeyDown(player.isShiftKeyDown());
         try {
             final InteractionResult result = state.use(world, fakePlayer, hand, vector);
             return result != InteractionResult.PASS;
+        } catch (final RuntimeException exception) {
+            LOGGER.warn(
+                    "Block interaction probe failed for {} at {}; treating the block as interactable",
+                    state.getBlock().getRegistryName(),
+                    pos,
+                    exception
+            );
+            return true;
         } finally {
+            if (fakePlayer.getVehicle() != null) {
+                fakePlayer.stopRiding();
+            }
             fakePlayer.closeContainer();
-            fakePlayer.kill();
+            fakePlayer.getInventory().clearContent();
+            fakePlayer.setShiftKeyDown(false);
+
+            final List<Entity> entitiesAfter = serverLevel.getEntities(
+                    (Entity) null,
+                    cleanupArea,
+                    entity -> !(entity instanceof Player)
+            );
+            for (final Entity entity : entitiesAfter) {
+                if (!entityIdsBefore.contains(entity.getUUID())) {
+                    entity.discard();
+                }
+            }
         }
     }
 
@@ -133,7 +171,7 @@ public class ServerHelper {
      */
     public static Item getItem(final String item, final Item basic) {
         try {
-            final Item mcItem = ForgeRegistries.ITEMS.getValue(new ResourceLocation(item));
+            final Item mcItem = ForgeRegistries.ITEMS.getValue(ResourceLocation.parse(item));
             return mcItem != null ? mcItem : basic;
         } catch (final Exception ex) {
             LOGGER.error("Failure to find item '{}';", item);
@@ -143,78 +181,40 @@ public class ServerHelper {
     }
 
     public static void registerIslandBorder(final ServerPlayer player, final List<Vec3i> points, final Vec3i location) {
-        //Cleanup old threads
-        if (spawnerTracker.containsKey(player.getUUID())) {
-            final UUID oldSpawner = spawnerTracker.get(player.getUUID());
-            final UUID oldTerminator = terminatorTracker.get(oldSpawner);
-
+        final UUID oldSpawner = spawnerTracker.remove(player.getUUID());
+        if (oldSpawner != null) {
+            final UUID oldTerminator = terminatorTracker.remove(oldSpawner);
             ThreadManager.terminateThread(oldSpawner);
             ThreadManager.terminateThread(oldTerminator);
         }
 
         //Setup threads for spawner and tracker
         final UUID particleSpawner = ThreadManager.startLoopingThread((id) -> {
-            ServerHelper.showParticleToPlayer(player, location, ParticleTypes.CLOUD, 3);
-            for (final Vec3i pos : points) {
-                ServerHelper.showParticleToPlayer(player, pos, ParticleTypes.CLOUD, 3);
-            }
+            final var server = player.getServer();
+            if (server == null) return;
+            server.execute(() -> {
+                if (player.isRemoved()) return;
+                ServerHelper.showParticleToPlayer(player, location, ParticleTypes.CLOUD, 3);
+                for (final Vec3i pos : points) {
+                    ServerHelper.showParticleToPlayer(player, pos, ParticleTypes.CLOUD, 3);
+                }
+            });
         }, 500);
         final UUID terminator = ThreadManager.startThread((id) -> {
             try {
                 Thread.sleep(1000 * 60 * 5);
-
-                //Terminate spawner thread
                 ThreadManager.terminateThread(particleSpawner);
-
-                //Cleanup trackers
-                spawnerTracker.remove(player.getUUID());
-                terminatorTracker.remove(id);
             } catch (final InterruptedException e) {
-                //Nothing here
+                Thread.currentThread().interrupt();
+            } finally {
+                spawnerTracker.remove(player.getUUID(), particleSpawner);
+                terminatorTracker.remove(particleSpawner, id);
             }
         });
 
         //Register threads to trackers
         spawnerTracker.put(player.getUUID(), particleSpawner);
         terminatorTracker.put(particleSpawner, terminator);
-    }
-
-    /**
-     * Forces a button to unpower, or toggles a lever at the given position.
-     * Fully updates redstone in all directions.
-     */
-    public static void forceUnpowerOrTogglePoweredBlock(final ServerLevel level, final BlockPos pos) {
-        final BlockState state = level.getBlockState(pos);
-        final Block block = state.getBlock();
-
-        final BooleanProperty poweredProp = BlockStateProperties.POWERED;
-
-        if (state.hasProperty(poweredProp)) {
-            final boolean powered = state.getValue(poweredProp);
-
-            if (block.getClass().getSimpleName().toLowerCase().contains("button")) {
-                // Always force OFF for buttons
-                final BlockState newState = state.setValue(poweredProp, false);
-                level.setBlock(pos, newState, 3);
-                updateAllNeighbors(level, pos, block);
-                level.scheduleTick(pos, block, 1);
-            } else {
-                final BlockState newState = state.setValue(poweredProp, !powered);
-                level.setBlock(pos, newState, 3);
-                updateAllNeighbors(level, pos, block);
-            }
-        }
-    }
-
-    /**
-     * Updates redstone and neighbor signals in all directions around a block.
-     */
-    private static void updateAllNeighbors(final ServerLevel level, final BlockPos pos, final Block block) {
-        for (final Direction dir : Direction.values()) {
-            final BlockPos neighborPos = pos.relative(dir);
-            level.updateNeighborsAt(neighborPos, block);
-            level.updateNeighbourForOutputSignal(neighborPos, block);
-        }
     }
 
 }

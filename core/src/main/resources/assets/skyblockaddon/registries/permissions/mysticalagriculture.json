@@ -1,0 +1,41 @@
+{
+  "mod": "mysticalagriculture",
+  "permissions": [
+    {
+      "id": "mod_mysticalagriculture",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Mystical Agriculture\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "mysticalagriculture:master_infusion_crystal",
+        "lore": [
+          [
+            "{\"text\":\"» Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"♦ Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Mods",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "mysticalagriculture:.*",
+          "mysticalagradditions:.*"
+        ],
+        "entities": []
+      },
+      "priority": 20,
+      "order": 1
+    }
+  ]
+}

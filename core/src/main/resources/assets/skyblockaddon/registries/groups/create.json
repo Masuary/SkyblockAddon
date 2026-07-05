@@ -5,7 +5,7 @@
       "block": ["create:pulse_repeater", "create:pulse_extender", "create:powered_latch", "create:powered_toggle_latch"]
     },
     "redstone_links": {
-      "block": ["create:linked_controller", "create:redstone_link"]
+      "block": ["create:redstone_link"]
     },
     "create_machines": {
       "block": [
@@ -23,7 +23,7 @@
         "create:water_wheel", "create:large_water_wheel",
         "create:cogwheel", "create:large_cogwheel",
         "create:shaft", "create:encased_chain_drive",
-        "create:adjustable_chain_gearshift", "create:encased_belt",
+        "create:adjustable_chain_gearshift",
         "create:belt", "create:gearbox", "create:gearshift",
         "create:clutch", "create:sequenced_gearshift",
         "create:rotation_speed_controller",
@@ -31,8 +31,7 @@
         "create:portable_storage_interface",
         "create:portable_fluid_interface",
         "create:weighted_ejector", "create:weighted_ejector_.*",
-        "create:stockpile_switch", "create:threshold_switch",
-        "create:content_observer", "create:smart_observer",
+        "create:stockpile_switch", "create:content_observer",
         "create:analog_lever", "create:cart_assembler",
         "create:andesite_funnel", "create:brass_funnel",
         "create:andesite_belt_funnel", "create:brass_belt_funnel",

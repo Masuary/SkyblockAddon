@@ -1,0 +1,4 @@
+{
+  "mod": "appbot",
+  "groups": {"ae2_blocks": {"block": ["appbot:.*"]}}
+}

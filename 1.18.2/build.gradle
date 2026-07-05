@@ -25,7 +25,8 @@ base {
 }
 
 java {
-    toolchain.languageVersion = JavaLanguageVersion.of(17)
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 minecraft {
@@ -149,7 +150,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'yorickbm.skyblockaddon.core:SkyBlockAddon-Core:8.0'
+    implementation 'yorickbm.skyblockaddon.core:SkyBlockAddon-Core:10.0.0'
 
     // Specify the version of Minecraft to use.
     // Any artifact can be supplied so long as it has a "userdev" classifier artifact and is a compatible patcher artifact.
@@ -171,6 +172,7 @@ dependencies {
 
     compileOnly fg.deobf("curse.maven:quark-243121:3840125")
     compileOnly fg.deobf("curse.maven:supplementaries-412082:4548315")
+    compileOnly fg.deobf("curse.maven:ars-nouveau-401955:4543053")
 //    compileOnly fg.deobf("curse.maven:ColossalChests-237875:4502141")
 //    compileOnly fg.deobf("curse.maven:camera-289310:3970106")
 //    compileOnly fg.deobf("curse.maven:ftbessentials-410811:4560421")
@@ -180,12 +182,18 @@ dependencies {
 //    compileOnly fg.deobf("curse.maven:refinedstorage-243076:4902316")
     compileOnly fg.deobf("curse.maven:building-gadgets-298187:4412996")
     compileOnly fileTree(dir: 'libs', include: ['*.jar'])
+    runtimeOnly fg.deobf("blank:masugui:1.0.0")
 
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
 }
 
@@ -226,7 +234,7 @@ tasks.named('jar', Jar).configure {
 
     // Merge Core jar dynamically at execution time
     from({
-        configurations.runtimeClasspath.findAll { it.name.contains("SkyBlockAddon-Core") }.collect { zipTree(it) }
+        zipTree(file('../core/build/libs/SkyBlockAddon-Core-10.0.0.jar'))
     })
 
     // Include your own compiled classes/resources
@@ -240,4 +248,13 @@ tasks.named('jar', Jar).configure {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+    options.release = 17
+    options.compilerArgs.add('-Xlint:unchecked')
+}
+
+tasks.named('test', Test).configure {
+    useJUnitPlatform()
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
 }

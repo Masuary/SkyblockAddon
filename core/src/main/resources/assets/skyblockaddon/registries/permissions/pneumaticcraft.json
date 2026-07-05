@@ -1,0 +1,49 @@
+{
+  "mod": "pneumaticcraft",
+  "permissions": [
+    {
+      "id": "mod_pneumaticcraft",
+      "priority": 20,
+      "order": 1,
+      "item": {
+        "display_name": [
+          "{\"text\": \"PneumaticCraft\", \"color\": \"blue\", \"bold\": true}"
+        ],
+        "item": "pneumaticcraft:pressure_gauge",
+        "lore": [
+          [
+            {
+              "text": "» Click to toggle the status of this permission for %data_group_name%.",
+              "color": "dark_gray"
+            }
+          ],
+          [
+            {
+              "text": " ",
+              "color": "dark_gray"
+            }
+          ],
+          [
+            {
+              "text": "♦ Status: ",
+              "color": "dark_gray"
+            },
+            {
+              "text": "%data_status% ",
+              "color": "white"
+            }
+          ]
+        ]
+      },
+      "category": "Mods",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "block": [
+          "pneumaticcraft:.*"
+        ]
+      }
+    }
+  ]
+}

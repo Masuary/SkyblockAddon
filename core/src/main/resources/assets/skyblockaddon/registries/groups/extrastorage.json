@@ -1,0 +1,4 @@
+{
+  "mod": "extrastorage",
+  "groups": {"refinedstorage_blocks": {"block": ["extrastorage:.*"]}}
+}

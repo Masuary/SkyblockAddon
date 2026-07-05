@@ -1,6 +1,7 @@
 package yorickbm.skyblockaddon.events.Gui;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.commands.Commands;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -43,7 +44,7 @@ public class RegistryGuiEvents {
 
             final GUIItemStackHolder holder = event.processHolder(event.getItemStackHolder().clone(), component.getCompound());
             String minecraftItem = ((yorickbm.skyblockaddon.core.registries.BiomeRegistry) event.getRegistry()).getDataForComponent(component).get();
-            holder.setItem(ForgeRegistries.ITEMS.getValue(new ResourceLocation(minecraftItem)));
+            holder.setItem(ForgeRegistries.ITEMS.getValue(ResourceLocation.parse(minecraftItem)));
 
             final ItemStack stack = holder.getItemStack();
             stack.getOrCreateTag().put(SkyblockAddonCore.MOD_ID, component.getCompound());
@@ -107,7 +108,12 @@ public class RegistryGuiEvents {
                 final ConditionEvaluator.Context context = new ConditionEvaluator.Context() {
                     @Override
                     public boolean isAdmin() {
-                        return false; // TODO: needs a public owner/admin check - see note above
+                        if (viewer == null) return false;
+                        if (viewer.hasPermissions(Commands.LEVEL_ADMINS)) return true;
+                        if (registry.getIsland().isOwner(viewer.getUUID())) return true;
+                        return registry.getIsland().getGroupForEntityUUID(viewer.getUUID())
+                                .map(group -> group.canDo("admin_menu"))
+                                .orElse(false);
                     }
 
                     @Override

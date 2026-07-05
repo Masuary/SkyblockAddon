@@ -1,10 +1,9 @@
 package yorickbm.guilibrary.JSON;
 
 import com.google.gson.Gson;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import yorickbm.guilibrary.GUIFiller;
 import yorickbm.guilibrary.events.GuiDrawFillerEvent;
+import yorickbm.guilibrary.interfaces.ServerInterface;
 import yorickbm.guilibrary.util.FillerPattern;
 import yorickbm.guilibrary.util.JSON.JSONSerializable;
 
@@ -12,8 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GUIFillerJson implements JSONSerializable {
-    private static final Logger LOGGER = LogManager.getLogger();
-
     private GUIItemStackJson item;
     private FillerPattern pattern;
     private GUIActionJson action = new GUIActionJson();
@@ -43,20 +40,29 @@ public class GUIFillerJson implements JSONSerializable {
         if(this.event.isEmpty()) return null;
 
         try {
-            // Dynamically load the class by its fully qualified name
-            final Class<?> clazz = Class.forName(this.event);
-            if (GuiDrawFillerEvent.class.isAssignableFrom(clazz)) {
-                return (Class<? extends GuiDrawFillerEvent>) clazz;
-            }
-            else {
-                LOGGER.error(String.format("Class '%s' does not implement GuiDrawFillerEvent, event removed.", this.event));
-                this.event = ""; //Invalidate trigger
-            }
-        } catch(final Exception ex) {
-            LOGGER.error(String.format("Class '%s' is not found, event removed.", this.event));
-            this.event = ""; //Invalidate trigger
+            final Class<? extends GuiDrawFillerEvent> eventClass = Class.forName(
+                    this.event,
+                    false,
+                    GUIFillerJson.class.getClassLoader()
+            )
+                    .asSubclass(GuiDrawFillerEvent.class);
+            eventClass.getConstructor(ServerInterface.class, GUIFiller.class, int.class);
+            return eventClass;
+        } catch (final ClassNotFoundException exception) {
+            throw new IllegalArgumentException("GUI filler event class not found: " + this.event, exception);
+        } catch (final NoSuchMethodException exception) {
+            throw new IllegalArgumentException("GUI filler event lacks the required constructor: "
+                    + this.event, exception);
+        } catch (final ClassCastException exception) {
+            throw new IllegalArgumentException("GUI filler event does not extend GuiDrawFillerEvent: "
+                    + this.event, exception);
         }
-        return null;
+    }
+
+    public void validate() {
+        if (item == null) throw new IllegalArgumentException("GUI filler has no item data");
+        action.validate();
+        getEvent();
     }
 
     @Override

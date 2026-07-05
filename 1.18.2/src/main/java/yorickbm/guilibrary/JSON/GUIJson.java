@@ -2,7 +2,6 @@ package yorickbm.guilibrary.JSON;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import yorickbm.guilibrary.GUIFiller;
@@ -30,14 +29,16 @@ public class GUIJson implements JSONSerializable {
     }
 
     public List<TextComponent> getTitle() throws NullPointerException {
-        List<TextComponent> result = new ArrayList<>();
+        final List<TextComponent> result = new ArrayList<>();
         try {
-            for (String raw : title) {
-                TextComponent component = (TextComponent) Objects.requireNonNull((Component) Component.Serializer.fromJson(raw));
+            for (final String raw : title) {
+                final TextComponent component = (TextComponent) Objects.requireNonNull(
+                        (Component) Component.Serializer.fromJson(raw)
+                );
                 result.add(component);
             }
-        } catch (Exception e) {
-            result.add((TextComponent) new TextComponent("Invalid JSON in title").withStyle(ChatFormatting.RED));
+        } catch (final RuntimeException exception) {
+            throw new IllegalArgumentException("Invalid GUI title JSON for '" + key + "'", exception);
         }
         return result;
     }
@@ -52,6 +53,15 @@ public class GUIJson implements JSONSerializable {
 
     public List<GUIFiller> getFillers() {
         return fillers.stream().map(GUIFillerJson::getItem).collect(Collectors.toList());
+    }
+
+    public void validateConfiguredClasses() {
+        if (key == null || key.isBlank()) throw new IllegalArgumentException("GUI has no key");
+        if (items == null || fillers == null) {
+            throw new IllegalArgumentException("GUI '" + key + "' must define items and fillers");
+        }
+        items.forEach(GUIItemJson::validate);
+        fillers.forEach(GUIFillerJson::validate);
     }
 
     public String toJSON() {

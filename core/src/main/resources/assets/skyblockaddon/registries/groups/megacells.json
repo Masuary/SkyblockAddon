@@ -1,0 +1,4 @@
+{
+  "mod": "megacells",
+  "groups": {"ae2_blocks": {"block": ["megacells:.*"]}}
+}

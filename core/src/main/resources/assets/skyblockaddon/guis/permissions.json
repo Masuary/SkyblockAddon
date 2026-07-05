@@ -207,6 +207,32 @@
     {
       "item": {
         "display_name": [
+          "{\"text\": \"Mods\", \"color\":\"blue\", \"bold\":true}"
+        ],
+        "item": "minecraft:CRAFTING_TABLE",
+        "lore": [
+          [
+            {
+              "text": "» Change permissions for additional mods.",
+              "color": "dark_gray"
+            }
+          ]
+        ],
+        "data": {
+          "category_id": "mods"
+        }
+      },
+      "slot": 17,
+      "action": {
+        "onClick": "yorickbm.guilibrary.events.ItemOpenMenuEvent",
+        "data": {
+          "gui": "skyblockaddon:set_permission"
+        }
+      }
+    },
+    {
+      "item": {
+        "display_name": [
           "{\"text\": \"Remove group\",\"bold\": true,\"color\": \"red\"}"
         ],
         "item": "minecraft:BARRIER",

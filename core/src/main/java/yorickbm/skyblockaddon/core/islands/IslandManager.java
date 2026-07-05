@@ -3,6 +3,8 @@ package yorickbm.skyblockaddon.core.islands;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.events.IslandCreatedEvent;
 import yorickbm.skyblockaddon.core.events.IslandDeletedEvent;
@@ -19,6 +21,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class IslandManager {
+    private static final Logger LOGGER = LogManager.getLogger();
     private Vec3i lastLocation;
     private Queue<Vec3i> reusableLocations;
     private ConcurrentHashMap<UUID, Island> islandsByUUID;
@@ -34,7 +37,7 @@ public class IslandManager {
     public IslandManager() {
         islandsByUUID = new ConcurrentHashMap<>();
         lastLocation = new Vec3i(0,0,0);
-        reusableLocations = new LinkedList();
+        reusableLocations = new LinkedList<>();
     }
 
     /**
@@ -44,6 +47,8 @@ public class IslandManager {
      * @param lastLocation Vec3i object
      */
     public void initializeData(List<? extends Island> islands, List<Vec3i> reusableLocations, Vec3i lastLocation) {
+        if (CACHE_islandByPlayerUUID != null) CACHE_islandByPlayerUUID.invalidateAll();
+        if (CACHE_islandByBoundingBox != null) CACHE_islandByBoundingBox.invalidateAll();
         this.islandsByUUID.clear();
         this.reusableLocations.clear();
         islands.forEach(island -> islandsByUUID.put(island.getId(), island)); //Store islands in map
@@ -87,6 +92,7 @@ public class IslandManager {
      * @param uuid - Player whose data is loaded into reverse lookup cache
      */
     public void loadIslandIntoReverseCache(UUID uuid) {
+        if (CACHE_islandByPlayerUUID == null || CACHE_islandByBoundingBox == null) return;
         try {
             final Optional<UUID> islandId = CACHE_islandByPlayerUUID.get(uuid);
             if (islandId.isEmpty()) return; //Got no island
@@ -95,7 +101,7 @@ public class IslandManager {
             island.getName(); //Load owners name into cache
             CACHE_islandByBoundingBox.put(island.getIslandBoundingBox(), islandId); //Store into bounding box cache
         } catch (final ExecutionException e) {
-            throw new RuntimeException(e);
+            LOGGER.error("Failed to prime island caches for {}", uuid, e);
         }
     }
 
@@ -116,12 +122,20 @@ public class IslandManager {
      * @return - Island of entity
      */
     public Island getIslandByEntityUUID(UUID uuid) {
+        if (CACHE_islandByPlayerUUID == null) {
+            return safeFindIslandId(island -> island.isPartOf(uuid))
+                    .map(this::getIslandByUUID)
+                    .orElse(null);
+        }
         try {
             return CACHE_islandByPlayerUUID.get(uuid)
                     .map(this::getIslandByUUID)
                     .orElse(null);
         } catch (final ExecutionException e) {
-            return null;
+            LOGGER.error("Island player cache lookup failed for {}; using direct registry lookup", uuid, e);
+            return safeFindIslandId(island -> island.isPartOf(uuid))
+                    .map(this::getIslandByUUID)
+                    .orElse(null);
         }
     }
 
@@ -151,12 +165,28 @@ public class IslandManager {
      * @param island - Island to register
      */
     public void registerIsland(Island island, UUID entity) {
-        islandsByUUID.put(island.getId(), island);
+        final Island existingIsland = islandsByUUID.putIfAbsent(island.getId(), island);
+        if (existingIsland != null) {
+            throw new IllegalStateException("Island ID is already registered: " + island.getId());
+        }
 
-        CACHE_islandByPlayerUUID.put(entity, Optional.of(island.getId()));
-        CACHE_islandByBoundingBox.put(island.getIslandBoundingBox(), Optional.of(island.getId()));
+        if (CACHE_islandByPlayerUUID != null) {
+            CACHE_islandByPlayerUUID.put(entity, Optional.of(island.getId()));
+        }
+        if (CACHE_islandByBoundingBox != null) {
+            CACHE_islandByBoundingBox.put(island.getIslandBoundingBox(), Optional.of(island.getId()));
+        }
 
-        IslandEventBus.fire(new IslandCreatedEvent(island, entity));
+        try {
+            IslandEventBus.fire(new IslandCreatedEvent(island, entity));
+        } catch (final RuntimeException exception) {
+            islandsByUUID.remove(island.getId(), island);
+            if (CACHE_islandByPlayerUUID != null) CACHE_islandByPlayerUUID.invalidate(entity);
+            if (CACHE_islandByBoundingBox != null) {
+                CACHE_islandByBoundingBox.invalidate(island.getIslandBoundingBox());
+            }
+            throw exception;
+        }
     }
 
     /**
@@ -164,9 +194,13 @@ public class IslandManager {
      * @param island Island object
      */
     public void clearIslandCache(Island island) {
-        CACHE_islandByBoundingBox.invalidate(island.getIslandBoundingBox());
-        Stream.concat(island.getMembers().stream(), Stream.of(island.getOwner()))
-                .forEach(CACHE_islandByPlayerUUID::invalidate);
+        if (CACHE_islandByBoundingBox != null) {
+            CACHE_islandByBoundingBox.invalidate(island.getIslandBoundingBox());
+        }
+        if (CACHE_islandByPlayerUUID != null) {
+            Stream.concat(island.getMembers().stream(), Stream.of(island.getOwner()))
+                    .forEach(CACHE_islandByPlayerUUID::invalidate);
+        }
         islandsByUUID.remove(island.getId());
 
         IslandEventBus.fire(new IslandDeletedEvent(island, island.getOwner()));
@@ -178,7 +212,7 @@ public class IslandManager {
      * player rejoins or gets re-invited.
      */
     public void clearCacheForPlayer(UUID uuid) {
-        CACHE_islandByPlayerUUID.invalidate(uuid);
+        if (CACHE_islandByPlayerUUID != null) CACHE_islandByPlayerUUID.invalidate(uuid);
     }
 
     /**
@@ -194,6 +228,7 @@ public class IslandManager {
      * Get collection of all current islands in cache
      */
     public Collection<Island> getIslandsFromCache() {
+        if (CACHE_islandByPlayerUUID == null) return List.of();
         Set<UUID> activeIslandUUIDs = CACHE_islandByPlayerUUID
                 .asMap()
                 .values()
@@ -211,8 +246,9 @@ public class IslandManager {
      * Get next island generation location
      */
     public Vec3i getNextIslandGen() {
-        final Vec3i islandLocation = reusableLocations.isEmpty() ? lastLocation : reusableLocations.remove();
-        if(islandLocation == lastLocation) lastLocation = nextGridLocation(lastLocation);
+        final boolean useNewGridLocation = reusableLocations.isEmpty();
+        final Vec3i islandLocation = useNewGridLocation ? lastLocation : reusableLocations.remove();
+        if(useNewGridLocation) lastLocation = nextGridLocation(lastLocation);
         return islandLocation;
     }
 
@@ -258,5 +294,5 @@ public class IslandManager {
     public Queue<Vec3i> getReusableLocations() {
         return reusableLocations;
     }
-    public Map<UUID, Island> getEntrySet() { return this.islandsByUUID; }
+    public Map<UUID, Island> getEntrySet() { return Collections.unmodifiableMap(this.islandsByUUID); }
 }

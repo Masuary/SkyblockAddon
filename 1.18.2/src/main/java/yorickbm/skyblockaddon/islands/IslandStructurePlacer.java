@@ -159,7 +159,12 @@ public class IslandStructurePlacer {
         final long packetMs = (System.nanoTime() - packetStartNanos) / 1_000_000L;
 
         final ChunkAccess heightChunk = level.getChunk(new BlockPos(reservation.islandLocation.getX(), reservation.height, reservation.islandLocation.getZ()));
-        final int topHeight = heightChunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, reservation.islandLocation.getX(), reservation.islandLocation.getZ()) + 2;
+        // LevelChunk#setBlockState updates WORLD_SURFACE at runtime, not the world-generation-only heightmap.
+        final int topHeight = heightChunk.getHeight(
+                Heightmap.Types.WORLD_SURFACE,
+                reservation.islandLocation.getX(),
+                reservation.islandLocation.getZ()
+        ) + 2;
 
         LOGGER.info("Island gen: placed {} blocks across {} chunk(s) at {} in {}ms (chunk packets: {}ms)",
                 placedCount, touchedChunks.size(), reservation.islandLocation, writeMs, packetMs);

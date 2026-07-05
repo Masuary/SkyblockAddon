@@ -20,6 +20,7 @@ import yorickbm.skyblockaddon.core.util.UsernameCache;
 import yorickbm.skyblockaddon.events.IslandEvents;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
 import yorickbm.skyblockaddon.islands.ForgeIslandGroup;
+import yorickbm.skyblockaddon.islands.IslandAdministrationService;
 import yorickbm.skyblockaddon.util.ForgeConverter;
 import yorickbm.skyblockaddon.util.FunctionRegistry;
 import yorickbm.skyblockaddon.util.ServerHelper;
@@ -64,19 +65,21 @@ public class IslandGuiEvents {
             return;
         }
 
-        final var oldSpawn = event.getIsland().getSpawn();
-        event.getIsland().setSpawnPoint(ForgeConverter.ForgeToInternalVec3i(event.getTarget().blockPosition()));
-        IslandEventBus.fire(new IslandDataUpdateEvent(event.getIsland(), IslandDataUpdateEvent.Field.SPAWNPOINT, oldSpawn, event.getIsland().getSpawn()));
-        event.getHolder().update();
+        if (IslandAdministrationService.setSpawn(event.getTarget(), event.getIsland())) {
+            event.getHolder().update();
+        } else {
+            event.setResult(Event.Result.DENY);
+        }
     }
 
     @SubscribeEvent
     public void onChangeIslandVisiblityEvent(final IslandEvents.ChangeVisibility event) {
         if(event.isCanceled()) return;
-        final boolean oldVisibility = event.getIsland().isVisible();
-        event.getIsland().toggleVisibility();
-        IslandEventBus.fire(new IslandDataUpdateEvent(event.getIsland(), IslandDataUpdateEvent.Field.VISIBILITY, oldVisibility, event.getIsland().isVisible()));
-        event.getHolder().update();
+        if (IslandAdministrationService.toggleVisibility(event.getTarget(), event.getIsland())) {
+            event.getHolder().update();
+        } else {
+            event.setResult(Event.Result.DENY);
+        }
     }
 
     @SubscribeEvent
@@ -159,9 +162,9 @@ public class IslandGuiEvents {
             }
 
             ServerHelper.playSongToPlayer(executor, SoundEvents.NOTE_BLOCK_CHIME, SkyblockAddonCore.UI_SUCCESS_VOL, 1f);
-            final UUID newGroupId = UUID.randomUUID();
-            event.getIsland().addGroup(new ForgeIslandGroup(newGroupId, executor.getMainHandItem(), false));
-            IslandEventBus.fire(new IslandGroupUpdateEvent(event.getIsland(), newGroupId, newGroupName, IslandGroupUpdateEvent.Action.CREATED));
+            if (!IslandAdministrationService.createGroup(executor, event.getIsland(), executor.getMainHandItem())) {
+                return false;
+            }
 
             executor.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.group.created")
                             .formatted(newGroupName, Objects.requireNonNull(executor.getMainHandItem().getItem().getRegistryName()).toString().split(":")[1].trim()))
@@ -191,8 +194,10 @@ public class IslandGuiEvents {
         }
 
         final String biome = modData.getString("biome");
-        event.getIsland().updateBiome(biome, event.getTarget().getLevel());
-        IslandEventBus.fire(new IslandDataUpdateEvent(event.getIsland(), IslandDataUpdateEvent.Field.BIOME, null, biome));
+        if (!IslandAdministrationService.updateBiome(event.getTarget(), event.getIsland(), biome)) {
+            event.setResult(Event.Result.DENY);
+            return;
+        }
         event.getHolder().close();
 
         event.getTarget().sendMessage(
@@ -231,9 +236,6 @@ public class IslandGuiEvents {
         final CompoundTag modData = event.getClickedItem().getOrCreateTag();
         final CompoundTag guiData = event.getHolder().getData().getCompound(SkyblockAddonCore.MOD_ID);
 
-        LOGGER.info(modData);
-        LOGGER.info(guiData);
-
         if(!guiData.contains("player_id") || !modData.contains("group_id")) {
             event.setResult(Event.Result.DENY);
             return;
@@ -242,8 +244,11 @@ public class IslandGuiEvents {
         final UUID groupUUID = modData.getUUID("group_id");
         final UUID playerUUID = guiData.getUUID("player_id");
 
-        event.getIsland().addMember(playerUUID, groupUUID);
-        IslandEventBus.fire(new IslandMemberUpdateEvent(event.getIsland(), playerUUID, IslandMemberUpdateEvent.Action.GROUP_CHANGED));
+        if(!IslandAdministrationService.assignMemberGroup(
+                event.getTarget(), event.getIsland(), playerUUID, groupUUID)) {
+            event.setResult(Event.Result.DENY);
+            return;
+        }
         event.getHolder().close();
 
         event.getTarget().sendMessage(
@@ -270,8 +275,7 @@ public class IslandGuiEvents {
         final ForgeIslandGroup group = (ForgeIslandGroup) event.getIsland().getGroup(groupUUID);
         event.getHolder().close();
 
-        if(event.getIsland().removeGroup(groupUUID)) {
-            IslandEventBus.fire(new IslandGroupUpdateEvent(event.getIsland(), groupUUID, group.getItem().getDisplayName().getString().trim(), IslandGroupUpdateEvent.Action.REMOVED));
+        if(IslandAdministrationService.removeGroup(event.getTarget(), event.getIsland(), groupUUID)) {
             event.getTarget().sendMessage(new TextComponent(String.format(SkyBlockAddonLanguage.getLocalizedString("island.group.remove.success"),
                             group.getItem().getDisplayName().getString().trim()))
                             .withStyle(ChatFormatting.RED)
@@ -303,15 +307,11 @@ public class IslandGuiEvents {
         final String permissionId = itemData.getString("permission_id");
 
         final boolean newValue = !event.getIsland().getGroup(groupUUID).canDo(permissionId);
-        final PermissionUpdateEvent permEvent = IslandEventBus.fire(new PermissionUpdateEvent(
-                event.getIsland(), groupUUID, permissionId, newValue, event.getTarget().getUUID()));
-
-        if (permEvent.isCancelled()) {
+        if (!IslandAdministrationService.setPermission(
+                event.getTarget(), event.getIsland(), groupUUID, permissionId, newValue)) {
             event.setResult(Event.Result.DENY);
             return;
         }
-
-        event.getIsland().getGroup(groupUUID).setPermission(permissionId, permEvent.isEnabled());
         event.getHolder().update();
         event.setResult(Event.Result.ALLOW);
     }

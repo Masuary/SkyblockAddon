@@ -1,0 +1,93 @@
+{
+  "mod": "sophisticatedstorage",
+  "permissions": [
+    {
+      "id": "sophisticatedstorage_storage",
+      "priority": 10,
+      "order": 1,
+      "item": {
+        "display_name": [
+          "{\"text\": \"Sophisticated Storage\", \"color\": \"aqua\", \"bold\": \"true\"}"
+        ],
+        "item": "sophisticatedstorage:iron_chest",
+        "lore": [
+          [
+            {
+              "text": "» Click to toggle the status of this permission for %data_group_name%.",
+              "color": "dark_gray"
+            }
+          ],
+          [
+            {
+              "text": " ",
+              "color": "dark_gray"
+            }
+          ],
+          [
+            {
+              "text": "♦ Status: ",
+              "color": "dark_gray"
+            },
+            {
+              "text": "%data_status% ",
+              "color": "white"
+            }
+          ]
+        ]
+      },
+      "category": "Storage",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "block": [
+          "#sophisticatedstorage_storage"
+        ]
+      }
+    },
+    {
+      "id": "sophisticatedstorage_link",
+      "priority": 10,
+      "order": 2,
+      "item": {
+        "display_name": [
+          "{\"text\": \"Storage Network Linking\", \"color\": \"aqua\", \"bold\": \"true\"}"
+        ],
+        "item": "sophisticatedstorage:controller",
+        "lore": [
+          [
+            {
+              "text": "» Click to toggle the status of this permission for %data_group_name%.",
+              "color": "dark_gray"
+            }
+          ],
+          [
+            {
+              "text": " ",
+              "color": "dark_gray"
+            }
+          ],
+          [
+            {
+              "text": "♦ Status: ",
+              "color": "dark_gray"
+            },
+            {
+              "text": "%data_status% ",
+              "color": "white"
+            }
+          ]
+        ]
+      },
+      "category": "Storage",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "block": [
+          "#sophisticatedstorage_link"
+        ]
+      }
+    }
+  ]
+}

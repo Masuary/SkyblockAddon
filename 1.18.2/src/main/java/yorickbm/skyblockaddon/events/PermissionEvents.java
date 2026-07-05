@@ -26,6 +26,7 @@ import net.minecraftforge.event.entity.living.LivingSpawnEvent;
 import net.minecraftforge.event.entity.player.*;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldCapability;
 import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldProvider;
@@ -178,7 +179,7 @@ public class PermissionEvents {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onRightClickBlock(final PlayerInteractEvent.RightClickBlock event) {
         final AtomicReference<Island> standingOn = new AtomicReference<>();
         if (!InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) {
@@ -296,6 +297,7 @@ public class PermissionEvents {
             PlayerInteractEvent.RightClickBlock rcb = (PlayerInteractEvent.RightClickBlock) event;
             rcb.setUseBlock(Event.Result.DENY);
             rcb.setUseItem(Event.Result.DENY);
+            player.connection.send(new ClientboundBlockUpdatePacket(rcb.getWorld(), rcb.getPos()));
 
             BlockEntity be = rcb.getWorld().getBlockEntity(rcb.getPos());
             if (be != null) {

@@ -1,6 +1,7 @@
 package yorickbm.skyblockaddon.core.configs;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,7 +19,10 @@ public class SkyBlockAddonLanguage {
         LANGUAGE_MAP.clear(); //Make sure its empty
 
         try (final BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-            final HashMap<String, String> map = GSON.fromJson(reader, HashMap.class);
+            final Map<String, String> map = GSON.fromJson(
+                    reader,
+                    new TypeToken<Map<String, String>>() { }.getType()
+            );
             LANGUAGE_MAP.putAll(map);
         } catch (final IOException e) {
             throw new RuntimeException(e);

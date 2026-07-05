@@ -5,7 +5,7 @@
       "block": ["the_vault:relic_crafting_table", "the_vault:companion_incubator", "the_vault:companion_home"]
     },
     "vault_personal": {
-      "block": ["the_vault:bounty_block", "the_vault:black_market", "the_vault:spirit_extractor", "the_vault:transmog_table", "the_vault:player_customisation_station", "the_vault:trinket_forge", "the_vault:etching_application_table", "the_vault:alchemy_table", "the_vault:identification_stand", "the_vault:skill_altar"]
+      "block": ["the_vault:bounty_block", "the_vault:black_market", "the_vault:spirit_extractor", "the_vault:transmog_table", "the_vault:player_customisation_station", "the_vault:trinket_forge", "the_vault:etching_application_table", "the_vault:alchemy_table", "the_vault:identification_stand", "the_vault:skill_altar", "the_vault:vault_anvil", "the_vault:spectator_terminal", "the_vault:treasure_pedestal"]
     },
     "vault_crystal_modification": {
       "block": ["the_vault:crystal_workbench", "the_vault:augment_station", "the_vault:catalyst_infusion_table", "the_vault:inscription_table"]

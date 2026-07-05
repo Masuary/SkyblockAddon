@@ -31,28 +31,32 @@ public class GUILibraryRegistry {
                     .build());
             LOGGER.info(String.format("Loaded file '%s' into registry.", filePath.toString()));
         } catch (final Exception ex) {
-            LOGGER.error(String.format("Failed to load GUI '%s' into registry.", filePath.toString()));
-            LOGGER.error(ex);
+            throw new IllegalStateException("Failed to load GUI " + filePath, ex);
         }
     }
 
     // Private method to register a GUIType with a string key
     public static void registerFolder(final String ModId, final Path filePath) {
-        REGISTRY.clear();
         try {
             final Collection<GUIJson> decoded = JSONEncoder.loadFromFolder(filePath, GUIJson.class);
+            final Map<String, GUIType> candidates = new HashMap<>();
             decoded.forEach(obj -> {
-                REGISTRY.put(ModId + ":" + obj.getKey(), new GUIType.Builder()
+                final String guiId = ModId + ":" + obj.getKey();
+                if (candidates.containsKey(guiId)) {
+                    throw new IllegalArgumentException("Duplicate GUI ID: " + guiId);
+                }
+                candidates.put(guiId, new GUIType.Builder()
                         .setRows(obj.getRows())
                         .setTitle(obj.getTitle())
                         .setItems(obj.getItems())
                         .setFillers(obj.getFillers())
                         .build());
             });
+            REGISTRY.clear();
+            REGISTRY.putAll(candidates);
             LOGGER.info(String.format("Loaded path '%s' resulting in %s GUI(s) being loaded into registry.", filePath.toString(), REGISTRY.size()));
         } catch (final Exception ex) {
-            LOGGER.error(String.format("Failed to load GUI '%s' into registry.", filePath.toString()));
-            LOGGER.error(ex);
+            throw new IllegalStateException("Failed to load GUI directory " + filePath, ex);
         }
     }
 

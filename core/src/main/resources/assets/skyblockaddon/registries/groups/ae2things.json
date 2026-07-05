@@ -1,0 +1,4 @@
+{
+  "mod": "ae2things",
+  "groups": {"ae2_blocks": {"block": ["ae2things:.*"]}}
+}

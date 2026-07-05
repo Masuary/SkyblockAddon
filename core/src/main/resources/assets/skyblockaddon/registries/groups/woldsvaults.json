@@ -1,0 +1,16 @@
+{
+  "mod": "woldsvaults",
+  "groups": {
+    "vault_crystal_modification": {"block": ["woldsvaults:augment_crafting_table"]},
+    "vault_jewels": {"block": ["woldsvaults:weaving_station"]},
+    "vault_crates": {"block": ["woldsvaults:vault_crate_.*", "woldsvaults:crate_cracker"]},
+    "vault_recycle": {"block": ["woldsvaults:vault_salvager", "woldsvaults:doll_dismantler"]},
+    "vault_personal": {
+      "block": [
+        "woldsvaults:mod_box_workstation",
+        "woldsvaults:chromatic_iron_vault_infuser",
+        "woldsvaults:chromatic_steel_vault_infuser"
+      ]
+    }
+  }
+}

@@ -8,6 +8,8 @@ import yorickbm.skyblockaddon.core.JSON.LoreLineJson;
 import yorickbm.skyblockaddon.core.JSON.PermissionDataJson;
 import yorickbm.skyblockaddon.core.util.JSON.JSONSerializable;
 
+import java.util.List;
+
 public class Permission implements JSONSerializable {
 
     protected String id;
@@ -55,6 +57,10 @@ public class Permission implements JSONSerializable {
             if (t.equals(trigger)) return true;
         }
         return false;
+    }
+
+    public List<String> getTriggers() {
+        return triggers == null ? List.of() : List.of(triggers);
     }
 
     public PermissionDataJson getData() {

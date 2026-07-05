@@ -1,14 +1,15 @@
 {
 	"homepage": "https://www.curseforge.com/minecraft/mc-mods/sky-vaulters-support",
 	"promos": {
-		"1.18.2-latest": "8.0",
-		"1.18.2-recommended": "8.0",
+		"1.18.2-latest": "10.0.0",
+		"1.18.2-recommended": "10.0.0",
 		"1.18.1-latest": "8.0",
 		"1.18.1-recommended": "8.0",
 		"1.18-latest": "8.0",
 		"1.18-recommended": "8.0"
 	},
 	"1.18.2": {
+		"10.0.0": "Masuary integration release based on YorickBM 8.2 with config and permission migration, custom-mod protection, and optional MasuGUI support.",
 		"8.0": "Download and changelog available at https://www.curseforge.com/minecraft/mc-mods/sky-vaulters-support/files/",
 		"7.3": "Download and changelog available at https://www.curseforge.com/minecraft/mc-mods/sky-vaulters-support/files/6807960",
 		"7.2": "Download and changelog available at https://www.curseforge.com/minecraft/mc-mods/sky-vaulters-support/files/6684939",

@@ -84,7 +84,8 @@
       "data": {
         "block": [
           "!#mekanism_qio_blocks",
-          "mekanism:.*"
+          "mekanism:.*",
+          "mekanismgenerators:.*"
         ]
       }
     },

@@ -1,35 +1,61 @@
-# Sky Vaulters Support
-For the modpack "Vault Hunters S3" by Iskall85, this mod provides a server utility that enables multiplayer island generation and protection.
-This mod can be used without changing the client-side modpack, the mod can be installed within the server mods to use.  
-  
-The mod has high customization ability for the protections of your island, this allows for co-op's without requiring you to be part of the other players island. The mod does NOT protect dimensional portals from being entered, I.E. Netherportal, Vaultportal, ...
+# SkyblockAddon 10.0.0
 
-## Mod Information
-Every island has a size of 800x800 blocks, these islands are generated within a void world. To keep this a void world the mod terralith is required to be removed from server mod files. (Client does not need to remove the mod, or add this one). The default island that is spawned is the one provided by the modpack 'Vault Hunters 3rd Edition'.  
-  
-You can interact with this server-sided mod through several commands, and through the GUI. The mod commands do not cover all possibilitys that are able to be done with the mod, the GUI does cover all possibilities. 
-  
-This mod can be seen in use on: vh3.yorickblom.nl.
+SkyblockAddon provides multiplayer island generation, protection, travel, permissions, and administration for the MasuCraft Wold's Vaults server. Version 10.0.0 is based on YorickBM's 8.2 source and carries forward the local integrations that are not present upstream.
 
-## Wiki Contents
-* [Commands](https://github.com/YorickBM/SkyblockAddon/wiki/Commands)
-* [Configuration & Data Storage](https://github.com/YorickBM/SkyblockAddon/wiki/Configuration-&-Data-Storage)
-* [Island GUI](https://github.com/YorickBM/SkyblockAddon/wiki/Island-GUI)
-* [Island Permissions](https://github.com/YorickBM/SkyblockAddon/wiki/Island-Permissions)
-* [Mod Download](#Download)
-* [Support](#Support)
-* [Screenshots](#Screenshots)
+## Runtime requirements
 
-## Download
-This mod can be downloaded from curse forge [here](https://www.curseforge.com/minecraft/mc-mods/sky-vaulters-support). Or you can compile the repositorys code using gradle.
+- Minecraft 1.18.2
+- Forge 40.3.11 or a compatible Forge 40.x build
+- Java 17
+- Vault Hunters 3 when Vault-specific permissions and mixins are used
+- A void overworld
+- Terralith must not be installed. SkyblockAddon aborts startup when Terralith is detected because it can replace void-world generation and corrupt the island world.
 
-## Support
-For support with the mod, the discord server can be joined via invite: [discord.gg/sxdyfVXADz](https://discord.gg/sxdyfVXADz).  
-Have you found bugs, issues, and/or errors these can be reported within this GitHub Repository under issues. Important when creating an issue is to describe the events that made the error, issue or bug occur, and the version of the mod that you are using. Console log/error code that is given in the console and/or in-game.  
-   
-Donations can be made [here](https://www.paypal.com/cgi-bin/webscr?return=https://www.curseforge.com/minecraft/mc-mods/sky-vaulters-support&cn=Add+special+instructions+to+the+addon+author()&business=info%40yorickblom.nl&bn=PP-DonationsBF:btn_donateCC_LG.gif:NonHosted&cancel_return=https://www.curseforge.com/minecraft/mc-mods/sky-vaulters-support&lc=US&item_name=Sky+Vaulters+Support+(from+www.curseforge.com)&cmd=_donations&rm=1&no_shipping=1&currency_code=EUR) and are greatly appreciate, since the mod is free to use and does take a lot of time to develop.
+SkyblockAddon remains server-side compatible. MasuGUI 1.0.0 is optional and is not embedded in the SkyblockAddon JAR. Install MasuGUI on the server and client to use the enhanced interface. Players without MasuGUI continue to use Yorick's inventory GUI.
 
-## Screenshots
-Below several screenshots taken within the game can be found.
+Optional integrations activate only when their target mod is installed. Direct hooks were compiled and source-verified against Vault Hunters `3.21.5.6573`, Effortless Building `2.40`, PneumaticCraft `3.6.4-45`, Buildscape `3.0.2-VH`, Ars Nouveau `2.9.0`, Elevator Mod `1.8.4`, and MasuGUI `1.0.0`. Reference compatibility also covers Wold's Vaults `0.31.1`, Companion Locker `3.21.0`, MobProcessor `1.0`, Regions Unexplored biomes, and the storage and technology mods represented in `registries/groups` and `registries/permissions`.
 
-Coming soon :)
+The complete reference-pack JAR and hash inventory is recorded in `audits/reference-mod-inventory-2026-07-04.md`. The actual production server directory must still be compared before deployment.
+
+## Configuration migration
+
+Back up the world and `config/skyblockaddon` before first startup. The loader also creates a one-time `config/skyblockaddon.pre-10.0-backup` snapshot before it writes migration changes.
+
+The 10.0.0 loader accepts both legacy string-encoded lore and 8.2 structured lore. If `registries/PermissionRegistry.json` exists, its still-valid permission definitions override bundled definitions by ID while new permissions are added from the per-mod registry directory. Retired broad permissions are not kept active beside their granular replacements.
+
+To create a reviewable new-format copy before startup, run:
+
+```bash
+tools/migrate_config.py /path/to/config/skyblockaddon /path/to/skyblockaddon-10.0-migrated
+```
+
+The converter never modifies the source directory and refuses to overwrite its output. It converts GUI and permission lore, replaces the monolithic registry with validated per-mod files, retains a `PermissionRegistry.pre-10.0.json` copy, and writes `migration-report.json` with every retained, retired, custom, added, split, and normalized permission.
+
+On island load, permission state is migrated to schema version 2. Version 2 splits the legacy Ars Nouveau, Industrial Foregoing, and Sophisticated Storage toggles while preserving their stored values. Before migration, affected island files are copied to `islanddata.pre-permission-v2-backup`. Membership inconsistencies that can be recovered are repaired and logged. Unreadable island files abort loading instead of silently removing an island from memory.
+
+Customized language values are retained. Missing bundled language keys are merged into `language.json`, with the original saved once as `language.json.pre-10.0.bak`. Old category permission files are moved into `registries/permissions/legacy-category-backup` rather than deleted.
+
+The supplied archive was converted without modifying it. The current schema-v2 output is `/home/masuary/Downloads/archive-2026-07-04T145717Z-skyblockaddon-10.0-migrated-v2`.
+
+## Administration
+
+- `/island admin reload` atomically reloads permission groups, permissions, and GUI files. A failed reload leaves the previous configuration active.
+- `/island admin permission set <permission> members|visitors|all <true|false>` previews a bulk permission change.
+- Append `confirm` to the bulk permission command to apply and persist it.
+- `/island admin cleanchunks` validates and prunes empty modified-chunk records.
+
+## Build
+
+Run:
+
+```bash
+bash gradlew buildAll --warning-mode all
+```
+
+The release JAR is written to `1.18.2/build/libs/skyblockaddon-10.0.0.jar`.
+
+## Rollback
+
+Stop the server before rollback. Restore the previous SkyblockAddon JAR, the complete backed-up `config/skyblockaddon` directory, and the world `islanddata` directory together. Do not combine pre-migration island files with post-migration configuration.
+
+Upstream documentation remains available in the [YorickBM SkyblockAddon wiki](https://github.com/YorickBM/SkyblockAddon/wiki).

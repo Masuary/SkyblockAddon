@@ -38,6 +38,10 @@ public class PermissionRegistry extends SkyblockAddonRegistry<DataComponent> imp
         return this.island.getGroup(this.groupId);
     }
 
+    public Island getIsland() {
+        return this.island;
+    }
+
     /**
      * Get Permission for component
      * @param component DataComponent object

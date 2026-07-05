@@ -1,0 +1,8 @@
+{
+  "mod": "companion_work_station",
+  "groups": {
+    "vault_companions": {
+      "block": ["companion_work_station:companion_workbench", "companion_work_station:companion_recycler"]
+    }
+  }
+}

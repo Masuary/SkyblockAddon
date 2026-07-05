@@ -15,11 +15,9 @@ import yorickbm.skyblockaddon.commands.interfaces.Cmds;
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.permissions.PermissionManager;
 import yorickbm.skyblockaddon.core.registries.PermissionGroupRegistry;
-import yorickbm.skyblockaddon.core.util.RegistrySelector;
 import yorickbm.skyblockaddon.core.util.ResourceManager;
 
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.function.Predicate;
 
 public class ConfigReloadCommand {
@@ -42,25 +40,33 @@ public class ConfigReloadCommand {
         final Path modDir = configDir.resolve(SkyblockAddonCore.MOD_ID);
 
         // Re-run resource extraction (language, configs, registries)
-        ResourceManager.commonSetup(configDir, new RegistrySelector(Map.of()), isModLoaded);
+        ResourceManager.commonSetup(configDir);
 
         // Reload groups
         final Path groupsDir = modDir.resolve("registries/groups/");
-        PermissionGroupRegistry.getInstance().clear();
-        PermissionGroupRegistry.getInstance().loadFromDirectory(groupsDir, isModLoaded);
+        final PermissionGroupRegistry groupRegistry = PermissionGroupRegistry.getInstance();
+        final PermissionGroupRegistry.State oldGroupState = groupRegistry.snapshotState();
+        final PermissionManager permissionManager = PermissionManager.getInstance();
+        final java.util.List<yorickbm.skyblockaddon.core.permissions.Permission> oldPermissionState =
+                permissionManager.snapshotState();
 
-        // Reload permissions — new per-mod directory takes priority over legacy single file
+        // Keep deployed legacy overrides and add permissions introduced by the per-mod registries.
         final Path newPermsDir  = modDir.resolve("registries/permissions/");
         final Path oldPermsFile = modDir.resolve("registries/PermissionRegistry.json");
 
         final int count;
-        if (oldPermsFile.toFile().isFile()) {
-            count = PermissionManager.getInstance().loadPermissions(oldPermsFile);
-        } else {
-            count = PermissionManager.getInstance().loadPermissions(newPermsDir, isModLoaded);
+        try {
+            groupRegistry.loadFromDirectory(groupsDir, isModLoaded);
+            count = permissionManager.loadPermissions(oldPermsFile, newPermsDir, isModLoaded);
+            GUILibraryRegistry.registerFolder(SkyblockAddonCore.MOD_ID, modDir.resolve("guis/"));
+        } catch (final RuntimeException exception) {
+            groupRegistry.restoreState(oldGroupState);
+            permissionManager.restoreState(oldPermissionState);
+            LOGGER.error("Configuration reload failed; previous groups and permissions remain active", exception);
+            command.sendFailure(new TextComponent("Reload failed; the previous configuration remains active: "
+                    + exception.getMessage()).withStyle(ChatFormatting.RED));
+            return 0;
         }
-
-        GUILibraryRegistry.registerFolder(SkyblockAddonCore.MOD_ID, modDir.resolve("guis/"));
 
         LOGGER.info("Reloaded {} permissions, {} GUIs.", count, GUILibraryRegistry.getGuis());
         command.sendSuccess(new TextComponent(

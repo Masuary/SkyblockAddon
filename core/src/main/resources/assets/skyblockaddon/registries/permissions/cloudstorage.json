@@ -1,0 +1,40 @@
+{
+  "mod": "cloudstorage",
+  "permissions": [
+    {
+      "id": "open_cloud",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Interact with Cloud Storage\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "cloudstorage:static_cloud_chest",
+        "lore": [
+          [
+            "{\"text\":\"» Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"♦ Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Storage",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "cloudstorage:.*"
+        ],
+        "entities": []
+      },
+      "priority": 20,
+      "order": 1
+    }
+  ]
+}

@@ -3,7 +3,7 @@ tasks.register('buildCore') {
 }
 
 tasks.register('build_1_18_2') {
-    dependsOn gradle.includedBuild('1.18.2').task(':jar')
+    dependsOn gradle.includedBuild('1.18.2').task(':build')
     mustRunAfter 'buildCore'
 }
 
@@ -11,4 +11,11 @@ tasks.register('buildAll') {
     description = 'Builds core and all Minecraft version jars in order'
     group = 'build'
     dependsOn 'buildCore', 'build_1_18_2'
+}
+
+tasks.register('cleanAll') {
+    description = 'Cleans core and all Minecraft version build outputs'
+    group = 'build'
+    dependsOn gradle.includedBuild('core').task(':clean')
+    dependsOn gradle.includedBuild('1.18.2').task(':clean')
 }

@@ -1,5 +1,6 @@
 package yorickbm.skyblockaddon.islands;
 
+import com.mojang.logging.LogUtils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.*;
 import net.minecraft.nbt.CompoundTag;
@@ -20,8 +21,7 @@ import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.lang3.mutable.MutableInt;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
@@ -34,10 +34,13 @@ import yorickbm.skyblockaddon.util.*;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ForgeIsland extends Island implements NBTSerializable {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Set<String> WARNED_MISSING_BIOMES = ConcurrentHashMap.newKeySet();
 
     public ForgeIsland() {
         super();
@@ -49,18 +52,17 @@ public class ForgeIsland extends Island implements NBTSerializable {
         super.setCenter(island.getCenter());
         super.setVisibility(island.isVisible());
         super.setSkullTexture(island.getSkullTexture());
+        super.setBiome(island.getBiome());
         super.setChunks(island.getLoadedChunks());
 
-        island.getGroups().forEach(super::addGroup);
-        island.getMembers().forEach(m -> {
-            final UUID groupId = island.getGroupForEntityUUID(m)
-                    .map(IslandGroup::getId)
-                    .filter(gid -> !gid.equals(SkyblockAddonCore.MOD_UUID2))
-                    .orElse(SkyblockAddonCore.MOD_UUID);
-            if(!super.addMember(m, groupId)) {
-                LOGGER.warn("Failed to copy member {} into island {} during snapshot", m, getId());
+        island.getGroups().forEach(group -> {
+            if(group instanceof ForgeIslandGroup forgeGroup) {
+                super.addGroup(new ForgeIslandGroup(forgeGroup));
+            } else {
+                throw new IllegalArgumentException("Cannot snapshot unsupported island group type: " + group.getClass().getName());
             }
         });
+        super.members.addAll(island.getMembers());
     }
     public ForgeIsland(UUID uuid, Vec3i vec) {
         super.setId(UUID.randomUUID());
@@ -76,15 +78,20 @@ public class ForgeIsland extends Island implements NBTSerializable {
      * Generate default groups
      */
     public void genBasicGroups() {
-        //Add default members group
+        super.addGroup(createMembersGroup());
+        super.addGroup(createVisitorsGroup());
+    }
+
+    private ForgeIslandGroup createMembersGroup() {
         final ItemStack item = new ItemStack(Items.RED_MUSHROOM);
         item.setHoverName(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("gui.group.default.name")).withStyle(ChatFormatting.BOLD).withStyle(ChatFormatting.BLUE));
+        return new ForgeIslandGroup(SkyblockAddonCore.MOD_UUID, item, true);
+    }
+
+    private ForgeIslandGroup createVisitorsGroup() {
         final ItemStack item2 = new ItemStack(Items.BROWN_MUSHROOM);
         item2.setHoverName(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("gui.group.nonmember.name")).withStyle(ChatFormatting.BOLD).withStyle(ChatFormatting.BLUE));
-
-
-        super.addGroup(new ForgeIslandGroup(SkyblockAddonCore.MOD_UUID, item, true));
-        super.addGroup(new ForgeIslandGroup(SkyblockAddonCore.MOD_UUID2, item2, false));
+        return new ForgeIslandGroup(SkyblockAddonCore.MOD_UUID2, item2, false);
     }
 
     /**
@@ -164,14 +171,18 @@ public class ForgeIsland extends Island implements NBTSerializable {
      * @param serverlevel - Over-world of server
      */
     public void updateBiome(final String biome, final ServerLevel serverlevel) {
-        if (biome == null || biome.isEmpty() || biome.equals("Unknown") || !biome.contains(":")) return;
-
-        setBiome(biome); //Store full namespaced id so modded biomes persist correctly
+        if (isUnconfiguredBiomeId(biome) || !biome.contains(":")) return;
 
         final BoundingBox boundingbox = ForgeConverter.InternalToForgeBoundingBox(getIslandBoundingBox());
+        final ResourceKey<Biome> biomeKey = ResourceKey.create(
+                ForgeRegistries.BIOMES.getRegistryKey(),
+                ResourceLocation.parse(biome)
+        );
         final Holder<Biome> holder = serverlevel.registryAccess()
                 .registryOrThrow(Registry.BIOME_REGISTRY)
-                .getOrCreateHolder(ResourceKey.create(ForgeRegistries.BIOMES.getRegistryKey(), new ResourceLocation(biome)));
+                .getHolder(biomeKey)
+                .orElseThrow(() -> new IllegalArgumentException("Unknown biome: " + biome));
+        setBiome(biome);
 
         for(int j = SectionPos.blockToSectionCoord(boundingbox.minZ()); j <= SectionPos.blockToSectionCoord(boundingbox.maxZ()); ++j) {
             for(int k = SectionPos.blockToSectionCoord(boundingbox.minX()); k <= SectionPos.blockToSectionCoord(boundingbox.maxX()); ++k) {
@@ -195,29 +206,41 @@ public class ForgeIsland extends Island implements NBTSerializable {
      */
     public boolean reapplyBiomeIfNeeded(final ChunkAccess chunk, final ServerLevel serverlevel) {
         final String biomeId = getBiome();
-        if (biomeId == null || biomeId.isEmpty() || biomeId.equals("Unknown")) return false;
+        if (isUnconfiguredBiomeId(biomeId)) return false;
 
-        final Holder<Biome> targetHolder;
+        final ResourceKey<Biome> targetKey;
         try {
-            targetHolder = serverlevel.registryAccess()
-                    .registryOrThrow(Registry.BIOME_REGISTRY)
-                    .getOrCreateHolder(ResourceKey.create(ForgeRegistries.BIOMES.getRegistryKey(), new ResourceLocation(biomeId)));
-        } catch (Exception ex) {
+            targetKey = ResourceKey.create(
+                    ForgeRegistries.BIOMES.getRegistryKey(),
+                    ResourceLocation.parse(biomeId)
+            );
+        } catch (final RuntimeException exception) {
+            if (WARNED_MISSING_BIOMES.add(biomeId)) {
+                LOGGER.warn("Island {} stores invalid biome ID '{}'; biome reapplication is disabled",
+                        getId(), biomeId, exception);
+            }
             return false;
         }
-
-        final Optional<ResourceKey<Biome>> targetKey = targetHolder.unwrapKey();
-        if (targetKey.isEmpty()) return false;
+        final Optional<Holder<Biome>> targetHolder = serverlevel.registryAccess()
+                .registryOrThrow(Registry.BIOME_REGISTRY)
+                .getHolder(targetKey);
+        if (targetHolder.isEmpty()) {
+            if (WARNED_MISSING_BIOMES.add(biomeId)) {
+                LOGGER.warn("Island {} stores unavailable biome '{}'; biome reapplication is disabled",
+                        getId(), biomeId);
+            }
+            return false;
+        }
 
         final ChunkPos pos = chunk.getPos();
         final Holder<Biome> existing = chunk.getNoiseBiome(
                 QuartPos.fromBlock(pos.getMiddleBlockX()),
                 QuartPos.fromBlock(155),
                 QuartPos.fromBlock(pos.getMiddleBlockZ()));
-        if (existing.is(targetKey.get())) return false;
+        if (existing.is(targetKey)) return false;
 
         final BoundingBox islandBbox = ForgeConverter.InternalToForgeBoundingBox(getIslandBoundingBox());
-        applyConfiguredBiomeToChunk(chunk, serverlevel, targetHolder, islandBbox);
+        applyConfiguredBiomeToChunk(chunk, serverlevel, targetHolder.get(), islandBbox);
         return true;
     }
 
@@ -291,10 +314,15 @@ public class ForgeIsland extends Island implements NBTSerializable {
 
     @Override
     public void deserializeNBT(final CompoundTag tag) {
+        super.islandGroups.clear();
+        super.members.clear();
+        super.setChunks(List.of());
+
         setId(tag.getUUID("Id"));
         if (tag.getString("owner").length() > 3) setOwner(UUID.fromString(tag.getString("owner")));
 
-        setBiome(tag.getString("biome"));
+        final String storedBiome = tag.getString("biome");
+        setBiome(isUnconfiguredBiomeId(storedBiome) ? "Unknown" : storedBiome);
         setVisibility(tag.getBoolean("travelability"));
         setSkullTexture(tag.getString("skullTexture"));
         setSpawn(NBTUtil.NBTToVec3i(tag.getCompound("spawn")));
@@ -307,18 +335,11 @@ public class ForgeIsland extends Island implements NBTSerializable {
             super.islandGroups.put(group.getId(), group);
         }
 
-        if(super.islandGroups.isEmpty() || super.islandGroups.size() < 2) {
-            final ItemStack item = new ItemStack(Items.RED_MUSHROOM);
-            item.setHoverName(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("gui.group.default.name")).withStyle(ChatFormatting.BOLD).withStyle(ChatFormatting.BLUE));
-
-            final IslandGroup defaultG = new ForgeIslandGroup(SkyblockAddonCore.MOD_UUID, item, true);
-            super.islandGroups.put(defaultG.getId(), defaultG);
-
-            final ItemStack item2 = new ItemStack(Items.BROWN_MUSHROOM);
-            item2.setHoverName(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("gui.group.nonmember.name")).withStyle(ChatFormatting.BOLD).withStyle(ChatFormatting.BLUE));
-
-            final IslandGroup defaultG2 = new ForgeIslandGroup(SkyblockAddonCore.MOD_UUID2, item2, true);
-            super.islandGroups.put(defaultG2.getId(), defaultG2);
+        if (!super.islandGroups.containsKey(SkyblockAddonCore.MOD_UUID)) {
+            super.addGroup(createMembersGroup());
+        }
+        if (!super.islandGroups.containsKey(SkyblockAddonCore.MOD_UUID2)) {
+            super.addGroup(createVisitorsGroup());
         }
 
         final CompoundTag members = tag.getCompound("members");
@@ -332,5 +353,17 @@ public class ForgeIsland extends Island implements NBTSerializable {
             super.addChunk(new ChunkRef(Integer.parseInt(parts[0]), Integer.parseInt(parts[1])));
         }
 
+        final MembershipRepairReport repairReport = repairMembershipIntegrity();
+        if (repairReport.changed()) {
+            LOGGER.warn("Repaired membership integrity for island {}: {}", getId(), repairReport);
+        }
+
+    }
+
+    static boolean isUnconfiguredBiomeId(final String biomeId) {
+        if (biomeId == null || biomeId.isBlank()) return true;
+        final int namespaceSeparator = biomeId.indexOf(':');
+        final String path = namespaceSeparator >= 0 ? biomeId.substring(namespaceSeparator + 1) : biomeId;
+        return path.equalsIgnoreCase("unknown");
     }
 }

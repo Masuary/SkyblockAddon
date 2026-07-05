@@ -34,7 +34,7 @@ public class GUIFiller extends GUIItem {
             return this.event.getConstructor(ServerInterface.class, GUIFiller.class, int.class)
                     .newInstance(instance, this, slots);  // Pass the arguments
         } catch (final Exception e) {
-            return new Event();  // Return null if event creation fails
+            throw new IllegalStateException("Failed to create GUI filler event " + this.event.getName(), e);
         }
     }
     public boolean hasEvent() {
@@ -98,4 +98,3 @@ public class GUIFiller extends GUIItem {
         }
     }
 }
-

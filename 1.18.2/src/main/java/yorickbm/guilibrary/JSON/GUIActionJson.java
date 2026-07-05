@@ -1,17 +1,17 @@
 package yorickbm.guilibrary.JSON;
 
 import com.google.gson.Gson;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.inventory.Slot;
+import yorickbm.guilibrary.GUIItem;
 import yorickbm.guilibrary.interfaces.GuiClickItemEvent;
+import yorickbm.guilibrary.interfaces.ServerInterface;
 import yorickbm.guilibrary.util.JSON.JSONSerializable;
 import yorickbm.skyblockaddon.components.ItemStackComponent;
 
 import java.util.HashMap;
 
 public class GUIActionJson implements JSONSerializable {
-    private static final Logger LOGGER = LogManager.getLogger();
-
     private String onClick = "";
     private String onSecondClick = "";
     private HashMap<String, String> data = new HashMap<>();
@@ -24,44 +24,46 @@ public class GUIActionJson implements JSONSerializable {
         return !this.onSecondClick.isEmpty();
     }
 
-    @SuppressWarnings("unchecked")
     public Class<? extends GuiClickItemEvent> getPrimary() {
-        try {
-            // Dynamically load the class by its fully qualified name
-            final Class<?> clazz = Class.forName(this.onClick);
-            if (GuiClickItemEvent.class.isAssignableFrom(clazz)) {
-                return (Class<? extends GuiClickItemEvent>) clazz;
-            }
-            else {
-                LOGGER.error(String.format("Class '%s' does not implement GuiClickItemEvent, primary click removed.", this.onClick));
-                this.onClick = ""; //Invalidate trigger
-            }
-        } catch(final Exception ex) {
-            LOGGER.error(String.format("Class '%s' is not found, primary click removed.", this.onClick));
-            this.onClick = ""; //Invalidate trigger
-        }
-
-        return null;
+        return resolveActionClass(this.onClick, "primary");
     }
 
-    @SuppressWarnings("unchecked")
     public Class<? extends GuiClickItemEvent> getSecondary() {
-        try {
-            // Dynamically load the class by its fully qualified name
-            final Class<?> clazz = Class.forName(this.onSecondClick);
-            if (GuiClickItemEvent.class.isAssignableFrom(clazz)) {
-                return (Class<? extends GuiClickItemEvent>) clazz;
-            }
-            else {
-                LOGGER.error(String.format("Class '%s' does not implement GuiClickItemEvent, primary click removed.", this.onSecondClick));
-                this.onSecondClick = ""; //Invalidate trigger
-            }
-        } catch(final Exception ex) {
-            LOGGER.error(String.format("Class '%s' is not found, primary click removed.", this.onSecondClick));
-            this.onSecondClick = ""; //Invalidate trigger
-        }
+        return resolveActionClass(this.onSecondClick, "secondary");
+    }
 
-        return null;
+    private Class<? extends GuiClickItemEvent> resolveActionClass(
+            final String className,
+            final String actionName
+    ) {
+        try {
+            final Class<? extends GuiClickItemEvent> actionClass = Class.forName(
+                    className,
+                    false,
+                    GUIActionJson.class.getClassLoader()
+            )
+                    .asSubclass(GuiClickItemEvent.class);
+            actionClass.getConstructor(
+                    ServerInterface.class,
+                    ServerPlayer.class,
+                    Slot.class,
+                    GUIItem.class
+            );
+            return actionClass;
+        } catch (final ClassNotFoundException exception) {
+            throw new IllegalArgumentException("GUI " + actionName + " action class not found: " + className, exception);
+        } catch (final NoSuchMethodException exception) {
+            throw new IllegalArgumentException("GUI " + actionName + " action lacks the required constructor: "
+                    + className, exception);
+        } catch (final ClassCastException exception) {
+            throw new IllegalArgumentException("GUI " + actionName + " action does not implement GuiClickItemEvent: "
+                    + className, exception);
+        }
+    }
+
+    public void validate() {
+        if (hasPrimary()) getPrimary();
+        if (hasSecondary()) getSecondary();
     }
 
     public ItemStackComponent getData() {

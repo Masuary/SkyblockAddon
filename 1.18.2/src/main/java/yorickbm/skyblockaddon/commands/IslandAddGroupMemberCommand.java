@@ -88,7 +88,10 @@ public class IslandAddGroupMemberCommand extends OverWorldCommandStack {
             command.sendFailure(new TextComponent(String.format(SkyBlockAddonLanguage.getLocalizedString("commands.group.not.found"), groupId)));
             return Command.SINGLE_SUCCESS;
         }
-        group.addMember(target.getUUID());
+        if(!island.assignGroup(target.getUUID(), group.getId())) {
+            command.sendFailure(new TextComponent(String.format(SkyBlockAddonLanguage.getLocalizedString("commands.group.not.found"), group.getName())));
+            return Command.SINGLE_SUCCESS;
+        }
 
         command.sendSuccess(new TextComponent(String.format(SkyBlockAddonLanguage.getLocalizedString("commands.group.added.member"), target.getDisplayName().getString().trim(), group.getName())).withStyle(ChatFormatting.GREEN), false);
 

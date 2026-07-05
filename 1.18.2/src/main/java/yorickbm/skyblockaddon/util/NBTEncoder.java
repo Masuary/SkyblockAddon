@@ -4,13 +4,17 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import yorickbm.skyblockaddon.core.permissions.PermissionStateMigrator;
+import yorickbm.skyblockaddon.core.util.AtomicFileMover;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -63,9 +67,10 @@ public class NBTEncoder {
 
         //List files into list (skipping in-progress temp files)
         final List<Path> nbtFiles = new ArrayList<>();
-        try {
-            Files.list(folderPath)
+        try (var paths = Files.list(folderPath)) {
+            paths
                     .filter(p -> p.getFileName().toString().endsWith(".nbt"))
+                    .sorted()
                     .forEach(nbtFiles::add);
         } catch (final IOException e) {
             throw new RuntimeException(e);
@@ -76,7 +81,7 @@ public class NBTEncoder {
                 final CompoundTag NBT = NbtIo.readCompressed(fileInputStream);
                 objects.add(NBT);
             } catch (final Exception e) {
-                LOGGER.error("Failed to load '"+path.toFile().getName()+"'", e);
+                throw new IllegalStateException("Failed to load NBT file " + path, e);
             }
         }
 
@@ -102,9 +107,10 @@ public class NBTEncoder {
 
         //List files into list (skipping in-progress temp files)
         final List<Path> nbtFiles = new ArrayList<>();
-        try {
-            Files.list(folderPath)
+        try (var paths = Files.list(folderPath)) {
+            paths
                     .filter(p -> p.getFileName().toString().endsWith(".nbt"))
+                    .sorted()
                     .forEach(nbtFiles::add);
         } catch (final IOException e) {
             throw new RuntimeException(e);
@@ -113,14 +119,43 @@ public class NBTEncoder {
         for (final Path path : nbtFiles) {
             try (final FileInputStream fileInputStream = new FileInputStream(path.toFile())) {
                 final CompoundTag NBT = NbtIo.readCompressed(fileInputStream);
+                backupBeforePermissionMigration(folderPath, path, NBT);
                 final T instance = clazz.getDeclaredConstructor().newInstance();
                 instance.deserializeNBT(NBT);
                 objects.add(instance);
             } catch (final Exception e) {
-                LOGGER.error("Failed to load '"+path.toFile().getName()+"'", e);
+                throw new IllegalStateException("Failed to load island NBT file " + path, e);
             }
         }
         return objects;
+    }
+
+    private static void backupBeforePermissionMigration(
+            final Path islandDataDirectory,
+            final Path islandFile,
+            final CompoundTag islandNbt
+    ) throws IOException {
+        if (!requiresPermissionMigration(islandNbt)) return;
+
+        final Path backupDirectory = islandDataDirectory.resolveSibling(
+                islandDataDirectory.getFileName() + ".pre-permission-v"
+                        + PermissionStateMigrator.CURRENT_SCHEMA_VERSION + "-backup"
+        );
+        Files.createDirectories(backupDirectory);
+        final Path backupFile = backupDirectory.resolve(islandFile.getFileName());
+        if (Files.notExists(backupFile)) {
+            Files.copy(islandFile, backupFile, StandardCopyOption.COPY_ATTRIBUTES);
+            LOGGER.info("Backed up {} before permission schema migration", islandFile.getFileName());
+        }
+    }
+
+    private static boolean requiresPermissionMigration(final CompoundTag islandNbt) {
+        final CompoundTag groups = islandNbt.getCompound("groups");
+        for (final String groupId : groups.getAllKeys()) {
+            if (groups.getCompound(groupId).getInt("permissionSchemaVersion")
+                    < PermissionStateMigrator.CURRENT_SCHEMA_VERSION) return true;
+        }
+        return false;
     }
 
     /**
@@ -146,17 +181,25 @@ public class NBTEncoder {
             final Path tempPath = filePath.resolve(data.getId().toString() + ".nbt.tmp");
             try {
                 Files.deleteIfExists(tempPath);
-                try (final OutputStream out = Files.newOutputStream(tempPath)) {
+                try (final OutputStream out = Files.newOutputStream(
+                        tempPath,
+                        StandardOpenOption.CREATE,
+                        StandardOpenOption.TRUNCATE_EXISTING,
+                        StandardOpenOption.WRITE
+                )) {
                     NbtIo.writeCompressed(data.serializeNBT(), out);
                 }
-                try {
-                    Files.move(tempPath, path, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-                } catch (final IOException atomicMoveFailed) {
-                    // Some filesystems (e.g. cross-device) don't support ATOMIC_MOVE; fall back to plain replace.
-                    Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING);
+                try (final FileChannel channel = FileChannel.open(tempPath, StandardOpenOption.WRITE)) {
+                    channel.force(true);
                 }
+                AtomicFileMover.moveReplacing(tempPath, path);
             } catch (final IOException e) {
-                try { Files.deleteIfExists(tempPath); } catch (final IOException ignored) {}
+                try {
+                    Files.deleteIfExists(tempPath);
+                } catch (final IOException cleanupException) {
+                    e.addSuppressed(cleanupException);
+                    LOGGER.warn("Failed to remove incomplete NBT temp file {}", tempPath, cleanupException);
+                }
                 throw new RuntimeException("Failed to save NBT for " + data.getId(), e);
             }
         }

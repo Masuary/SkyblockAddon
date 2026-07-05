@@ -36,7 +36,7 @@ public class NBTUtil {
 
     public static ItemStack NBTToItemStack(final CompoundTag tag) {
         final String registryName = tag.getString("registryName");
-        final Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(registryName));
+        final Item item = ForgeRegistries.ITEMS.getValue(ResourceLocation.parse(registryName));
         if (item == null) {
             LogManager.getLogger().warn("NBTToItemStack: unknown item '{}', using barrier as fallback", registryName);
             return new ItemStack(Items.BARRIER);

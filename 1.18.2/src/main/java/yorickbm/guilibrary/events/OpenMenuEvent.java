@@ -26,10 +26,12 @@ public class OpenMenuEvent extends Event {
     protected MenuProviderInterface provider;
     protected ServerPlayer target;
     protected CompoundTag data;
+    protected String guiId;
 
     protected List<TextComponent> title;
 
     public OpenMenuEvent(final String id, final ServerPlayer target, final CompoundTag data) {
+        this.guiId = id;
         final GUIType guiStructure = GUILibraryRegistry.getValue(id);
         if(guiStructure == null) {
             setCanceled(true);
@@ -62,5 +64,6 @@ public class OpenMenuEvent extends Event {
     public void setTitle(final List<TextComponent> title) { this.title = title;}
 
     public CompoundTag getData() { return this.data; }
+    public String getGuiId() { return this.guiId; }
 
 }
