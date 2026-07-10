@@ -23,7 +23,10 @@ class ConfigurationMigrationTest(unittest.TestCase):
                     self.permission("mod_create", "create:.*"),
                     self.permission("mod_ars_nouveau", "ars_nouveau:.*"),
                     self.permission("mod_industrialforegoing", "industrialforegoing:.*"),
+                    self.permission("mod_occultism", "occultism:.*"),
+                    self.permission("open_ID", "integrateddynamics:.*"),
                     self.permission("open_sophstorage", "sophisticatedstorage:.*"),
+                    self.permission("open_Tom", "toms_storage:ts.*"),
                     self.permission("server_custom", "custom:machine"),
                 ]
             }
@@ -50,7 +53,7 @@ class ConfigurationMigrationTest(unittest.TestCase):
             self.assertTrue((output / "registries/PermissionRegistry.pre-10.0.json").is_file())
             self.assertIn("mod_create", report["retired"])
             self.assertEqual(
-                ["ars_nouveau_interact", "ars_nouveau_portal"],
+                ["ars_nouveau_machines", "ars_nouveau_portal"],
                 report["retired"]["mod_ars_nouveau"],
             )
             self.assertEqual(
@@ -61,7 +64,19 @@ class ConfigurationMigrationTest(unittest.TestCase):
                 ["sophisticatedstorage_storage", "sophisticatedstorage_link"],
                 report["retired"]["open_sophstorage"],
             )
-            self.assertEqual(2, report["schema_version"])
+            self.assertEqual(
+                ["idyn_logic", "integratednbt_extractor", "integrated_addons"],
+                report["retired"]["open_id"],
+            )
+            self.assertEqual(
+                ["occultism_rituals", "occultism_storage"],
+                report["retired"]["mod_occultism"],
+            )
+            self.assertEqual(
+                ["toms_storage_terminals"],
+                report["retired"]["open_tom"],
+            )
+            self.assertEqual(3, report["schema_version"])
             self.assertEqual(["server_custom"], report["custom"])
             self.assertEqual(1, report["counts"]["salvager_typos_corrected"])
             self.assertEqual("woldsvaults:vault_salvager", report["normalizations"][0]["to"])
@@ -84,12 +99,21 @@ class ConfigurationMigrationTest(unittest.TestCase):
             self.assertNotIn("mod_create", permissions_by_id)
             self.assertNotIn("mod_ars_nouveau", permissions_by_id)
             self.assertNotIn("mod_industrialforegoing", permissions_by_id)
+            self.assertNotIn("mod_occultism", permissions_by_id)
+            self.assertNotIn("open_ID", permissions_by_id)
             self.assertNotIn("open_sophstorage", permissions_by_id)
-            self.assertIn("ars_nouveau_interact", permissions_by_id)
+            self.assertNotIn("open_Tom", permissions_by_id)
+            self.assertIn("ars_nouveau_machines", permissions_by_id)
             self.assertIn("ars_nouveau_portal", permissions_by_id)
+            self.assertIn("idyn_logic", permissions_by_id)
+            self.assertIn("integrated_addons", permissions_by_id)
+            self.assertIn("integratednbt_extractor", permissions_by_id)
             self.assertIn("industrialforegoing_machines", permissions_by_id)
+            self.assertIn("occultism_storage", permissions_by_id)
+            self.assertIn("occultism_rituals", permissions_by_id)
             self.assertIn("sophisticatedstorage_storage", permissions_by_id)
             self.assertIn("sophisticatedstorage_link", permissions_by_id)
+            self.assertIn("toms_storage_terminals", permissions_by_id)
             self.assertIn("server_custom", permissions_by_id)
             self.assertEqual(
                 ["woldsvaults:vault_salvager"],

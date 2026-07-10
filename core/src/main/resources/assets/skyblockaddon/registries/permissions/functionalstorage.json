@@ -2,40 +2,24 @@
   "mod": "functionalstorage",
   "permissions": [
     {
-      "id": "interact_functional_drawers",
+      "id": "functionalstorage_interact",
+      "priority": 10,
       "item": {
         "display_name": [
-          "{\"text\": \"Interact with Functional Storage\", \"color\":\"blue\", \"bold\":\"true\"}"
+          "{\"text\": \"Functional Storage\", \"color\": \"aqua\", \"bold\": \"true\"}"
         ],
-        "item": "functionalstorage:storage_controller",
+        "item": "functionalstorage:oak_4",
         "lore": [
-          [
-            "{\"text\":\"» Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\"♦ Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
-          ]
+          [{"text": "» Click to toggle the status of this permission for %data_group_name%.", "color": "dark_gray"}],
+          [{"text": " ", "color": "dark_gray"}],
+          [{"text": "♦ Status: ", "color": "dark_gray"}, {"text": "%data_status% ", "color": "white"}]
         ]
       },
       "category": "Storage",
-      "triggers": [
-        "onRightClickBlock",
-        "onLeftClickBlock"
-      ],
+      "triggers": ["onRightClickBlock", "onLeftClickBlock"],
       "data": {
-        "skyblockaddon": [],
-        "items": [],
-        "blocks": [
-          "functionalstorage:.*"
-        ],
-        "entities": []
-      },
-      "priority": 20,
-      "order": 1
+        "block": ["functionalstorage:.*"]
+      }
     }
   ]
 }

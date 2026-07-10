@@ -7,6 +7,7 @@
 - Source base: YorickBM Version-8.X commit `563ec4f`
 - Integration branch: `integration/upstream-8.2`
 - Modules: `core` for configuration and island rules, `1.18.2` for Forge and mod integrations
+- Upstream drift through YorickBM `eafb115` is manually ported where relevant. Do not directly merge `Version-8.X` over the integration branch.
 
 ## Durable invariants
 
@@ -27,7 +28,7 @@ Version 10 uses per-mod files under `registries/permissions` and `registries/gro
 
 The offline converter is `tools/migrate_config.py`. It never changes its source directory, refuses to overwrite an output directory, preserves the old registry as `PermissionRegistry.pre-10.0.json`, and writes `migration-report.json`.
 
-Before in-process configuration migration, the loader creates `config/skyblockaddon.pre-10.0-backup`. Island permission state migrates to schema version 2 and backs up affected files under `islanddata.pre-permission-v2-backup`. Schema version 2 splits the legacy Ars Nouveau, Industrial Foregoing, and Sophisticated Storage permissions while copying their stored values into every replacement.
+Before in-process configuration migration, the loader creates `config/skyblockaddon.pre-10.0-backup`. Island permission state migrates to schema version 3 and backs up affected files under `islanddata.pre-permission-v3-backup`. Schema version 3 splits retired broad permissions while copying their stored values into every replacement, including the post-`eafb115` granular permission IDs.
 
 Both legacy JSON-encoded lore strings and structured component lore are accepted. New bundled resources use structured lore.
 
@@ -55,7 +56,7 @@ python -m unittest tools/test_migrate_config.py
 
 The Forge tests use Java 17. `buildAll` includes core and Forge tests. The expected artifact is `1.18.2/build/libs/skyblockaddon-10.0.0.jar`.
 
-The current suite contains 58 Java tests plus the Python migration-converter test. It includes atomic-move fallback policy, optional mixin selection without target definition, modified-chunk persistence, and empty-chunk classification.
+The current suite contains 60 Java tests plus the Python migration-converter test. It includes atomic-move fallback policy, optional mixin selection without target definition, modified-chunk persistence, empty-chunk classification, permission split migration, and shadowing checks for high-risk bundled permissions.
 
 The known build warning is external to this repository: ForgeGradle 6.0.54 uses Gradle's deprecated `ResolvedConfiguration.getFirstLevelModuleDependencies(Spec)` API. Recheck it when ForgeGradle or Gradle changes.
 

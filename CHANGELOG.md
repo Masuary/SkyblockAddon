@@ -2,16 +2,16 @@
 
 ## 10.0.0 - Unreleased
 
-Last updated: 2026-07-05
+Last updated: 2026-07-10
 
-Version 10.0.0 rebuilds the MasuCraft edition on YorickBM's 8.2 architecture, includes official `Version-8.X` changes through commit `35af3ff`, and preserves the behavior from the previous local 9.10 branch. The major version changes because configuration layout, permission IDs, persistence rules, optional integrations, and migration behavior changed together.
+Version 10.0.0 rebuilds the MasuCraft edition on YorickBM's 8.2 architecture, includes official `Version-8.X` changes through commit `eafb115`, and preserves the behavior from the previous local 9.10 branch. The major version changes because configuration layout, permission IDs, persistence rules, optional integrations, and migration behavior changed together.
 
-Source implementation is complete. Dedicated-server startup and schema-v2 island loading are verified against the Backend 1 test pack. Production approval still requires the complete staging interaction matrix and migration comparison against copied production data.
+Source implementation is complete. Dedicated-server startup was verified before the schema-v3 permission split update. Production approval still requires a refreshed staging startup, the complete interaction matrix, and migration comparison against copied production data.
 
 ### Added
 
 - Added per-mod permission and group registries with deterministic loading, duplicate detection, regex validation, group-reference validation, and cycle detection. This makes optional-mod configuration reviewable and prevents malformed rules from failing during player interaction.
-- Added permission schema version 2 and idempotent state migration. Split permissions inherit the previous specific value instead of receiving an unsafe broad default.
+- Added permission schema version 3 and idempotent state migration. Split permissions inherit the previous specific value instead of receiving an unsafe broad default.
 - Added `tools/migrate_config.py` for offline conversion of legacy configuration. It preserves the source, creates a reviewable output, retains a legacy registry backup, converts lore, and emits a machine-readable report.
 - Added one-time full configuration backup and per-island permission-state backup before in-process migration.
 - Added the bulk admin permission command with preview, confirmation, target selection, rollback, and result counts.
@@ -19,8 +19,8 @@ Source implementation is complete. Dedicated-server startup and schema-v2 island
 - Added fallback confirmation for changing island spawn.
 - Added optional integrations for Effortless Building batch and normal placement, PneumaticCraft pickup and protection paths, Buildscape, Vault Hunters Remastered, Regions Unexplored, and the custom-mod permissions represented by the reference pack.
 - Added dedicated permission coverage for MobProcessor and corrected Wold's Vaults registry entries.
-- Added granular Industrial Foregoing and Sophisticated Storage permissions from current upstream, with migration from the previous broad toggles.
-- Added separate Ars Nouveau block and Warp Portal permissions. This makes Yorick's new portal mixin effective while retaining the legacy Ars permission value for both replacement controls.
+- Added granular Industrial Foregoing, Sophisticated Storage, Occultism, RFTools, Integrated Dynamics add-on, Ars Nouveau, and other post-8.2 permissions from current upstream, with migration from the previous broad toggles.
+- Added separate Ars Nouveau machine and Warp Portal permissions. This makes Yorick's new portal mixin effective while retaining the legacy Ars permission value for both replacement controls.
 - Added automated coverage for membership integrity, snapshot copying, NBT round trips, permission loading and migration, biome filtering, GUI resource loading, configuration backup, trigger completeness, and migration conversion.
 - Added regression coverage for atomic-file fallback behavior, modified-chunk lifecycle and empty-chunk classification, and optional mixin selection.
 
@@ -88,20 +88,23 @@ All 36 commits after the common ancestor of the previous `wolds` branch are repr
 
 ### Phase 9 upstream synchronization
 
-Phase 9 is complete and integrates both official commits added after the original 8.2 integration base:
+Phase 9 is complete and integrates the official commits added after the original 8.2 integration base:
 
-- `2586419` adds granular Industrial Foregoing and Sophisticated Storage permissions and corrects the optional mod ID from `creeper_power` to `creeperpower`. Version 10 adds schema-v2 split mappings so existing island values remain unchanged.
+- `2586419` adds granular Industrial Foregoing and Sophisticated Storage permissions and corrects the optional mod ID from `creeper_power` to `creeperpower`. Version 10 adds schema-v3 split mappings so existing island values remain unchanged.
 - `35af3ff` adds an Ars Nouveau Warp Portal mixin. Version 10 also adds the missing matching portal permission; the upstream mixin alone would not claim `ars_nouveau:portal` through any existing `onEnterPortal` rule.
+- `eafb115` adds Remastered and Wold's Vaults permission resources. Version 10 ports the missing IDs and retires local broad permissions that would otherwise shadow the new granular controls.
 
 The Ars redirect target was verified against Ars Nouveau 2.9.0. Its optional mixin configuration is loaded only when `PortalTile` is available, and Ars Nouveau classes are not bundled in the SkyblockAddon JAR.
 
 ### Permission migration mappings
 
-Permission state schema 2 preserves existing island access by copying each legacy value into every replacement:
+Permission state schema 3 preserves existing island access by copying each legacy value into every replacement:
 
-| Legacy permission | Schema-v2 replacement |
+| Legacy permission | Schema-v3 replacement |
 | --- | --- |
-| `mod_ars_nouveau` | `ars_nouveau_interact`, `ars_nouveau_portal` |
+| `mod_ars_nouveau` | `ars_nouveau_machines`, `ars_nouveau_portal` |
+| `open_ID` | `idyn_logic`, `integratednbt_extractor`, `integrated_addons` |
+| `mod_occultism` | `occultism_rituals`, `occultism_storage` |
 | `mod_industrialforegoing` | `industrialforegoing_machines` |
 | `open_sophstorage` | `sophisticatedstorage_storage`, `sophisticatedstorage_link` |
 
@@ -109,11 +112,11 @@ Explicitly stored replacement values win over migrated values. Retired IDs remai
 
 ### Verification status
 
-- 58 Java tests and one migration-converter test pass.
+- 60 Java tests and one migration-converter test pass.
 - Clean `buildAll` succeeds and produces the 10.0.0 JAR without embedding optional dependency packages.
-- The supplied legacy configuration converts to 90 groups and 100 permissions with no retired permission left active.
+- The supplied legacy configuration converts to 95 groups and 112 permissions with no retired permission left active.
 - The Phase 9 artifact contains 11 mixin configurations and no optional dependency packages.
-- The final JAR starts with the full Backend 1 test mod pack, reaches `Done`, loads two islands at schema version 2, and completes a clean world save on shutdown.
+- The previous final JAR started with the full Backend 1 test mod pack, reached `Done`, loaded two islands at schema version 2, and completed a clean world save on shutdown. Schema version 3 still requires refreshed staging startup verification before production.
 - The dedicated-server run confirms that optional mixin discovery no longer loads Minecraft targets before KubeJS prepares its mixins. It also confirms that legacy namespaced `Unknown` biome values load without invalid-resource warnings.
 - The first runtime attempt exposed an unrelated MasuPlots and Supplementaries book-pile crash after startup. This is outside SkyblockAddon and did not recur because the final verification run was stopped immediately after startup validation.
 - Production approval still requires copied production island-data comparison and the remaining runtime compatibility matrix.

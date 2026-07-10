@@ -1,0 +1,43 @@
+{
+  "mod": "rftoolsutility",
+  "groups": {
+    "rftoolsutility_machines": {
+      "block": [
+        "rftoolsutility:.*",
+        "!rftoolsutility:matter_transmitter",
+        "!rftoolsutility:matter_receiver",
+        "!rftoolsutility:matter_booster",
+        "!rftoolsutility:matter_beamer",
+        "!rftoolsutility:dialing_device",
+        "!rftoolsutility:simple_dialer",
+        "!rftoolsutility:destination_analyzer",
+        "!rftoolsutility:spawner",
+        "!rftoolsutility:analog",
+        "!rftoolsutility:counter",
+        "!rftoolsutility:digit",
+        "!rftoolsutility:invchecker",
+        "!rftoolsutility:sensor",
+        "!rftoolsutility:sequencer",
+        "!rftoolsutility:logic",
+        "!rftoolsutility:timer",
+        "!rftoolsutility:wire",
+        "!rftoolsutility:redstone_receiver",
+        "!rftoolsutility:redstone_transmitter"
+      ]
+    },
+    "rftoolsutility_teleporter": {
+      "block": [
+        "rftoolsutility:matter_transmitter",
+        "rftoolsutility:matter_receiver",
+        "rftoolsutility:matter_booster",
+        "rftoolsutility:matter_beamer",
+        "rftoolsutility:dialing_device",
+        "rftoolsutility:simple_dialer",
+        "rftoolsutility:destination_analyzer"
+      ]
+    },
+    "rftoolsutility_spawner": {
+      "block": ["rftoolsutility:spawner"]
+    }
+  }
+}

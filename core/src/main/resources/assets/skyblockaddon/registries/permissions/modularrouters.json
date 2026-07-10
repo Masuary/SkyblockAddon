@@ -1,14 +1,14 @@
 {
-  "mod": "sfm",
+  "mod": "modularrouters",
   "permissions": [
     {
-      "id": "sfm_manager",
+      "id": "modularrouters_interact",
       "priority": 10,
       "item": {
         "display_name": [
-          "{\"text\": \"Super Factory Manager\", \"color\": \"green\", \"bold\": \"true\"}"
+          "{\"text\": \"Modular Routers\", \"color\": \"green\", \"bold\": \"true\"}"
         ],
-        "item": "sfm:manager",
+        "item": "modularrouters:modular_router",
         "lore": [
           [{"text": "» Click to toggle the status of this permission for %data_group_name%.", "color": "dark_gray"}],
           [{"text": " ", "color": "dark_gray"}],
@@ -18,7 +18,7 @@
       "category": "Miscellaneous",
       "triggers": ["onRightClickBlock"],
       "data": {
-        "block": ["sfm:.*"]
+        "block": ["modularrouters:.*"]
       }
     }
   ]

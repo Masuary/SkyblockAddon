@@ -1,0 +1,42 @@
+{
+  "mod": "immersiveengineering",
+  "permissions": [
+    {
+      "id": "immersive_engineering",
+      "priority": 15,
+      "item": {
+        "display_name": [
+          "{\"text\": \"Immersive Engineering\", \"color\": \"green\", \"bold\": \"true\"}"
+        ],
+        "item": "immersiveengineering:workbench",
+        "lore": [
+          [{"text": "» Click to toggle the status of this permission for %data_group_name%.", "color": "dark_gray"}],
+          [{"text": " ", "color": "dark_gray"}],
+          [{"text": "♦ Status: ", "color": "dark_gray"}, {"text": "%data_status% ", "color": "white"}],
+          {
+            "join": {
+              "prefix": {"text": "♦ Contains: ", "color": "dark_gray"},
+              "separator": {"text": ", ", "color": "gray"},
+              "entries": [
+                {"text": "Machines", "color": "white", "conditions": ["mod:immersiveengineering"]},
+                {"text": "Crates", "color": "white", "conditions": ["mod:immersiveengineering"]},
+                {"text": "Workstations", "color": "white", "conditions": ["mod:immersiveengineering"]},
+                {"text": "Turrets", "color": "white", "conditions": ["mod:immersiveengineering"]},
+                {"text": "Connectors", "color": "white", "conditions": ["mod:immersiveengineering"]},
+                {"text": "Pumpjack", "color": "white", "conditions": ["mod:immersivepetroleum"]},
+                {"text": "Derrick", "color": "white", "conditions": ["mod:immersivepetroleum"]},
+                {"text": "Refinery units (Coker, Distillation Tower, Hydrotreater)", "color": "white", "conditions": ["mod:immersivepetroleum"]},
+                {"text": "Oil Tank & Automatic Lubricator", "color": "white", "conditions": ["mod:immersivepetroleum"]}
+              ]
+            }
+          }
+        ]
+      },
+      "category": "Miscellaneous",
+      "triggers": ["onRightClickBlock"],
+      "data": {
+        "block": ["immersiveengineering:.*", "immersivepetroleum:.*"]
+      }
+    }
+  ]
+}

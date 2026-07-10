@@ -1,14 +1,14 @@
 {
-  "mod": "sfm",
+  "mod": "irongenerators",
   "permissions": [
     {
-      "id": "sfm_manager",
+      "id": "irongenerators_interact",
       "priority": 10,
       "item": {
         "display_name": [
-          "{\"text\": \"Super Factory Manager\", \"color\": \"green\", \"bold\": \"true\"}"
+          "{\"text\": \"Iron Generators\", \"color\": \"green\", \"bold\": \"true\"}"
         ],
-        "item": "sfm:manager",
+        "item": "irongenerators:iron_generator",
         "lore": [
           [{"text": "» Click to toggle the status of this permission for %data_group_name%.", "color": "dark_gray"}],
           [{"text": " ", "color": "dark_gray"}],
@@ -18,7 +18,7 @@
       "category": "Miscellaneous",
       "triggers": ["onRightClickBlock"],
       "data": {
-        "block": ["sfm:.*"]
+        "block": ["irongenerators:.*"]
       }
     }
   ]

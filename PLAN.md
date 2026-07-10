@@ -4,7 +4,7 @@
 
 - Planning baseline: local `wolds` commit `1097a69` (`9.10`).
 - Upstream baseline: Yorick `Version-8.X` commit `563ec4fc3b5126b1d7ceb23ba25663c958e6f338` (`8.2`).
-- Latest official upstream checked on 2026-07-05: `35af3ff5f1ff570342fd55d5426bd5e9887a3957`. Both post-base commits are integrated in Phase 9.
+- Latest official upstream checked on 2026-07-10: `eafb115496393279f04950cc7218c622213b4e57`. Post-base commits through `eafb115` are manually ported in Phase 9.
 - Common ancestor: `0d99631e5ac146d84feb9787dee4bbb64875d903`.
 - Strategy: start from upstream 8.2 and port only missing behavior. Do not merge the two branches directly.
 - Resulting version: `10.0.0`, because this changes the source base, configuration layout, permission IDs, and persisted permission state.
@@ -25,7 +25,7 @@ Produce a production-ready SkyblockAddon based on upstream 8.2 that:
 
 ## Authoritative Inputs
 
-- Upstream 8.2 source and all 45 upstream commits after the common ancestor.
+- Upstream 8.2 source and all 48 upstream commits after the common ancestor.
 - Local 9.10 source and all 36 local commits after the common ancestor.
 - Deployed configuration snapshot:
   `/home/masuary/Downloads/archive-2026-07-04T145717Z/`
@@ -564,11 +564,11 @@ Fix before release:
 
 Verification evidence:
 
-- 58 Java tests and one converter test pass with zero failures.
+- 60 Java tests and one converter test pass with zero failures.
 - The only warning is ForgeGradle 6.0.54 calling Gradle's deprecated `ResolvedConfiguration.getFirstLevelModuleDependencies(Spec)` API. It is external build-plugin code and is recorded in the dated audit.
 - The JAR contains all 11 mixin configs, `skyblockaddon.refmap.json`, `META-INF/mods.toml`, fallback GUI resources, permission migration rules, and custom-mod permission resources.
 - No optional dependency package is embedded in the JAR.
-- The final JAR reaches `Done` with the full Backend 1 test mod pack, loads two schema-v2 islands, and completes a clean shutdown save. The optional mixin discovery fix prevents the prior KubeJS target-already-loaded failure.
+- The previously verified JAR reached `Done` with the full Backend 1 test mod pack, loaded two schema-v2 islands, and completed a clean shutdown save. The current schema-v3 permission changes still need a refreshed staging startup and copied-data comparison before production.
 
 ### Migration rehearsal
 
@@ -616,13 +616,14 @@ Release 10.0.0 is complete only when:
 
 ## Phase 9 - Upstream Drift After the 8.2 Base
 
-Yorick added two commits after this integration was implemented:
+Yorick added three commits after this integration was implemented:
 
 - [x] Integrate `2586419` granular Industrial Foregoing and Sophisticated Storage permissions.
 - [x] Add migration rules from `mod_industrialforegoing` to `industrialforegoing_machines` and from `open_sophstorage` to `sophisticatedstorage_storage` plus `sophisticatedstorage_link` without changing existing island access unexpectedly.
 - [x] Rename the inactive optional resource gate from `creeper_power` to the corrected `creeperpower` mod ID.
 - [x] Integrate `35af3ff` Ars Nouveau Warp Portal protection using optional mixin loading.
 - [x] Verify the mixin target against the exact deployed Ars Nouveau 2.9.0 JAR and cover migration, permission matching, and absent-mod resource loading with automated tests.
+- [x] Port `eafb115` registry additions for Remastered and Wold's Vaults permission coverage, then retire or split shadowing local broad IDs so the new granular permissions control live interactions.
 - [ ] Run allowed member, denied member, visitor, owner, OP, and absent-mod portal behavior on the staging server.
 
 Source parity with the current official `Version-8.X` branch is complete. Runtime approval remains part of the staging matrix.
@@ -637,6 +638,6 @@ Source parity with the current official `Version-8.X` branch is complete. Runtim
 ## Current Build Artifact
 
 - Path: `1.18.2/build/libs/skyblockaddon-10.0.0.jar`
-- Size: 584,374 bytes
-- SHA-256: `10e76797a40e1941495b15dbd941e63de977e84b5755a58e5a054982f25238f3`
-- Status: build and dedicated-server startup verified, not approved for production until copied-data comparison and the runtime matrix pass.
+- Size: 591,311 bytes
+- SHA-256: `42a2ffdbfa7e002badf9bd53308d87f1b6a0c8245adaf2c4274aef23d2dedfe4`
+- Status: clean build verified with schema-v3 permission resources. Dedicated-server startup must be rerun before production because the last startup verification used the earlier schema-v2 artifact.

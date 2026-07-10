@@ -2,39 +2,35 @@
   "mod": "rftoolsstorage",
   "permissions": [
     {
-      "id": "open_rftools",
+      "id": "rftoolsstorage_machines",
+      "priority": 15,
       "item": {
         "display_name": [
-          "{\"text\": \"Interact with RFTools Storage\", \"color\":\"blue\", \"bold\":\"true\"}"
+          "{\"text\": \"RFTools - Storage\", \"color\": \"light_purple\", \"bold\": \"true\"}"
         ],
         "item": "rftoolsstorage:modular_storage",
         "lore": [
-          [
-            "{\"text\":\"» Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\"♦ Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
-          ]
+          [{"text": "» Click to toggle the status of this permission for %data_group_name%.", "color": "dark_gray"}],
+          [{"text": " ", "color": "dark_gray"}],
+          [{"text": "♦ Status: ", "color": "dark_gray"}, {"text": "%data_status% ", "color": "white"}],
+          {
+            "join": {
+              "prefix": {"text": "♦ Contains: ", "color": "dark_gray"},
+              "separator": {"text": ", ", "color": "gray"},
+              "entries": [
+                {"text": "Modular Storage", "color": "white", "conditions": ["mod:rftoolsstorage"]},
+                {"text": "Remote Storage", "color": "white", "conditions": ["mod:rftoolsstorage"]},
+                {"text": "Storage Scanner", "color": "white", "conditions": ["mod:rftoolsstorage"]}
+              ]
+            }
+          }
         ]
       },
-      "category": "Storage",
-      "triggers": [
-        "onRightClickBlock"
-      ],
+      "category": "RFTools",
+      "triggers": ["onRightClickBlock"],
       "data": {
-        "skyblockaddon": [],
-        "items": [],
-        "blocks": [
-          "rftoolsstorage:.*"
-        ],
-        "entities": []
-      },
-      "priority": 20,
-      "order": 1
+        "block": ["rftoolsstorage:.*"]
+      }
     }
   ]
 }

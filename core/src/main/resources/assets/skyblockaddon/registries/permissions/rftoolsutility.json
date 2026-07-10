@@ -45,6 +45,80 @@
       },
       "priority": 20,
       "order": 1
+    },
+    {
+      "id": "rftoolsutility_machines",
+      "priority": 15,
+      "item": {
+        "display_name": [
+          "{\"text\": \"RFTools - Utility\", \"color\": \"light_purple\", \"bold\": \"true\"}"
+        ],
+        "item": "rftoolsutility:crafter3",
+        "lore": [
+          [{"text": "» Click to toggle the status of this permission for %data_group_name%.", "color": "dark_gray"}],
+          [{"text": " ", "color": "dark_gray"}],
+          [{"text": "♦ Status: ", "color": "dark_gray"}, {"text": "%data_status% ", "color": "white"}],
+          [{"text": "♦ Allows: ", "color": "dark_gray"}, {"text": "Crafters, screens, sensors, redstone logic blocks, and everything else except the Teleporter network and Spawner below.", "color": "white"}]
+        ]
+      },
+      "category": "RFTools",
+      "triggers": ["onRightClickBlock"],
+      "data": {
+        "block": ["#rftoolsutility_machines"]
+      }
+    },
+    {
+      "id": "rftoolsutility_teleporter",
+      "priority": 10,
+      "item": {
+        "display_name": [
+          "{\"text\": \"RFTools - Teleporter Network\", \"color\": \"light_purple\", \"bold\": \"true\"}"
+        ],
+        "item": "rftoolsutility:matter_transmitter",
+        "lore": [
+          [{"text": "» Click to toggle the status of this permission for %data_group_name%.", "color": "dark_gray"}],
+          [{"text": " ", "color": "dark_gray"}],
+          [{"text": "♦ Status: ", "color": "dark_gray"}, {"text": "%data_status% ", "color": "white"}],
+          {
+            "join": {
+              "prefix": {"text": "♦ Contains: ", "color": "dark_gray"},
+              "separator": {"text": ", ", "color": "gray"},
+              "entries": [
+                {"text": "Matter Transmitter/Receiver/Booster/Beamer", "color": "white", "conditions": ["mod:rftoolsutility"]},
+                {"text": "Dialing Device", "color": "white", "conditions": ["mod:rftoolsutility"]},
+                {"text": "Simple Dialer", "color": "white", "conditions": ["mod:rftoolsutility"]},
+                {"text": "Destination Analyzer", "color": "white", "conditions": ["mod:rftoolsutility"]}
+              ]
+            }
+          }
+        ]
+      },
+      "category": "RFTools",
+      "triggers": ["onRightClickBlock"],
+      "data": {
+        "block": ["#rftoolsutility_teleporter"]
+      }
+    },
+    {
+      "id": "rftoolsutility_spawner",
+      "priority": 10,
+      "item": {
+        "display_name": [
+          "{\"text\": \"RFTools - Spawner\", \"color\": \"light_purple\", \"bold\": \"true\"}"
+        ],
+        "item": "rftoolsutility:spawner",
+        "lore": [
+          [{"text": "» Click to toggle the status of this permission for %data_group_name%.", "color": "dark_gray"}],
+          [{"text": " ", "color": "dark_gray"}],
+          [{"text": "♦ Status: ", "color": "dark_gray"}, {"text": "%data_status% ", "color": "white"}],
+          [{"text": "♦ Allows: ", "color": "dark_gray"}, {"text": "Using the RFTools Spawner.", "color": "white"}]
+        ]
+      },
+      "category": "RFTools",
+      "triggers": ["onRightClickBlock"],
+      "data": {
+        "block": ["#rftoolsutility_spawner"]
+      }
     }
   ]
 }

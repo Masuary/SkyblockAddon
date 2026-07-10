@@ -72,11 +72,41 @@ class PermissionStateMigratorTest {
                 Set.of("mod_ars_nouveau", "mod_industrialforegoing", "open_sophstorage")
         ));
 
-        assertFalse(permissions.get("ars_nouveau_interact"));
+        assertFalse(permissions.get("ars_nouveau_machines"));
         assertFalse(permissions.get("ars_nouveau_portal"));
         assertTrue(permissions.get("industrialforegoing_machines"));
         assertFalse(permissions.get("sophisticatedstorage_storage"));
         assertFalse(permissions.get("sophisticatedstorage_link"));
-        assertEquals(2, PermissionStateMigrator.CURRENT_SCHEMA_VERSION);
+        assertEquals(3, PermissionStateMigrator.CURRENT_SCHEMA_VERSION);
+    }
+
+    @Test
+    void migratesShadowingBroadPermissionsToLiveSafeSplitIds() {
+        final Map<String, Boolean> permissions = new HashMap<>();
+        permissions.put("mod_occultism", false);
+        permissions.put("open_ID", true);
+        permissions.put("interact_functional_drawers", true);
+        permissions.put("mod_immersiveengineering", false);
+        permissions.put("open_Tom", true);
+
+        assertEquals(8, PermissionStateMigrator.migrate(
+                permissions,
+                Set.of(
+                        "mod_occultism",
+                        "open_ID",
+                        "interact_functional_drawers",
+                        "mod_immersiveengineering",
+                        "open_Tom"
+                )
+        ));
+
+        assertFalse(permissions.get("occultism_rituals"));
+        assertFalse(permissions.get("occultism_storage"));
+        assertTrue(permissions.get("idyn_logic"));
+        assertTrue(permissions.get("integratednbt_extractor"));
+        assertTrue(permissions.get("integrated_addons"));
+        assertTrue(permissions.get("functionalstorage_interact"));
+        assertFalse(permissions.get("immersive_engineering"));
+        assertTrue(permissions.get("toms_storage_terminals"));
     }
 }

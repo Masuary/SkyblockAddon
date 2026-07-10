@@ -31,11 +31,11 @@ tools/migrate_config.py /path/to/config/skyblockaddon /path/to/skyblockaddon-10.
 
 The converter never modifies the source directory and refuses to overwrite its output. It converts GUI and permission lore, replaces the monolithic registry with validated per-mod files, retains a `PermissionRegistry.pre-10.0.json` copy, and writes `migration-report.json` with every retained, retired, custom, added, split, and normalized permission.
 
-On island load, permission state is migrated to schema version 2. Version 2 splits the legacy Ars Nouveau, Industrial Foregoing, and Sophisticated Storage toggles while preserving their stored values. Before migration, affected island files are copied to `islanddata.pre-permission-v2-backup`. Membership inconsistencies that can be recovered are repaired and logged. Unreadable island files abort loading instead of silently removing an island from memory.
+On island load, permission state is migrated to schema version 3. Version 3 splits retired broad mod toggles into granular replacements, including Ars Nouveau, Industrial Foregoing, Sophisticated Storage, Occultism, RFTools, Integrated Dynamics add-ons, and the other per-mod permissions represented in `permission_migrations.json`. Before migration, affected island files are copied to `islanddata.pre-permission-v3-backup`. Membership inconsistencies that can be recovered are repaired and logged. Unreadable island files abort loading instead of silently removing an island from memory.
 
 Customized language values are retained. Missing bundled language keys are merged into `language.json`, with the original saved once as `language.json.pre-10.0.bak`. Old category permission files are moved into `registries/permissions/legacy-category-backup` rather than deleted.
 
-The supplied archive was converted without modifying it. The current schema-v2 output is `/home/masuary/Downloads/archive-2026-07-04T145717Z-skyblockaddon-10.0-migrated-v2`.
+The supplied archive was converted without modifying it. The current schema-v3 output is `/home/masuary/Downloads/archive-2026-07-04T145717Z-skyblockaddon-10.0-migrated-v3`.
 
 ## Administration
 

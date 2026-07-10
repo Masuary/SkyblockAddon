@@ -1,0 +1,14 @@
+{
+  "mod": "immersive_aircraft",
+  "groups": {
+    "vehicles": {
+      "entity": [
+        "immersive_aircraft:airship",
+        "immersive_aircraft:cargo_airship",
+        "immersive_aircraft:biplane",
+        "immersive_aircraft:gyrodyne",
+        "immersive_aircraft:quadrocopter"
+      ]
+    }
+  }
+}

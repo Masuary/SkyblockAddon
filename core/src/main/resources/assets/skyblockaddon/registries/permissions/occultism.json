@@ -2,39 +2,45 @@
   "mod": "occultism",
   "permissions": [
     {
-      "id": "mod_occultism",
+      "id": "occultism_rituals",
+      "priority": 10,
       "item": {
         "display_name": [
-          "{\"text\": \"Occultism\", \"color\":\"blue\", \"bold\":\"true\"}"
+          "{\"text\": \"Occultism\", \"color\": \"green\", \"bold\": \"true\"}"
+        ],
+        "item": "occultism:golden_sacrificial_bowl",
+        "lore": [
+          [{"text": "» Click to toggle the status of this permission for %data_group_name%.", "color": "dark_gray"}],
+          [{"text": " ", "color": "dark_gray"}],
+          [{"text": "♦ Status: ", "color": "dark_gray"}, {"text": "%data_status% ", "color": "white"}]
+        ]
+      },
+      "category": "Miscellaneous",
+      "triggers": ["onRightClickBlock"],
+      "data": {
+        "block": ["!#occultism_storage", "occultism:.*"]
+      }
+    },
+    {
+      "id": "occultism_storage",
+      "priority": 10,
+      "item": {
+        "display_name": [
+          "{\"text\": \"Dimensional Storage\", \"color\": \"aqua\", \"bold\": \"true\"}"
         ],
         "item": "occultism:storage_controller",
         "lore": [
-          [
-            "{\"text\":\"» Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\"♦ Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
-          ]
+          [{"text": "» Click to toggle the status of this permission for %data_group_name%.", "color": "dark_gray"}],
+          [{"text": " ", "color": "dark_gray"}],
+          [{"text": "♦ Status: ", "color": "dark_gray"}, {"text": "%data_status% ", "color": "white"}],
+          [{"text": "♦ Allows: ", "color": "dark_gray"}, {"text": "Accessing the Dimensional Storage Actuator and its Stabilizers.", "color": "white"}]
         ]
       },
-      "category": "Mods",
-      "triggers": [
-        "onRightClickBlock"
-      ],
+      "category": "Storage",
+      "triggers": ["onRightClickBlock"],
       "data": {
-        "skyblockaddon": [],
-        "items": [],
-        "blocks": [
-          "occultism:.*"
-        ],
-        "entities": []
-      },
-      "priority": 20,
-      "order": 1
+        "block": ["#occultism_storage"]
+      }
     }
   ]
 }

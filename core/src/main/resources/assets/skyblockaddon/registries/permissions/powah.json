@@ -1,14 +1,14 @@
 {
-  "mod": "sfm",
+  "mod": "powah",
   "permissions": [
     {
-      "id": "sfm_manager",
-      "priority": 10,
+      "id": "powah_power_network",
+      "priority": 15,
       "item": {
         "display_name": [
-          "{\"text\": \"Super Factory Manager\", \"color\": \"green\", \"bold\": \"true\"}"
+          "{\"text\": \"Powah\", \"color\": \"green\", \"bold\": \"true\"}"
         ],
-        "item": "sfm:manager",
+        "item": "powah:reactor_hardened",
         "lore": [
           [{"text": "» Click to toggle the status of this permission for %data_group_name%.", "color": "dark_gray"}],
           [{"text": " ", "color": "dark_gray"}],
@@ -18,7 +18,7 @@
       "category": "Miscellaneous",
       "triggers": ["onRightClickBlock"],
       "data": {
-        "block": ["sfm:.*"]
+        "block": ["powah:.*"]
       }
     }
   ]

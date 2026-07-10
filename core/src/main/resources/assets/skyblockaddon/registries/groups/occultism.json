@@ -1,0 +1,8 @@
+{
+  "mod": "occultism",
+  "groups": {
+    "occultism_storage": {
+      "block": ["occultism:storage_controller", "occultism:storage_controller_base", "occultism:storage_stabilizer_tier.*"]
+    }
+  }
+}

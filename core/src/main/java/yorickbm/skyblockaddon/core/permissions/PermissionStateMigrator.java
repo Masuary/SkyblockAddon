@@ -7,6 +7,7 @@ import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -33,13 +34,25 @@ public final class PermissionStateMigrator {
             final Map<String, Boolean> permissions,
             final Set<String> storedPermissionIds
     ) {
+        final Map<String, String> permissionKeysByNormalizedId = new HashMap<>();
+        permissions.keySet().forEach(permissionId ->
+                permissionKeysByNormalizedId.put(permissionId.toLowerCase(Locale.ROOT), permissionId)
+        );
+        final Set<String> normalizedStoredPermissionIds = storedPermissionIds.stream()
+                .map(permissionId -> permissionId.toLowerCase(Locale.ROOT))
+                .collect(java.util.stream.Collectors.toSet());
+
         int migrated = 0;
         for (final Map.Entry<String, List<String>> replacement : REPLACEMENTS.entrySet()) {
-            if (!storedPermissionIds.contains(replacement.getKey())) continue;
+            if (!normalizedStoredPermissionIds.contains(replacement.getKey())) continue;
 
-            final boolean value = permissions.getOrDefault(replacement.getKey(), false);
+            final String sourceKey = permissionKeysByNormalizedId.getOrDefault(
+                    replacement.getKey(),
+                    replacement.getKey()
+            );
+            final boolean value = permissions.getOrDefault(sourceKey, false);
             for (final String target : replacement.getValue()) {
-                if (storedPermissionIds.contains(target)) continue;
+                if (normalizedStoredPermissionIds.contains(target.toLowerCase(Locale.ROOT))) continue;
                 permissions.put(target, value);
                 migrated++;
             }

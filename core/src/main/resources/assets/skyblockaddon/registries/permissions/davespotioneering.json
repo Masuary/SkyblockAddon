@@ -2,39 +2,35 @@
   "mod": "davespotioneering",
   "permissions": [
     {
-      "id": "mod_davespotioneering",
+      "id": "davespotioneering_interact",
+      "priority": 10,
       "item": {
         "display_name": [
-          "{\"text\": \"Dave's Potioneering\", \"color\":\"blue\", \"bold\":\"true\"}"
+          "{\"text\": \"Dave's Potioneering\", \"color\": \"green\", \"bold\": \"true\"}"
         ],
         "item": "davespotioneering:compound_brewing_stand",
         "lore": [
-          [
-            "{\"text\":\"» Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\"♦ Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
-          ]
+          [{"text": "» Click to toggle the status of this permission for %data_group_name%.", "color": "dark_gray"}],
+          [{"text": " ", "color": "dark_gray"}],
+          [{"text": "♦ Status: ", "color": "dark_gray"}, {"text": "%data_status% ", "color": "white"}],
+          {
+            "join": {
+              "prefix": {"text": "♦ Contains: ", "color": "dark_gray"},
+              "separator": {"text": ", ", "color": "gray"},
+              "entries": [
+                {"text": "Compound Brewing Stand", "color": "white", "conditions": ["mod:davespotioneering"]},
+                {"text": "Potion Injector", "color": "white", "conditions": ["mod:davespotioneering"]},
+                {"text": "Reinforced Cauldron", "color": "white", "conditions": ["mod:davespotioneering"]}
+              ]
+            }
+          }
         ]
       },
-      "category": "Mods",
-      "triggers": [
-        "onRightClickBlock"
-      ],
+      "category": "Miscellaneous",
+      "triggers": ["onRightClickBlock"],
       "data": {
-        "skyblockaddon": [],
-        "items": [],
-        "blocks": [
-          "davespotioneering:.*"
-        ],
-        "entities": []
-      },
-      "priority": 20,
-      "order": 1
+        "block": ["davespotioneering:.*"]
+      }
     }
   ]
 }

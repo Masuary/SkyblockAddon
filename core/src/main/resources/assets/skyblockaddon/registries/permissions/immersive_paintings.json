@@ -1,0 +1,26 @@
+{
+  "mod": "immersive_paintings",
+  "permissions": [
+    {
+      "id": "immersive_paintings_interact",
+      "priority": 10,
+      "item": {
+        "display_name": [
+          "{\"text\": \"Immersive Paintings\", \"color\": \"green\", \"bold\": \"true\"}"
+        ],
+        "item": "minecraft:painting",
+        "lore": [
+          [{"text": "» Click to toggle the status of this permission for %data_group_name%.", "color": "dark_gray"}],
+          [{"text": " ", "color": "dark_gray"}],
+          [{"text": "♦ Status: ", "color": "dark_gray"}, {"text": "%data_status% ", "color": "white"}],
+          [{"text": "♦ Allows: ", "color": "dark_gray"}, {"text": "Editing/re-uploading the image on placed Immersive Paintings and Graffiti (regular and glowing).", "color": "white"}]
+        ]
+      },
+      "category": "Miscellaneous",
+      "triggers": ["onRightClickEntity"],
+      "data": {
+        "entity": ["immersive_paintings:.*"]
+      }
+    }
+  ]
+}
