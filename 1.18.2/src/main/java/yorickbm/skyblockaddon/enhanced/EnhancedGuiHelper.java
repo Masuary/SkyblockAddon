@@ -15,6 +15,8 @@ import net.minecraftforge.server.ServerLifecycleHooks;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,6 +35,18 @@ public final class EnhancedGuiHelper {
             lore.add(StringTag.valueOf(Component.Serializer.toJson(line)));
         }
         display.put("Lore", lore);
+    }
+
+    public static List<Component> lore(ItemStack item) {
+        CompoundTag display = item.getTagElement("display");
+        if (display == null || !display.contains("Lore")) return List.of();
+        List<Component> lines = new ArrayList<>();
+        ListTag lore = display.getList("Lore", 8);
+        for (int i = 0; i < lore.size(); i++) {
+            Component line = Component.Serializer.fromJson(lore.getString(i));
+            if (line != null) lines.add(line);
+        }
+        return lines;
     }
 
     public static ItemStack getPlayerHead(UUID playerUuid) {

@@ -1,27 +1,38 @@
 package yorickbm.skyblockaddon.enhanced;
 
 import com.masuary.masugui.api.MasuGui;
-import com.masuary.masugui.element.*;
 import com.masuary.masugui.element.Button;
-import com.masuary.masugui.element.Label;
-import com.masuary.masugui.element.Panel;
+import com.masuary.masugui.element.ButtonStyle;
+import com.masuary.masugui.element.CardGrid;
+import com.masuary.masugui.element.StatusBar;
+import com.masuary.masugui.element.Window;
+import com.masuary.masugui.element.data.Card;
+import com.masuary.masugui.element.data.Chip;
+import com.masuary.masugui.element.data.KeyHint;
 import com.masuary.masugui.fallback.FallbackType;
-import net.minecraft.ChatFormatting;
 import net.minecraft.commands.Commands;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import yorickbm.guilibrary.GUILibraryRegistry;
-import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
-import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.util.UsernameCache;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+
+/** The island menu: one card per action with its current state; staff-only actions are hidden from members. */
 public final class IslandHubGui {
 
-    private static final int WIDTH = 240;
-    private static final int HEIGHT = 164;
+    private static final int WIDTH = 320;
+    private static final int HEIGHT = 168;
+
+    private record Action(Card card, Consumer<ServerPlayer> run) {
+    }
 
     private IslandHubGui() {}
 
@@ -40,106 +51,54 @@ public final class IslandHubGui {
                 || player.hasPermissions(Commands.LEVEL_ADMINS)
                 || hasAdminGroupPermission;
         boolean isPart = island.isPartOf(player.getUUID());
+        String rawBiome = island.getBiome() != null ? island.getBiome() : "Unknown";
+        String biome = rawBiome.contains(":") ? rawBiome.substring(rawBiome.indexOf(':') + 1) : rawBiome;
+        String visibility = island.isVisible() ? "Public" : "Private";
+
+        List<Action> actions = new ArrayList<>();
+        actions.add(new Action(Card.of(new ItemStack(Items.ENDER_PEARL), "Teleport", "Go to the island spawn"), p -> {
+            MasuGui.closeFor(p);
+            island.teleportTo(p);
+        }));
+        if (isAdmin) {
+            actions.add(new Action(Card.of(new ItemStack(Items.LODESTONE), "Set spawn", "Use your position"),
+                    p -> ConfirmSetSpawnGui.open(p, data)));
+        }
+        actions.add(new Action(Card.of(new ItemStack(Items.ENDER_EYE), "Visibility", visibility + ", click to "
+                + (island.isVisible() ? "hide" : "show")), p -> {
+            island.toggleVisibility();
+            open(p, data);
+        }));
+        actions.add(new Action(Card.of(new ItemStack(Items.PLAYER_HEAD), "Members", island.getMembers().size() + " members"),
+                p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:members", data)));
+        if (isAdmin) {
+            actions.add(new Action(Card.of(new ItemStack(Items.GRASS_BLOCK), "Biome", biome),
+                    p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:biomes", data)));
+            actions.add(new Action(Card.of(new ItemStack(Items.WRITABLE_BOOK), "Permissions", island.getGroups().size() + " groups"),
+                    p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:groups", data)));
+        }
 
         MasuGui gui = MasuGui.create("island_hub")
                 .title(new TextComponent(ownerName + "'s Island"))
                 .size(WIDTH, HEIGHT)
                 .fallbackType(FallbackType.CHEST_3);
-
-        gui.add(new Panel("bg", 0, 0, WIDTH, HEIGHT)
-                .color(0xE8181818).border(0x333333));
-
-        gui.add(new Button("close_btn", WIDTH - 16, 2, 12, 12)
-                .label(new TextComponent("X")).backgroundColor(0xFFAA4444).flat()
-                .onClick(MasuGui::closeFor));
-
-        gui.add(new Label("title", WIDTH / 2, 6)
-                .text(new TextComponent(ownerName + "'s Island").withStyle(ChatFormatting.GOLD))
-                .centered().scale(1.0f).shadow(true));
-
-        String rawBiome = island.getBiome() != null ? island.getBiome() : "Unknown";
-        String biome = rawBiome.contains(":") ? rawBiome.substring(rawBiome.indexOf(':') + 1) : rawBiome;
-        String visibility = island.isVisible() ? "Public" : "Private";
-        gui.add(new Label("info", WIDTH / 2, 18)
-                .text(new TextComponent("Biome: " + biome + "  |  " + visibility))
-                .color(0xFFAAAAAA).centered().scale(0.7f));
-
-        gui.add(new Divider("header_div", 8, 28, WIDTH - 16)
-                .horizontal().color(0xFF3A3A3A));
-
-        gui.add(new Label("actions_label", 62, 33)
-                .text(new TextComponent("Quick Actions"))
-                .color(0xFF888888).centered().scale(0.7f));
-        gui.add(new Label("manage_label", 178, 33)
-                .text(new TextComponent("Management"))
-                .color(0xFF888888).centered().scale(0.7f));
-
-        gui.add(new Divider("col_div", WIDTH / 2, 30, HEIGHT - 60)
-                .vertical().color(0xFF2A2A2A));
-
-        gui.add(new Button("teleport_btn", 10, 44, 104, 18)
-                .label(new TextComponent("Teleport")).backgroundColor(0xFF383838).flat()
-                .onClick(p -> {
-                    MasuGui.closeFor(p);
-                    island.teleportTo(p);
+        gui.add(new Window("window", WIDTH, HEIGHT).title(new TextComponent(ownerName + "'s Island")).accent(EnhancedDialog.ACCENT)
+                .chip(Chip.of("", biome, 0xAAAAAA))
+                .chip(Chip.of("", visibility, island.isVisible() ? 0x55FF55 : 0xAAAAAA))
+                .chip(Chip.of("Members", String.valueOf(island.getMembers().size()), 0xFFFFFF))
+                .fallbackIcon(new ItemStack(Items.GRASS_BLOCK)));
+        gui.add(new CardGrid("actions", 8, 28, WIDTH - 16, 108).columns(2).cardHeight(32).gap(4)
+                .cards(actions.stream().map(Action::card).toList())
+                .onClick((p, index, click) -> {
+                    if (index >= 0 && index < actions.size()) actions.get(index).run().accept(p);
                 }));
-
-        if (isAdmin) {
-            gui.add(new Button("spawn_btn", 10, 66, 104, 18)
-                    .label(new TextComponent("Set Spawn")).backgroundColor(0xFF383838).flat()
-                    .onClick(p -> ConfirmSetSpawnGui.open(p, data)));
-        }
-
-        String visibilityLabel = island.isVisible() ? "Visibility: Public" : "Visibility: Private";
-        gui.add(new Button("visibility_btn", 10, 88, 104, 18)
-                .label(new TextComponent(visibilityLabel)).backgroundColor(0xFF383838).flat()
-                .onClick(p -> {
-                    island.toggleVisibility();
-                    open(p, data);
-                }));
-
-        if (isAdmin) {
-            gui.add(new Button("members_btn", 126, 44, 104, 18)
-                    .label(new TextComponent("Members")).backgroundColor(0xFF383838).flat()
-                    .onClick(p -> {
-                        MasuGui.closeFor(p);
-                        GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:members", data);
-                    }));
-
-            gui.add(new Button("biome_btn", 126, 66, 104, 18)
-                    .label(new TextComponent("Biome")).backgroundColor(0xFF383838).flat()
-                    .onClick(p -> {
-                        MasuGui.closeFor(p);
-                        GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:biomes", data);
-                    }));
-
-            gui.add(new Button("permissions_btn", 126, 88, 104, 18)
-                    .label(new TextComponent("Permissions")).backgroundColor(0xFF383838).flat()
-                    .onClick(p -> {
-                        MasuGui.closeFor(p);
-                        GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:groups", data);
-                    }));
-        } else {
-            gui.add(new Button("members_btn", 126, 44, 104, 18)
-                    .label(new TextComponent("Members")).backgroundColor(0xFF383838).flat()
-                    .onClick(p -> {
-                        MasuGui.closeFor(p);
-                        GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:members", data);
-                    }));
-        }
-
-        gui.add(new Divider("footer_div", 8, HEIGHT - 30, WIDTH - 16)
-                .horizontal().color(0xFF3A3A3A));
-
         if (isPart) {
-            gui.add(new Button("leave_btn", 10, HEIGHT - 24, 70, 16)
-                    .label(new TextComponent("Leave Island")).backgroundColor(0xFFAA4444).flat()
-                    .onClick(p -> {
-                        MasuGui.closeFor(p);
-                        ConfirmLeaveGui.open(p, data);
-                    }));
+            gui.add(new Button("leave", 8, HEIGHT - 31, 80, 15).style(ButtonStyle.DANGER)
+                    .label(new TextComponent("Leave island"))
+                    .onClick(p -> ConfirmLeaveGui.open(p, data)).fallbackSlot(18));
         }
-
+        gui.add(new StatusBar("status", 1, HEIGHT - 13, WIDTH - 2).hints(List.of(new KeyHint("Click", "Open")))
+                .right(new TextComponent("Owner: " + ownerName)));
         gui.openFor(player);
     }
 }
