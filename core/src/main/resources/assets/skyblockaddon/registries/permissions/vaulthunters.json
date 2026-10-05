@@ -64,7 +64,9 @@
           "supplementaries:slingshot"
         ],
         "blocks": [
-          ".*:.*"
+          ".*:.*",
+          "!the_vault:vault_stone_pillar",
+          "!the_vault:vault_portal"
         ],
         "entities": []
       }
@@ -102,6 +104,7 @@
           "quark:pickarang"
         ],
         "blocks": [
+          "!storagedrawers:.*",
           "!the_vault:animal_pen"
         ],
         "entities": [
@@ -146,24 +149,23 @@
           "!.*:.*_chest",
           "!.*:chest",
           "!the_vault:.*_chest_placeable",
+          "!colossalchests:.*",
           "!minecraft:shulker_box",
           "!minecraft:.*_shulker_box",
           "!sophisticatedbackpacks:.*",
           "!.*:.*_door",
           "!.*:.*_trapdoor",
           "!easy_villagers:.*",
-          "!sophisticatedstorage:.*",
+          "!storagedrawers:.*",
           "!ae2:.*",
           "!refinedstorage:.*",
           "!.*:.*_spawn_egg",
           "!minecraft:repeater",
           "!minecraft:comparator",
-          "!create:pulse_repeater",
-          "!create:pulse_extender",
-          "!create:powered_latch",
-          "!create:powered_toggle_latch",
           "!minecraft:daylight_detector",
           "!minecraft:note_block",
+          "!blockcarpentry:frame_daylight_detector",
+          "!blockcarpentry:illusion_daylight_detector",
           "!minecraft:lever",
           "!.*:.*_button",
           "!.*:.*_button_.*",
@@ -176,6 +178,13 @@
           "!create:linked_controller",
           "!create:redstone_link",
           "!the_vault:vault_altar",
+          "!the_vault:greed_cauldron",
+          "!the_vault:augment_station",
+          "!the_vault:reclamation_altar",
+          "!the_vault:relic_crafting_table",
+          "!the_vault:unique_wardrobe",
+          "!the_vault:modifier_discovery",
+          "!the_vault:alchemy_archive",
           "!the_vault:inscription_table",
           "!the_vault:crystal_workbench",
           "!the_vault:catalyst_infusion_table",
@@ -206,6 +215,8 @@
           "!the_vault:animatrix_block",
           "!the_vault:.*_crate_.*",
           "!the_vault:.*_crate",
+          "!the_vault:cryo_chamber",
+          "!the_vault:eternal_pedestal",
           "!the_vault:artifact_projector_block",
           "!the_vault:vault_recycler",
           "!the_vault:vault_diffuser",
@@ -218,14 +229,51 @@
           "!the_vault:spectator_terminal",
           "!the_vault:identification_stand",
           "!the_vault:treasure_pedestal",
-          "!the_vault:greed_cauldron",
-          "!the_vault:augment_station",
-          "!the_vault:reclamation_altar",
-          "!the_vault:relic_crafting_table",
+          "!the_vault:soul_harvester",
           "!the_vault:player_customisation_station",
-          "!the_vault:unique_wardrobe",
-          "!the_vault:modifier_discovery",
-          "!the_vault:alchemy_archive"
+          "!woldsvaults:augment_crafting_table",
+          "!woldsvaults:chromatic_steel_vault_infuser",
+          "!woldsvaults:chromatic_iron_vault_infuser",
+          "!woldsvaults:weaving_station",
+          "!woldsvaults:mod_box_workstation",
+          "!woldsvaults:doll_dismantler",
+          "!woldsvaults:crate_cracker",
+          "!woldsvaults:vault_salager",
+          "!vending_companions:companion_vending_machine",
+          "!companion_work_station:companion_recycler",
+          "!companion_work_station:companion_workbench",
+          "!pneumaticcraft:.*",
+          "!sfm:.*",
+          "!occultism:.*",
+          "!ars_nouveau:.*",
+          "!immersiveengineering:.*",
+          "!industrialforegoing:.*",
+          "!rftoolsbase:.*",
+          "!rftoolsutility:.*",
+          "!rftoolspower:.*",
+          "!rftoolsstorage:.*",
+          "!davespotioneering:.*",
+          "!mysticalagriculture:.*",
+          "!cloudstorage:.*",
+          "!toms_storage:.*",
+          "!functionalstorage:.*",
+          "!sophisticatedstorage:.*",
+          "!ae2things:.*",
+          "!megacells:.*",
+          "!appbot:.*",
+          "!appmek:.*",
+          "!extrastorage:.*",
+          "!integrateddynamics:.*",
+          "!integratednbt:.*",
+          "!integratedterminals:.*",
+          "!integratedtunnels:.*",
+          "!integratedcrafting:.*",
+          "!woldsvaults:vault_crate_.*",
+          "!mekanism:.*",
+          "!thermal:.*",
+          "!create:.*",
+          "!botania:.*",
+          "!mining_dimension:.*"
         ],
         "entities": []
       }
@@ -333,7 +381,7 @@
       "id": "activate_waystones",
       "item": {
         "display_name": [
-          "{\"text\": \"Activate Waystones\", \"color\":\"blue\", \"bold\":\"true\"}"
+          "{\"text\": \"Activate Waystones & Mining Dimension\", \"color\":\"blue\", \"bold\":\"true\"}"
         ],
         "item": "waystones:WAYSTONE",
         "lore": [
@@ -357,7 +405,8 @@
         "skyblockaddon": [],
         "items": [],
         "blocks": [
-          "waystones:waystone"
+          "waystones:waystone",
+          "mining_dimension:teleporter"
         ],
         "entities": []
       }
@@ -399,7 +448,7 @@
         "skyblockaddon": [],
         "items": [],
         "blocks": [],
-        "entities": []
+        "entities": ["!create:seat"]
       }
     },
     {
@@ -471,7 +520,41 @@
         "blocks": [
           ".*:chest",
           ".*:.*_chest",
-          ".*:.*_chest_placeable"
+          ".*:.*_chest_placeable",
+          "!the_vault:enigma_chest"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "open_colossalchests",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Interact with Colossal Chests\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "colossalchests:interface_wood",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Storage",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "colossalchests:.*"
         ],
         "entities": []
       }
@@ -599,7 +682,11 @@
         "skyblockaddon": [],
         "items": [],
         "blocks": [
-          "ae2:.*"
+          "ae2:.*",
+          "ae2things:.*",
+          "megacells:.*",
+          "appbot:.*",
+          "appmek:.*"
         ],
         "entities": []
       }
@@ -630,11 +717,171 @@
         "skyblockaddon": [],
         "items": [],
         "blocks": [
-          "refinedstorage:.*"
+          "refinedstorage:.*",
+          "extrastorage:.*"
         ],
         "entities": []
       }
     },
+    {
+      "id": "open_ID",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Interact with Integrated Dynamics\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "integrateddynamics:variable",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Storage",
+      "triggers": [ "onRightClickBlock" ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "integrateddynamics:.*",
+          "integratednbt:.*",
+          "integratedterminals:.*",
+          "integratedtunnels:.*",
+          "integratedcrafting:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "open_Tom",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Interact with Toms Simple Storage Network\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "toms_storage:ts.inventory_connector",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Storage",
+      "triggers": [ "onRightClickBlock" ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "toms_storage:ts.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "open_rftools",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Interact with RFTools Storage\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "rftoolsstorage:modular_storage",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Storage",
+      "triggers": [ "onRightClickBlock" ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "rftoolsstorage:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "open_cloud",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Interact with Cloud Storage\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "cloudstorage:static_cloud_chest",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Storage",
+      "triggers": [ "onRightClickBlock" ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "cloudstorage:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "open_sophstorage",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Interact with Sophisticated Storage\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "sophisticatedstorage:diamond_chest",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Storage",
+      "triggers": [ "onRightClickBlock" ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "sophisticatedstorage:.*"
+        ],
+        "entities": []
+      }
+    },     
     {
       "id": "interact_doors",
       "item": {
@@ -731,12 +978,12 @@
       }
     },
     {
-      "id": "interact_sophisticated_storage",
+      "id": "interact_storage_drawers",
       "item": {
         "display_name": [
-          "{\"text\": \"Interact with Sophisticated Storage\", \"color\":\"blue\", \"bold\":\"true\"}"
+          "{\"text\": \"Interact with Storage Drawers\", \"color\":\"blue\", \"bold\":\"true\"}"
         ],
-        "item": "sophisticatedstorage:controller",
+        "item": "storagedrawers:controller",
         "lore": [
           [
             "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
@@ -759,7 +1006,41 @@
         "skyblockaddon": [],
         "items": [],
         "blocks": [
-          "sophisticatedstorage:.*"
+          "storagedrawers:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "interact_functional_drawers",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Interact with Functional Storage\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "functionalstorage:storage_controller",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Storage",
+      "triggers": [
+        "onRightClickBlock",
+        "onLeftClickBlock"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "functionalstorage:.*"
         ],
         "entities": []
       }
@@ -1093,7 +1374,9 @@
         "items": [],
         "blocks": [
           "minecraft:daylight_detector",
-          "minecraft:note_block"
+          "minecraft:note_block",
+          "blockcarpentry:frame_daylight_detector",
+          "blockcarpentry:illusion_daylight_detector"
         ],
         "entities": []
       }
@@ -1244,6 +1527,49 @@
       }
     },
     {
+      "id": "rftools_redstone",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Interact with Rftools Redstone\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "rftoolsutility:logic",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Redstone",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "rftoolsutility:analog",
+          "rftoolsutility:counter",
+          "rftoolsutility:digit",
+          "rftoolsutility:invchecker",
+          "rftoolsutility:sensor",
+          "rftoolsutility:sequencer",
+          "rftoolsutility:logic",
+          "rftoolsutility:timer",
+          "rftoolsutility:wire",
+          "rftoolsutility:redstone_receiver",
+          "rftoolsutility:redstone_transmitter"
+        ],
+        "entities": []
+      }
+    },
+    {
       "id": "vh_crystals_crafting",
       "item": {
         "display_name": [
@@ -1263,7 +1589,7 @@
           ],
           [
             "{\"text\":\"\u2666 Contains: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"Vault Altar, Greed Cauldron, Inscription Table, Crystal Workbench, Catalyst Infusion Table\",\"color\":\"white\"}"
+            "{\"text\":\"Vault Altar, Greed Cauldron, Inscription Table, Crystal Workbench, Catalyst Infusion Table, Augment Assembly Pedestal\",\"color\":\"white\"}"
           ]
         ]
       },
@@ -1279,7 +1605,8 @@
           "the_vault:greed_cauldron",
           "the_vault:inscription_table",
           "the_vault:crystal_workbench",
-          "the_vault:catalyst_infusion_table"
+          "the_vault:catalyst_infusion_table",
+          "woldsvaults:augment_crafting_table"
         ],
         "entities": []
       }
@@ -1347,7 +1674,7 @@
           ],
           [
             "{\"text\":\"\u2666 Contains: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"Vault Jewel Application Station, Jewel Crafting Table, Unboxing Station, Trinket Forge, Relic Crafting Table\",\"color\":\"white\"}"
+            "{\"text\":\"Vault Jewel Application Station, Jewel Crafting Table, Unboxing Station, Trinket Forge, Relic Crafting Table, Weaving Station\",\"color\":\"white\"}"
           ]
         ]
       },
@@ -1361,7 +1688,8 @@
           "the_vault:jewel_crafting_table",
           "the_vault:unboxing_station",
           "the_vault:trinket_forge",
-          "the_vault:relic_crafting_table"
+          "the_vault:relic_crafting_table",
+          "woldsvaults:weaving_station"
         ],
         "items": [],
         "entities": []
@@ -1493,7 +1821,7 @@
           ],
           [
             "{\"text\":\"\u2666 Contains: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"Companion Incubator, Companion Home\",\"color\":\"white\"}"
+            "{\"text\":\"Companion Incubator, Companion Home, Companion Workbench, Companion Recycler, Companion Vending Machine\",\"color\":\"white\"}"
           ]
         ]
       },
@@ -1502,7 +1830,10 @@
       "data": {
         "blocks": [
           "the_vault:companion_incubator",
-          "the_vault:companion_home"
+          "the_vault:companion_home",
+          "companion_work_station:companion_workbench",
+          "companion_work_station:companion_recycler",
+          "vending_companions:companion_vending_machine"
         ],
         "items": [],
         "entities": []
@@ -1589,7 +1920,7 @@
         "display_name": [
           "{\"text\": \"Crates\", \"color\":\"yellow\", \"bold\":\"true\"}"
         ],
-        "item": "the_vault:vault_crate",
+        "item": "sophisticatedstorage:unique_crate",
         "lore": [
           [
             "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
@@ -1603,7 +1934,7 @@
           ],
           [
             "{\"text\":\"\u2666 Contains: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"All Vault Crates\",\"color\":\"white\"}"
+            "{\"text\":\"All Vault Crates, Crate Cracker\",\"color\":\"white\"}"
           ]
         ]
       },
@@ -1612,7 +1943,44 @@
       "data": {
         "blocks": [
           "the_vault:.*_crate_.*",
-          "the_vault:.*_crate"
+          "the_vault:.*_crate",
+          "woldsvaults:vault_crate_.*",
+          "woldsvaults:crate_cracker"
+        ],
+        "items": [],
+        "entities": []
+      }
+    },
+    {
+      "id": "vh_eternals",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Eternals\", \"color\":\"yellow\", \"bold\":\"true\"}"
+        ],
+        "item": "the_vault:eternal_pedestal",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Contains: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"Cryo Chamber, Eternal Pedestal\",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Vaulthunters",
+      "triggers": ["onRightClickBlock"],
+      "data": {
+        "blocks": [
+          "the_vault:cryo_chamber",
+          "the_vault:eternal_pedestal"
         ],
         "items": [],
         "entities": []
@@ -1672,7 +2040,7 @@
           ],
           [
             "{\"text\":\"\u2666 Contains: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"Recycler, Diffuser, Harvester, Charm Controller, Reclamation Altar\",\"color\":\"white\"}"
+            "{\"text\":\"Recycler, Salvager, Diffuser, Harvester, Charm Controller, Reclamation Altar, Doll Blender\",\"color\":\"white\"}"
           ]
         ]
       },
@@ -1684,7 +2052,9 @@
           "the_vault:vault_diffuser",
           "the_vault:vault_harvester",
           "the_vault:vault_charm_controller",
-          "the_vault:reclamation_altar"
+          "the_vault:reclamation_altar",
+          "woldsvaults:vault_salager",
+          "woldsvaults:doll_dismantler"
         ],
         "items": [],
         "entities": []
@@ -1710,7 +2080,7 @@
           ],
           [
             "{\"text\":\"\u2666 Contains: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"Transmog Table, Bounty Block, Black Market, Vault Anvil, Spectator Terminal, Identification Stand, Treasure Pedestal\",\"color\":\"white\"}"
+            "{\"text\":\"Transmog Table, Bounty Block, Black Market, Vault Anvil, Spectator Terminal, Identification Stand, Treasure Pedestal, Artifact Projector, Mod Box Workstation, Chromatic Iron Vault Infuser, Chromatic Steel Vault Infuser, Soul Harvester\",\"color\":\"white\"}"
           ]
         ]
       },
@@ -1725,9 +2095,449 @@
           "the_vault:spectator_terminal",
           "the_vault:identification_stand",
           "the_vault:treasure_pedestal",
-          "the_vault:artifact_projector_block"
+          "the_vault:artifact_projector_block",
+          "woldsvaults:mod_box_workstation",
+          "woldsvaults:chromatic_iron_vault_infuser",
+          "woldsvaults:chromatic_steel_vault_infuser",
+          "the_vault:soul_harvester"
         ],
         "items": [],
+        "entities": []
+      }
+    },
+    {
+      "id": "mod_mekanism",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Mekanism\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "mekanism:alloy_atomic",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Mods",
+      "triggers": ["onRightClickBlock"],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "mekanism:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "mod_thermal",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Thermal\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "thermal:machine_speed_augment",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Mods",
+      "triggers": ["onRightClickBlock"],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "thermal:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "mod_create",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Create\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "create:large_cogwheel",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Mods",
+      "triggers": ["onRightClickBlock"],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "create:.*",
+          "!create:.*seat"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "mod_botania",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Botania\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "botania:lexicon",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Mods",
+      "triggers": ["onRightClickBlock"],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "botania:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "mod_pneumaticcraft",
+      "item": {
+        "display_name": [
+          "{\"text\": \"PneumaticCraft\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "pneumaticcraft:pressure_gauge",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Mods",
+      "triggers": ["onRightClickBlock"],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "pneumaticcraft:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "mod_immersiveengineering",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Immersive Engineering\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "immersiveengineering:hammer",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Mods",
+      "triggers": ["onRightClickBlock"],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "immersiveengineering:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "mod_industrialforegoing",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Industrial Foregoing\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "industrialforegoing:machine_frame_pity",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Mods",
+      "triggers": ["onRightClickBlock"],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "industrialforegoing:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "mod_rftoolsbase",
+      "item": {
+        "display_name": [
+          "{\"text\": \"RFTools Base\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "rftoolsbase:machine_frame",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Mods",
+      "triggers": ["onRightClickBlock"],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "rftoolsbase:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "mod_rftoolspower",
+      "item": {
+        "display_name": [
+          "{\"text\": \"RFTools Power\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "rftoolspower:coalgenerator",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Mods",
+      "triggers": ["onRightClickBlock"],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "rftoolspower:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "mod_sfm",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Super Factory Manager\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "sfm:manager",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Mods",
+      "triggers": ["onRightClickBlock"],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "sfm:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "mod_occultism",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Occultism\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "occultism:storage_controller",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Mods",
+      "triggers": ["onRightClickBlock"],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "occultism:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "mod_ars_nouveau",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Ars Nouveau\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "ars_nouveau:arcane_core",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Mods",
+      "triggers": ["onRightClickBlock"],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "ars_nouveau:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "mod_mysticalagriculture",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Mystical Agriculture\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "mysticalagriculture:master_infusion_crystal",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Mods",
+      "triggers": ["onRightClickBlock"],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "mysticalagriculture:.*",
+          "mysticalagradditions:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "mod_davespotioneering",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Dave's Potioneering\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "davespotioneering:compound_brewing_stand",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Mods",
+      "triggers": ["onRightClickBlock"],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "davespotioneering:.*"
+        ],
         "entities": []
       }
     },

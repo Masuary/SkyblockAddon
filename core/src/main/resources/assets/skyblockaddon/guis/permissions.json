@@ -110,6 +110,28 @@
     },{
       "item": {
         "display_name": [
+          "{\"text\": \"Mods\", \"color\":\"blue\",\"bold\": true}"
+        ],
+        "item": "minecraft:piston",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Change mod-specific permissions.\",\"color\":\"dark_gray\"}"
+          ]
+        ],
+        "data": {
+          "category_id": "mods"
+        }
+      },
+      "slot": 13,
+      "action": {
+        "onClick": "yorickbm.guilibrary.events.ItemOpenMenuEvent",
+        "data": {
+          "gui": "skyblockaddon:set_permission"
+        }
+      }
+    },{
+      "item": {
+        "display_name": [
           "{\"text\": \"Interactables\", \"color\":\"blue\",\"bold\": true}"
         ],
         "item": "minecraft:crafting_table",
