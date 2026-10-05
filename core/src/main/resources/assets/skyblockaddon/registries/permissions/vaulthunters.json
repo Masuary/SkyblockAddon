@@ -64,7 +64,8 @@
           "supplementaries:slingshot"
         ],
         "blocks": [
-          ".*:.*"
+          ".*:.*",
+          "!minecraft:player_head"
         ],
         "entities": []
       }
@@ -155,6 +156,7 @@
           "!sophisticatedstorage:.*",
           "!ae2:.*",
           "!refinedstorage:.*",
+          "!extrastorage:.*",
           "!.*:.*_spawn_egg",
           "!minecraft:repeater",
           "!minecraft:comparator",
@@ -630,7 +632,8 @@
         "skyblockaddon": [],
         "items": [],
         "blocks": [
-          "refinedstorage:.*"
+          "refinedstorage:.*",
+          "extrastorage:.*"
         ],
         "entities": []
       }
