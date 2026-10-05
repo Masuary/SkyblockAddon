@@ -1,14 +1,21 @@
 package yorickbm.skyblockaddon.enhanced;
 
 import com.masuary.masugui.api.MasuGui;
-import com.masuary.masugui.element.*;
 import com.masuary.masugui.element.Button;
-import com.masuary.masugui.element.Label;
-import com.masuary.masugui.element.Panel;
+import com.masuary.masugui.element.ButtonStyle;
+import com.masuary.masugui.element.ListView;
+import com.masuary.masugui.element.Section;
+import com.masuary.masugui.element.StatusBar;
+import com.masuary.masugui.element.Window;
+import com.masuary.masugui.element.data.Cell;
+import com.masuary.masugui.element.data.Chip;
+import com.masuary.masugui.element.data.KeyHint;
+import com.masuary.masugui.element.data.ListColumn;
+import com.masuary.masugui.element.data.ListRow;
 import com.masuary.masugui.fallback.FallbackType;
-import com.masuary.masugui.session.GuiSessionManager;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.resources.ResourceLocation;
@@ -18,7 +25,6 @@ import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.registries.ForgeRegistries;
 import yorickbm.guilibrary.GUILibraryRegistry;
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
-import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
@@ -31,18 +37,12 @@ import yorickbm.skyblockaddon.islands.ForgeIslandGroup;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/** The island lists (travel, members, biomes, groups, group members, assign group) as named rows with a back button. */
 public final class ScrollableListGui {
 
-    private static final int COLUMNS = 9;
-    private static final int CELL_SIZE = 18;
-    private static final int GUI_WIDTH = 220;
-    private static final int GRID_X = (GUI_WIDTH - COLUMNS * CELL_SIZE) / 2;
-    private static final int HEADER_HEIGHT = 30;
-    private static final int NAV_HEIGHT = 18;
-    private static final int MIN_HEIGHT = 140;
-    private static final int MAX_HEIGHT = 260;
-
-    private static final int GROUP_COLUMNS = 5;
+    private static final int WIDTH = 300;
+    private static final int HEIGHT = 214;
+    private static final int LIST_TOP = 34;
 
     private ScrollableListGui() {}
 
@@ -51,86 +51,34 @@ public final class ScrollableListGui {
             openGroupsLayout(player, data, variant);
             return;
         }
-
         openGenericList(player, data, variant);
     }
 
-    private static void openGenericList(ServerPlayer player, CompoundTag data, String variant) {
+    private static MasuGui frame(String variant, CompoundTag data, int count) {
         String title = resolveTitle(data, variant);
-        String subtitle = resolveSubtitle(data, variant);
-        List<ItemStack> items = buildItems(player, data, variant);
         String backTarget = resolveBackTarget(variant);
-
-        int itemCount = items.size();
-        int gridRows = Math.max(1, (itemCount + COLUMNS - 1) / COLUMNS);
-        int gridHeight = gridRows * CELL_SIZE;
-
-        int contentHeight = HEADER_HEIGHT + gridHeight + 4 + NAV_HEIGHT + 6;
-        int totalHeight = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, contentHeight));
-
-        boolean needsScroll = contentHeight > MAX_HEIGHT;
-        int displayRows = needsScroll
-                ? Math.max(1, (MAX_HEIGHT - HEADER_HEIGHT - NAV_HEIGHT - 10) / CELL_SIZE)
-                : gridRows;
-
-        if (needsScroll) {
-            totalHeight = MAX_HEIGHT;
-        }
-
-        int navY = totalHeight - NAV_HEIGHT - 4;
-        int navDivY = navY - 4;
-
         MasuGui gui = MasuGui.create("scrollable_list_" + variant)
                 .title(new TextComponent(title))
-                .size(GUI_WIDTH, totalHeight)
+                .size(WIDTH, HEIGHT)
                 .fallbackType(FallbackType.CHEST_6);
+        Window window = new Window("window", WIDTH, HEIGHT).title(new TextComponent(title)).accent(EnhancedDialog.ACCENT)
+                .chip(Chip.of("", String.valueOf(count), 0xFFFFFF));
+        if (backTarget != null) window.onBack(p -> GUILibraryRegistry.openGUIForPlayer(p, backTarget, data));
+        gui.add(window);
+        String subtitle = resolveSubtitle(data, variant);
+        gui.add(new StatusBar("status", 1, HEIGHT - 13, WIDTH - 2)
+                .hints(List.of(new KeyHint("Click", subtitle != null ? subtitle.replace("Click ", "") : "Select"))));
+        return gui;
+    }
 
-        gui.add(new Panel("bg", 0, 0, GUI_WIDTH, totalHeight)
-                .color(0xE8181818).border(0x333333));
-
-        gui.add(new Button("close_btn", GUI_WIDTH - 16, 2, 12, 12)
-                .label(new TextComponent("X")).backgroundColor(0xFFAA4444).flat()
-                .onClick(MasuGui::closeFor));
-
-        gui.add(new Label("title", GUI_WIDTH / 2, 6)
-                .text(new TextComponent(title).withStyle(ChatFormatting.GOLD))
-                .centered().scale(1.0f).shadow(true));
-
-        if (subtitle != null) {
-            gui.add(new Label("subtitle", GUI_WIDTH / 2, 18)
-                    .text(new TextComponent(subtitle))
-                    .color(0xFFAAAAAA).centered().scale(0.7f));
-        }
-
-        gui.add(new Divider("header_div", 8, HEADER_HEIGHT - 2, GUI_WIDTH - 16)
-                .horizontal().color(0xFF3A3A3A));
-
-        ItemGrid grid = new ItemGrid("list_grid", GRID_X, HEADER_HEIGHT, COLUMNS, displayRows)
-                .items(items)
-                .hoverHighlight(0xFF55FFFF)
-                .onClick((p, idx) -> {});
-        if (needsScroll) {
-            grid.clientSideScroll(true);
-        }
-        gui.add(grid);
-
-        gui.add(new Divider("nav_div", 8, navDivY, GUI_WIDTH - 16)
-                .horizontal().color(0xFF3A3A3A));
-
-        gui.add(new Button("back_btn", 10, navY, 32, 14)
-                .label(new TextComponent("Back")).backgroundColor(0xFFAA4444).flat()
-                .onClick(p -> {
-                    MasuGui.closeFor(p);
-                    if (backTarget != null) {
-                        GUILibraryRegistry.openGUIForPlayer(p, backTarget, data);
-                    }
-                }));
-
+    private static void openGenericList(ServerPlayer player, CompoundTag data, String variant) {
+        List<ItemStack> items = buildItems(player, data, variant);
+        MasuGui gui = frame(variant, data, items.size());
+        gui.add(new Section("list_header", 1, 21, WIDTH - 2).label(new TextComponent(resolveTitle(data, variant))));
+        gui.add(new ListView("list", 1, LIST_TOP, WIDTH - 2, HEIGHT - LIST_TOP - 14).rows(rows(items))
+                .emptyText(new TextComponent("Nothing here yet"))
+                .onClick((p, index, click) -> handleItemClick(p, data, variant, index, items)));
         gui.openFor(player);
-
-        GuiSessionManager.getSession(player.getUUID()).ifPresent(session ->
-                session.registerIndexedButtonClickHandler("list_grid", (p, idx, click) ->
-                        handleItemClick(p, data, variant, idx, items)));
     }
 
     private static void openGroupsLayout(ServerPlayer player, CompoundTag data, String variant) {
@@ -138,130 +86,46 @@ public final class ScrollableListGui {
         Island island = IslandManager.getInstance().getIslandByUUID(data.getUUID("island_id"));
         if (island == null) return;
 
-        String title = resolveTitle(data, variant);
-        String subtitle = resolveSubtitle(data, variant);
-        String backTarget = resolveBackTarget(variant);
-
         List<ItemStack> defaultItems = buildDefaultGroupItems(island);
         List<ItemStack> customItems = buildCustomGroupItems(island);
+        MasuGui gui = frame(variant, data, defaultItems.size() + customItems.size());
 
-        int labelWidth = 42;
-        int gridX = labelWidth + (GUI_WIDTH - labelWidth - GROUP_COLUMNS * CELL_SIZE) / 2;
-        int defaultRows = Math.max(1, (defaultItems.size() + GROUP_COLUMNS - 1) / GROUP_COLUMNS);
+        int defaultHeight = Math.max(1, defaultItems.size()) * 18;
+        gui.add(new Section("default_header", 1, 21, WIDTH - 2).label(new TextComponent("Default groups"))
+                .right(new TextComponent("Members")));
+        gui.add(new ListView("default_groups", 1, LIST_TOP, WIDTH - 2, defaultHeight).rows(rows(defaultItems))
+                .columns(List.of(ListColumn.of("", 8)))
+                .onClick((p, index, click) -> handleItemClick(p, data, variant, index, defaultItems)));
 
-        int y = HEADER_HEIGHT;
-        int defaultGridHeight = defaultRows * CELL_SIZE;
-        int dividerY = y + defaultGridHeight + 4;
-
-        boolean hasCustomGroups = !customItems.isEmpty();
-        int customRows = hasCustomGroups
-                ? Math.max(1, (customItems.size() + GROUP_COLUMNS - 1) / GROUP_COLUMNS)
-                : 0;
-        int customGridHeight = customRows * CELL_SIZE;
-        int customSectionHeight = hasCustomGroups ? customGridHeight : 12;
-
-        int contentHeight = HEADER_HEIGHT + defaultGridHeight + 4 + 2 + customSectionHeight + 8 + NAV_HEIGHT + 6;
-        int totalHeight = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, contentHeight));
-
-        int navY = totalHeight - NAV_HEIGHT - 4;
-        int navDivY = navY - 4;
-
-        MasuGui gui = MasuGui.create("scrollable_list_" + variant)
-                .title(new TextComponent(title))
-                .size(GUI_WIDTH, totalHeight)
-                .fallbackType(FallbackType.CHEST_6);
-
-        gui.add(new Panel("bg", 0, 0, GUI_WIDTH, totalHeight)
-                .color(0xE8181818).border(0x333333));
-
-        gui.add(new Button("close_btn", GUI_WIDTH - 16, 2, 12, 12)
-                .label(new TextComponent("X")).backgroundColor(0xFFAA4444).flat()
-                .onClick(MasuGui::closeFor));
-
-        gui.add(new Label("title", GUI_WIDTH / 2, 6)
-                .text(new TextComponent(title).withStyle(ChatFormatting.GOLD))
-                .centered().scale(1.0f).shadow(true));
-
-        if (subtitle != null) {
-            gui.add(new Label("subtitle", GUI_WIDTH / 2, 18)
-                    .text(new TextComponent(subtitle))
-                    .color(0xFFAAAAAA).centered().scale(0.7f));
-        }
-
-        gui.add(new Divider("header_div", 8, HEADER_HEIGHT - 2, GUI_WIDTH - 16)
-                .horizontal().color(0xFF3A3A3A));
-
-        int defaultLabelY = y + (defaultGridHeight - 7) / 2;
-        gui.add(new Label("default_label", 10, defaultLabelY)
-                .text(new TextComponent("Default"))
-                .color(0xFF888888).scale(0.7f));
-
-        ItemGrid defaultGrid = new ItemGrid("default_grid", gridX, y, GROUP_COLUMNS, defaultRows)
-                .items(defaultItems)
-                .hoverHighlight(0xFF55FFFF)
-                .onClick((p, idx) -> {});
-        gui.add(defaultGrid);
-
-        gui.add(new Divider("group_div", 8, dividerY, GUI_WIDTH - 16)
-                .horizontal().color(0xFF3A3A3A));
-
-        int customY = dividerY + 4;
-
-        if (hasCustomGroups) {
-            int customLabelY = customY + (customGridHeight - 7) / 2;
-            gui.add(new Label("custom_label", 10, customLabelY)
-                    .text(new TextComponent("Custom"))
-                    .color(0xFF888888).scale(0.7f));
-
-            ItemGrid customGrid = new ItemGrid("custom_grid", gridX, customY, GROUP_COLUMNS, customRows)
-                    .items(customItems)
-                    .hoverHighlight(0xFF55FFFF)
-                    .onClick((p, idx) -> {});
-            gui.add(customGrid);
-        } else {
-            gui.add(new Label("custom_label", 10, customY + 2)
-                    .text(new TextComponent("Custom"))
-                    .color(0xFF888888).scale(0.7f));
-            gui.add(new Label("no_custom", GUI_WIDTH / 2, customY + 2)
-                    .text(new TextComponent("No custom groups"))
-                    .color(0xFF555555).centered().scale(0.7f));
-        }
-
-        gui.add(new Divider("nav_div", 8, navDivY, GUI_WIDTH - 16)
-                .horizontal().color(0xFF3A3A3A));
-
-        gui.add(new Button("back_btn", 10, navY, 32, 14)
-                .label(new TextComponent("Back")).backgroundColor(0xFFAA4444).flat()
-                .onClick(p -> {
-                    MasuGui.closeFor(p);
-                    if (backTarget != null) {
-                        GUILibraryRegistry.openGUIForPlayer(p, backTarget, data);
-                    }
-                }));
+        int customTop = LIST_TOP + defaultHeight + 2;
+        int bottom = "groups".equals(variant) ? HEIGHT - 36 : HEIGHT - 14;
+        gui.add(new Section("custom_header", 1, customTop, WIDTH - 2).label(new TextComponent("Custom groups"))
+                .right(new TextComponent("Members")));
+        gui.add(new ListView("custom_groups", 1, customTop + 13, WIDTH - 2, Math.max(18, bottom - customTop - 13)).rows(rows(customItems))
+                .columns(List.of(ListColumn.of("", 8)))
+                .emptyText(new TextComponent("No custom groups"))
+                .onClick((p, index, click) -> handleItemClick(p, data, variant, index, customItems)));
 
         if ("groups".equals(variant)) {
-            gui.add(new Button("create_group_btn", GUI_WIDTH - 10 - 72, navY, 72, 14)
-                    .label(new TextComponent("Create Group")).backgroundColor(0xFF336633).flat()
-                    .onClick(p -> {
-                        MasuGui.closeFor(p);
-                        ConfirmCreateGroupGui.open(p, data);
-                    }));
+            gui.add(new Button("create_group", WIDTH - 104, HEIGHT - 33, 96, 15).style(ButtonStyle.ACCENT)
+                    .label(new TextComponent("+ Create group"))
+                    .onClick(p -> ConfirmCreateGroupGui.open(p, data)));
         }
-
         gui.openFor(player);
+    }
 
-        List<ItemStack> allItems = new ArrayList<>();
-        allItems.addAll(defaultItems);
-        allItems.addAll(customItems);
-
-        GuiSessionManager.getSession(player.getUUID()).ifPresent(session -> {
-            session.registerIndexedButtonClickHandler("default_grid", (p, idx, click) ->
-                    handleItemClick(p, data, variant, idx, defaultItems));
-            if (hasCustomGroups) {
-                session.registerIndexedButtonClickHandler("custom_grid", (p, idx, click) ->
-                        handleItemClick(p, data, variant, idx, customItems));
+    /** A row per item: its icon and name, its lore as the tooltip, and a member count for group items. */
+    private static List<ListRow> rows(List<ItemStack> items) {
+        List<ListRow> rows = new ArrayList<>();
+        for (ItemStack item : items) {
+            List<Component> lore = EnhancedGuiHelper.lore(item);
+            ListRow row = ListRow.of(item.copy(), item.getHoverName().getString()).withTooltip(lore);
+            if (item.getOrCreateTagElement("skyblockaddon").contains("group_id") && !lore.isEmpty()) {
+                row = row.withCells(Cell.of(lore.get(0).getString().replace(" members", ""), 0xAAAAAA));
             }
-        });
+            rows.add(row);
+        }
+        return rows;
     }
 
     private static void handleItemClick(ServerPlayer player, CompoundTag data, String variant,
@@ -462,7 +326,7 @@ public final class ScrollableListGui {
             Optional<String> iconItem = biomeRegistry.getDataForComponent(component);
             net.minecraft.world.item.Item itemType = Items.PAPER;
             if (iconItem.isPresent()) {
-                net.minecraft.world.item.Item resolved = ForgeRegistries.ITEMS.getValue(new ResourceLocation(iconItem.get()));
+                net.minecraft.world.item.Item resolved = ForgeRegistries.ITEMS.getValue(ResourceLocation.parse(iconItem.get()));
                 if (resolved != null && resolved != Items.AIR) {
                     itemType = resolved;
                 }

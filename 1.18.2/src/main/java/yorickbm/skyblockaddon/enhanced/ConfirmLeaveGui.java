@@ -1,26 +1,21 @@
 package yorickbm.skyblockaddon.enhanced;
 
-import com.masuary.masugui.api.MasuGui;
-import com.masuary.masugui.element.*;
-import com.masuary.masugui.element.Button;
-import com.masuary.masugui.element.Label;
-import com.masuary.masugui.element.Panel;
-import com.masuary.masugui.fallback.FallbackType;
+import com.masuary.masugui.element.ButtonStyle;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
-
-import java.util.Objects;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import yorickbm.guilibrary.GUILibraryRegistry;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.util.UsernameCache;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
 
-public final class ConfirmLeaveGui {
+import java.util.List;
+import java.util.Objects;
 
-    private static final int WIDTH = 200;
-    private static final int HEIGHT = 80;
+public final class ConfirmLeaveGui {
 
     private ConfirmLeaveGui() {}
 
@@ -32,42 +27,11 @@ public final class ConfirmLeaveGui {
         if (island == null) return;
 
         String ownerName = UsernameCache.getBlocking(island.getOwner());
-
-        MasuGui gui = MasuGui.create("confirm_leave")
-                .title(new TextComponent("Leave Island"))
-                .size(WIDTH, HEIGHT)
-                .fallbackType(FallbackType.CHEST_1);
-
-        gui.add(new Panel("bg", 0, 0, WIDTH, HEIGHT)
-                .color(0xE8181818).border(0xFF553333));
-
-        gui.add(new Label("title", WIDTH / 2, 8)
-                .text(new TextComponent("Leave Island?").withStyle(ChatFormatting.RED))
-                .centered().scale(1.0f).shadow(true));
-
-        gui.add(new Label("message", WIDTH / 2, 24)
-                .text(new TextComponent("Are you sure you want to leave"))
-                .color(0xFFCCCCCC).centered().scale(0.7f));
-
-        gui.add(new Label("message2", WIDTH / 2, 34)
-                .text(new TextComponent(ownerName + "'s island?"))
-                .color(0xFFCCCCCC).centered().scale(0.7f));
-
-        gui.add(new Button("confirm_btn", WIDTH / 2 - 72, HEIGHT - 26, 64, 16)
-                .label(new TextComponent("Leave")).backgroundColor(0xFFAA3333).flat()
-                .onClick(p -> {
-                    MasuGui.closeFor(p);
-                    Objects.requireNonNull(p.getServer()).getCommands()
-                            .performCommand(p.createCommandSourceStack(), "/island leave");
-                }));
-
-        gui.add(new Button("cancel_btn", WIDTH / 2 + 8, HEIGHT - 26, 64, 16)
-                .label(new TextComponent("Cancel")).backgroundColor(0xFF383838).flat()
-                .onClick(p -> {
-                    MasuGui.closeFor(p);
-                    GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:overview", data);
-                }));
-
-        gui.openFor(player);
+        EnhancedDialog.open(player, "confirm_leave", "Leave island?", new ItemStack(Items.TNT),
+                List.of(new TextComponent("Leave " + ownerName + "'s island?"),
+                        new TextComponent("You need a new invite to come back.").withStyle(ChatFormatting.GRAY)),
+                "Leave", ButtonStyle.DANGER,
+                p -> Objects.requireNonNull(p.getServer()).getCommands().performCommand(p.createCommandSourceStack(), "/island leave"),
+                p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:overview", data));
     }
 }

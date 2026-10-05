@@ -3,19 +3,29 @@ package yorickbm.skyblockaddon.enhanced;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.masuary.masugui.api.MasuGui;
-import com.masuary.masugui.element.*;
 import com.masuary.masugui.element.Button;
-import com.masuary.masugui.element.Checkbox;
-import com.masuary.masugui.element.Label;
-import com.masuary.masugui.element.Panel;
+import com.masuary.masugui.element.ButtonStyle;
+import com.masuary.masugui.element.ListView;
+import com.masuary.masugui.element.Section;
+import com.masuary.masugui.element.Sidebar;
+import com.masuary.masugui.element.StatusBar;
+import com.masuary.masugui.element.Window;
+import com.masuary.masugui.element.data.Cell;
+import com.masuary.masugui.element.data.KeyHint;
+import com.masuary.masugui.element.data.ListColumn;
+import com.masuary.masugui.element.data.ListRow;
+import com.masuary.masugui.element.data.SidebarEntry;
 import com.masuary.masugui.fallback.FallbackType;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import yorickbm.guilibrary.GUILibraryRegistry;
 import yorickbm.skyblockaddon.core.JSON.ItemStackJson;
+import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
@@ -27,97 +37,104 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/** A group's permissions: categories on the left, the category's rules on the right; a click toggles a rule. */
 public final class PermissionTogglesGui {
 
-    private static final int WIDTH = 240;
-    private static final int CHECKBOX_HEIGHT = 14;
-    private static final int HEADER_HEIGHT = 30;
-    private static final int NAV_HEIGHT = 18;
-    private static final int MIN_HEIGHT = 120;
-    private static final int MAX_HEIGHT = 300;
+    private static final int WIDTH = 356;
+    private static final int HEIGHT = 214;
+    private static final String[][] CATEGORIES = {
+            {"general", "General"}, {"transport", "Transport"}, {"redstone", "Redstone"}, {"storage", "Storage"},
+            {"interactables", "Interactables"}, {"vaulthunters", "Vault Hunters"}};
+    private static final String[] ADMIN_CATEGORY = {"admin_controls", "Admin"};
 
     private PermissionTogglesGui() {}
 
     public static void open(ServerPlayer player, CompoundTag data) {
         if (!data.contains("island_id") || !data.contains("group_id")) return;
-
         Island island = IslandManager.getInstance().getIslandByUUID(data.getUUID("island_id"));
         if (island == null) return;
         IslandGroup group = island.getGroup(data.getUUID("group_id"));
         if (group == null) return;
-
         String categoryId = data.getCompound(GUILibraryRegistry.MOD_ID).getString("category_id");
-        open(player, data, categoryId, group);
+        open(player, data, categoryId.isEmpty() ? CATEGORIES[0][0] : categoryId, group);
+    }
+
+    static List<String[]> categoriesFor(ServerPlayer player) {
+        List<String[]> categories = new ArrayList<>(List.of(CATEGORIES));
+        if (player.hasPermissions(2)) categories.add(ADMIN_CATEGORY);
+        return categories;
     }
 
     public static void open(ServerPlayer player, CompoundTag data, String categoryId, IslandGroup group) {
+        List<String[]> categories = categoriesFor(player);
+        int active = 0;
+        for (int i = 0; i < categories.size(); i++) {
+            if (categories.get(i)[0].equals(categoryId)) active = i;
+        }
         List<Permission> permissions = PermissionManager.getInstance().getPermissionsFor(categoryId);
-
-        String categoryName = prettifyCategory(categoryId);
-        int permCount = permissions.size();
-        int contentHeight = HEADER_HEIGHT + permCount * (CHECKBOX_HEIGHT + 2) + 4 + NAV_HEIGHT + 6;
-        int totalHeight = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, contentHeight));
-
-        int navY = totalHeight - NAV_HEIGHT - 4;
-        int navDivY = navY - 4;
+        long allowed = permissions.stream().filter(permission -> group.canDo(permission.getId())).count();
 
         MasuGui gui = MasuGui.create("permission_toggles")
-                .title(new TextComponent(categoryName + " Permissions"))
-                .size(WIDTH, totalHeight)
-                .fallbackType(FallbackType.CHEST_3);
+                .title(new TextComponent("Permissions: " + group.getName()))
+                .size(WIDTH, HEIGHT)
+                .fallbackType(FallbackType.CHEST_6);
+        gui.add(new Window("window", WIDTH, HEIGHT).title(new TextComponent("Permissions"))
+                .subtitle(new TextComponent("Group: " + group.getName())).accent(EnhancedDialog.ACCENT)
+                .onBack(p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:groups", data)));
 
-        gui.add(new Panel("bg", 0, 0, WIDTH, totalHeight)
-                .color(0xE8181818).border(0x333333));
-
-        gui.add(new Button("close_btn", WIDTH - 16, 2, 12, 12)
-                .label(new TextComponent("X")).backgroundColor(0xFFAA4444).flat()
-                .onClick(MasuGui::closeFor));
-
-        gui.add(new Label("title", WIDTH / 2, 6)
-                .text(new TextComponent(categoryName + " Permissions").withStyle(ChatFormatting.GOLD))
-                .centered().scale(1.0f).shadow(true));
-
-        gui.add(new Label("group_info", WIDTH / 2, 18)
-                .text(new TextComponent("Group: " + group.getName()))
-                .color(0xFFAAAAAA).centered().scale(0.7f));
-
-        gui.add(new Divider("header_div", 8, HEADER_HEIGHT - 2, WIDTH - 16)
-                .horizontal().color(0xFF3A3A3A));
-
-        int y = HEADER_HEIGHT;
-        for (int i = 0; i < permissions.size(); i++) {
-            Permission perm = permissions.get(i);
-            boolean enabled = group.canDo(perm.getId());
-            String permName = extractDisplayName(perm);
-
-            Checkbox checkbox = new Checkbox("perm_" + i, 14, y)
-                    .checked(enabled)
-                    .label(new TextComponent(permName))
-                    .checkColor(0xFF00CC00).boxColor(0xFF444444)
-                    .onToggle((p, checked) -> {
-                        group.setPermission(perm.getId(), checked);
-                    });
-
-            List<Component> tooltipLines = buildTooltip(perm);
-            if (!tooltipLines.isEmpty()) {
-                checkbox.tooltip(tooltipLines);
-            }
-
-            gui.add(checkbox);
-            y += CHECKBOX_HEIGHT + 2;
+        List<SidebarEntry> entries = new ArrayList<>();
+        for (String[] category : categories) {
+            List<Permission> categoryPermissions = PermissionManager.getInstance().getPermissionsFor(category[0]);
+            long categoryAllowed = categoryPermissions.stream().filter(permission -> group.canDo(permission.getId())).count();
+            entries.add(SidebarEntry.of(category[1], ItemStack.EMPTY, categoryAllowed + "/" + categoryPermissions.size()));
         }
-
-        gui.add(new Divider("nav_div", 8, navDivY, WIDTH - 16)
-                .horizontal().color(0xFF3A3A3A));
-
-        gui.add(new Button("back_btn", 10, navY, 32, 14)
-                .label(new TextComponent("Back")).backgroundColor(0xFFAA4444).flat()
-                .onClick(p -> {
-                    MasuGui.closeFor(p);
-                    GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:permissions", data);
+        gui.add(new Sidebar("category", 1, 21, 112, 150).rowHeight(16).entries(entries).active(active)
+                .onSelect((p, index, click) -> {
+                    if (index >= 0 && index < categories.size()) open(p, data, categories.get(index)[0], group);
                 }));
 
+        gui.add(new Section("rules_header", 113, 21, 242).label(new TextComponent(categories.get(active)[1]))
+                .right(new TextComponent(allowed + " of " + permissions.size() + " allowed")));
+        List<ListRow> rows = new ArrayList<>();
+        for (Permission permission : permissions) {
+            boolean enabled = group.canDo(permission.getId());
+            rows.add(ListRow.of(new ItemStack(enabled ? Items.LIME_DYE : Items.GRAY_DYE), extractDisplayName(permission))
+                    .withStatus(enabled ? 0x55FF55 : 0xFF5555)
+                    .withCells(Cell.of(enabled ? "Allowed" : "Denied", enabled ? 0x55FF55 : 0xFF5555))
+                    .withTooltip(buildTooltip(permission)));
+        }
+        gui.add(new ListView("rules", 113, 34, 242, 140).rows(rows).columns(List.of(ListColumn.of("", 8)))
+                .emptyText(new TextComponent("No rules in this category"))
+                .fallbackHints(List.of(new KeyHint("Click", "to allow or deny")))
+                .onClick((p, index, click) -> {
+                    if (index < 0 || index >= permissions.size()) return;
+                    Permission permission = permissions.get(index);
+                    group.setPermission(permission.getId(), !group.canDo(permission.getId()));
+                    open(p, data, categoryId, group);
+                }));
+
+        gui.add(new Button("allow_all", 120, 179, 70, 15).style(ButtonStyle.SECONDARY).label(new TextComponent("Allow all"))
+                .onClick(p -> setAll(p, data, categoryId, group, permissions, true)).fallbackSlot(47));
+        gui.add(new Button("deny_all", 194, 179, 70, 15).style(ButtonStyle.SECONDARY).label(new TextComponent("Deny all"))
+                .onClick(p -> setAll(p, data, categoryId, group, permissions, false)).fallbackSlot(48));
+        gui.add(new Button("members", 278, 179, 70, 15).style(ButtonStyle.SECONDARY).label(new TextComponent("Members"))
+                .onClick(p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:members_group", data)).fallbackSlot(50));
+        boolean defaultGroup = group.getId().equals(SkyblockAddonCore.MOD_UUID) || group.getId().equals(SkyblockAddonCore.MOD_UUID2);
+        if (!defaultGroup) {
+            Island island = IslandManager.getInstance().getIslandByUUID(data.getUUID("island_id"));
+            gui.add(new Button("remove_group", 6, 179, 100, 15).style(ButtonStyle.DANGER).label(new TextComponent("Remove group"))
+                    .onClick(p -> ConfirmRemoveGroupGui.open(p, data, island, group)).fallbackSlot(52));
+        }
+        gui.add(new StatusBar("status", 1, HEIGHT - 13, WIDTH - 2)
+                .hints(List.of(new KeyHint("Click", "Allow / deny"), new KeyHint("Hover", "What it covers")))
+                .right(new TextComponent("Changes apply instantly")));
         gui.openFor(player);
+    }
+
+    private static void setAll(ServerPlayer player, CompoundTag data, String categoryId, IslandGroup group,
+                               List<Permission> permissions, boolean allowed) {
+        for (Permission permission : permissions) group.setPermission(permission.getId(), allowed);
+        open(player, data, categoryId, group);
     }
 
     private static String extractDisplayName(Permission perm) {

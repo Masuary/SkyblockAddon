@@ -1,5 +1,6 @@
 package yorickbm.skyblockaddon.enhanced;
 
+import com.masuary.masugui.network.MasuGuiNetwork;
 import com.masuary.masugui.network.PlayerTracker;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -30,7 +31,8 @@ public class EnhancedGuiListener {
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public void onOpenMenu(OpenMenuEvent event) {
-        if (!PlayerTracker.isModded(event.getTarget())) return;
+        if (!PlayerTracker.isModded(event.getTarget())
+                || PlayerTracker.featureLevel(event.getTarget().getUUID()) < MasuGuiNetwork.FEATURE_LEVEL) return;
 
         String guiId = event.getGuiId();
         if (guiId == null) return;
