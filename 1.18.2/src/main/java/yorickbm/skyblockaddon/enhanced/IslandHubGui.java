@@ -93,7 +93,7 @@ public final class IslandHubGui {
                     if (index >= 0 && index < actions.size()) actions.get(index).run().accept(p);
                 }));
         if (isPart) {
-            gui.add(new Button("leave", 8, HEIGHT - 31, 80, 15).style(ButtonStyle.DANGER)
+            gui.add(new Button("leave", WIDTH - 88, HEIGHT - 31, 80, 15).style(ButtonStyle.DANGER)
                     .label(new TextComponent("Leave island"))
                     .onClick(p -> ConfirmLeaveGui.open(p, data)).fallbackSlot(18));
         }
