@@ -21,6 +21,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import yorickbm.guilibrary.GUILibraryRegistry;
@@ -40,7 +41,7 @@ import java.util.stream.Collectors;
 /** A group's permissions: categories on the left, the category's rules on the right; a click toggles a rule. */
 public final class PermissionTogglesGui {
 
-    private static final int WIDTH = 356;
+    private static final int WIDTH = 380;
     private static final int HEIGHT = 214;
     private static final String[][] CATEGORIES = {
             {"general", "General"}, {"transport", "Transport"}, {"redstone", "Redstone"}, {"storage", "Storage"},
@@ -57,6 +58,19 @@ public final class PermissionTogglesGui {
         if (group == null) return;
         String categoryId = data.getCompound(GUILibraryRegistry.MOD_ID).getString("category_id");
         open(player, data, categoryId.isEmpty() ? CATEGORIES[0][0] : categoryId, group);
+    }
+
+    private static Item categoryIcon(String categoryId) {
+        return switch (categoryId) {
+            case "general" -> Items.GRASS_BLOCK;
+            case "transport" -> Items.MINECART;
+            case "redstone" -> Items.REDSTONE;
+            case "storage" -> Items.CHEST;
+            case "interactables" -> Items.LEVER;
+            case "vaulthunters" -> Items.ENDER_EYE;
+            case "mods" -> Items.CRAFTING_TABLE;
+            default -> Items.WRITABLE_BOOK;
+        };
     }
 
     static List<String[]> categoriesFor(ServerPlayer player) {
@@ -86,24 +100,24 @@ public final class PermissionTogglesGui {
         for (String[] category : categories) {
             List<Permission> categoryPermissions = PermissionManager.getInstance().getPermissionsFor(category[0]);
             long categoryAllowed = categoryPermissions.stream().filter(permission -> group.canDo(permission.getId())).count();
-            entries.add(SidebarEntry.of(category[1], ItemStack.EMPTY, categoryAllowed + "/" + categoryPermissions.size()));
+            entries.add(SidebarEntry.of(category[1], new ItemStack(categoryIcon(category[0])), categoryAllowed + "/" + categoryPermissions.size()));
         }
-        gui.add(new Sidebar("category", 1, 21, 112, 150).rowHeight(16).entries(entries).active(active)
+        gui.add(new Sidebar("category", 1, 21, 136, 150).rowHeight(16).entries(entries).active(active)
                 .onSelect((p, index, click) -> {
                     if (index >= 0 && index < categories.size()) open(p, data, categories.get(index)[0], group);
                 }));
 
-        gui.add(new Section("rules_header", 113, 21, 242).label(new TextComponent(categories.get(active)[1]))
+        gui.add(new Section("rules_header", 137, 21, 242).label(new TextComponent(categories.get(active)[1]))
                 .right(new TextComponent(allowed + " of " + permissions.size() + " allowed")));
         List<ListRow> rows = new ArrayList<>();
         for (Permission permission : permissions) {
             boolean enabled = group.canDo(permission.getId());
-            rows.add(ListRow.of(new ItemStack(enabled ? Items.LIME_DYE : Items.GRAY_DYE), extractDisplayName(permission))
-                    .withStatus(enabled ? 0x55FF55 : 0xFF5555)
+            rows.add(ListRow.of(ItemStack.EMPTY, extractDisplayName(permission))
+                    .withSwitch(enabled)
                     .withCells(Cell.of(enabled ? "Allowed" : "Denied", enabled ? 0x55FF55 : 0xFF5555))
                     .withTooltip(buildTooltip(permission)));
         }
-        gui.add(new ListView("rules", 113, 34, 242, 140).rows(rows).columns(List.of(ListColumn.of("", 8)))
+        gui.add(new ListView("rules", 137, 34, 242, 140).rows(rows).columns(List.of(ListColumn.of("", 8)))
                 .emptyText(new TextComponent("No rules in this category"))
                 .fallbackHints(List.of(new KeyHint("Click", "to allow or deny")))
                 .onClick((p, index, click) -> {
@@ -113,11 +127,11 @@ public final class PermissionTogglesGui {
                     open(p, data, categoryId, group);
                 }));
 
-        gui.add(new Button("allow_all", 120, 179, 70, 15).style(ButtonStyle.SECONDARY).label(new TextComponent("Allow all"))
+        gui.add(new Button("allow_all", 144, 179, 70, 15).style(ButtonStyle.SECONDARY).label(new TextComponent("Allow all"))
                 .onClick(p -> setAll(p, data, categoryId, group, permissions, true)).fallbackSlot(47));
-        gui.add(new Button("deny_all", 194, 179, 70, 15).style(ButtonStyle.SECONDARY).label(new TextComponent("Deny all"))
+        gui.add(new Button("deny_all", 218, 179, 70, 15).style(ButtonStyle.SECONDARY).label(new TextComponent("Deny all"))
                 .onClick(p -> setAll(p, data, categoryId, group, permissions, false)).fallbackSlot(48));
-        gui.add(new Button("members", 278, 179, 70, 15).style(ButtonStyle.SECONDARY).label(new TextComponent("Members"))
+        gui.add(new Button("members", 302, 179, 70, 15).style(ButtonStyle.SECONDARY).label(new TextComponent("Members"))
                 .onClick(p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:members_group", data)).fallbackSlot(50));
         boolean defaultGroup = group.getId().equals(SkyblockAddonCore.MOD_UUID) || group.getId().equals(SkyblockAddonCore.MOD_UUID2);
         if (!defaultGroup) {
