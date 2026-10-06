@@ -97,7 +97,7 @@ public final class IslandHubGui {
                     .label(new TextComponent("Leave island"))
                     .onClick(p -> ConfirmLeaveGui.open(p, data)).fallbackSlot(18));
         }
-        gui.add(new StatusBar("status", 1, HEIGHT - 13, WIDTH - 2).hints(List.of(new KeyHint("Click", "Open")))
+        gui.add(new StatusBar("status", 1, HEIGHT - 13, WIDTH - 2).hints(List.of(new KeyHint("Click", "a card to open it")))
                 .right(new TextComponent("Owner: " + ownerName)));
         gui.openFor(player);
     }

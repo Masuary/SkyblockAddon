@@ -140,7 +140,7 @@ public final class PermissionTogglesGui {
                     .onClick(p -> ConfirmRemoveGroupGui.open(p, data, island, group)).fallbackSlot(52));
         }
         gui.add(new StatusBar("status", 1, HEIGHT - 13, WIDTH - 2)
-                .hints(List.of(new KeyHint("Click", "Allow / deny"), new KeyHint("Hover", "What it covers")))
+                .hints(List.of(new KeyHint("Click", "a rule to allow or deny it"), new KeyHint("Hover", "for details")))
                 .right(new TextComponent("Changes apply instantly")));
         gui.openFor(player);
     }
