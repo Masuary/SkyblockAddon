@@ -440,7 +440,7 @@ public class PermissionEvents {
         final Optional<SkyblockAddonWorldCapability> cap = event.getEntity().getLevel().getCapability(SkyblockAddonWorldProvider.SKYBLOCKADDON_WORLD_CAPABILITY).resolve();
         if(cap.isEmpty()) return;
 
-        final Island island = IslandManager.getInstance().getIslandByPos(ForgeConverter.ForgeToInternalVec3i(event.getEntity().getOnPos()));
+        final Island island = IslandManager.getInstance().getIslandByPos(ForgeConverter.ForgeToInternalVec3i(event.getEntity().blockPosition()));
         if(island == null) return;
 
         final boolean runFail = processPermissions(
