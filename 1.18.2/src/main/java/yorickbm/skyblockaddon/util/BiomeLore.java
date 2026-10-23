@@ -52,7 +52,7 @@ public final class BiomeLore {
     private static List<TextComponent> buildUncached(final String biomeId, final ServerLevel level) {
         final Biome biome = level.registryAccess()
                 .registryOrThrow(Registry.BIOME_REGISTRY)
-                .get(new ResourceLocation(biomeId));
+                .get(ResourceLocation.parse(biomeId));
         if (biome == null) return Collections.emptyList();
 
         final List<TextComponent> lines = new ArrayList<>();

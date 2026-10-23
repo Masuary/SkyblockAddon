@@ -171,7 +171,7 @@ public class ForgeIsland extends Island implements NBTSerializable {
         final BoundingBox boundingbox = ForgeConverter.InternalToForgeBoundingBox(getIslandBoundingBox());
         final Holder<Biome> holder = serverlevel.registryAccess()
                 .registryOrThrow(Registry.BIOME_REGISTRY)
-                .getOrCreateHolder(ResourceKey.create(ForgeRegistries.BIOMES.getRegistryKey(), new ResourceLocation(biome)));
+                .getOrCreateHolder(ResourceKey.create(ForgeRegistries.BIOMES.getRegistryKey(), ResourceLocation.parse(biome)));
 
         for(int j = SectionPos.blockToSectionCoord(boundingbox.minZ()); j <= SectionPos.blockToSectionCoord(boundingbox.maxZ()); ++j) {
             for(int k = SectionPos.blockToSectionCoord(boundingbox.minX()); k <= SectionPos.blockToSectionCoord(boundingbox.maxX()); ++k) {
@@ -201,7 +201,7 @@ public class ForgeIsland extends Island implements NBTSerializable {
         try {
             targetHolder = serverlevel.registryAccess()
                     .registryOrThrow(Registry.BIOME_REGISTRY)
-                    .getOrCreateHolder(ResourceKey.create(ForgeRegistries.BIOMES.getRegistryKey(), new ResourceLocation(biomeId)));
+                    .getOrCreateHolder(ResourceKey.create(ForgeRegistries.BIOMES.getRegistryKey(), ResourceLocation.parse(biomeId)));
         } catch (Exception ex) {
             return false;
         }

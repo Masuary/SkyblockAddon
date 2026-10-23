@@ -30,7 +30,7 @@ public class ForgeConverter {
     public static GUIItemStackHolder JSONItemToGUIItemStackHolder(ItemStackJson jsonData) {
         if (jsonData == null) return null;
 
-        Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(jsonData.getItem().toLowerCase()));;
+        Item item = ForgeRegistries.ITEMS.getValue(ResourceLocation.parse(jsonData.getItem().toLowerCase()));;
 
         List<String> display = (jsonData.getDisplay_name() != null)
                 ? Arrays.asList(jsonData.getDisplay_name())

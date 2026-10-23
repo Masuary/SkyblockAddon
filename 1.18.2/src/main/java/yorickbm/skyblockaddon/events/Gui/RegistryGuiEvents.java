@@ -42,7 +42,7 @@ public class RegistryGuiEvents {
 
             final GUIItemStackHolder holder = event.processHolder(event.getItemStackHolder().clone(), component.getCompound());
             String minecraftItem = ((yorickbm.skyblockaddon.core.registries.BiomeRegistry) event.getRegistry()).getDataForComponent(component).get();
-            holder.setItem(ForgeRegistries.ITEMS.getValue(new ResourceLocation(minecraftItem)));
+            holder.setItem(ForgeRegistries.ITEMS.getValue(ResourceLocation.parse(minecraftItem)));
 
             final ItemStack stack = holder.getItemStack();
             stack.getOrCreateTag().put(SkyblockAddonCore.MOD_ID, component.getCompound());
