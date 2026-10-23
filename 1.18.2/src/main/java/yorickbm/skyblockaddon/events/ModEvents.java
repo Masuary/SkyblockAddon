@@ -77,7 +77,7 @@ public class ModEvents {
             return;
 
         if (event.getObject() instanceof final ServerLevel level) {
-            event.addCapability(new ResourceLocation(SkyblockAddonCore.MOD_ID, "properties"), new SkyblockAddonWorldProvider(event.getObject().getServer()));
+            event.addCapability(ResourceLocation.fromNamespaceAndPath(SkyblockAddonCore.MOD_ID, "properties"), new SkyblockAddonWorldProvider(event.getObject().getServer()));
         }
     }
 

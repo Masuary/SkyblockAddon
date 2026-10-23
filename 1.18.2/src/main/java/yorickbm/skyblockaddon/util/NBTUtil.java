@@ -32,7 +32,7 @@ public class NBTUtil {
     }
 
     public static ItemStack NBTToItemStack(final CompoundTag tag) {
-        final ItemStack item = new ItemStack(ForgeRegistries.ITEMS.getValue(new ResourceLocation(tag.getString("registryName"))));
+        final ItemStack item = new ItemStack(ForgeRegistries.ITEMS.getValue(ResourceLocation.parse(tag.getString("registryName"))));
         item.setTag(tag.getCompound("NBT"));
         return item;
     }

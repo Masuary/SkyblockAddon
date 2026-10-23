@@ -136,7 +136,7 @@ public class ServerHelper {
      */
     public static Item getItem(final String item, final Item basic) {
         try {
-            final Item mcItem = ForgeRegistries.ITEMS.getValue(new ResourceLocation(item));
+            final Item mcItem = ForgeRegistries.ITEMS.getValue(ResourceLocation.parse(item));
             return mcItem != null ? mcItem : basic;
         } catch (final Exception ex) {
             LOGGER.error("Failure to find item '{}';", item);

@@ -150,7 +150,7 @@ public class SkyBlockAddon {
             } catch (final IOException e) {
                 LOGGER.error("Could not load external island.nbt file, using mod's internal island.nbt file.");
                 try {
-                    final Resource rs = server.getResourceManager().getResource(new ResourceLocation(SkyblockAddonCore.MOD_ID, "structures/island.nbt"));
+                    final Resource rs = server.getResourceManager().getResource(ResourceLocation.fromNamespaceAndPath(SkyblockAddonCore.MOD_ID, "structures/island.nbt"));
                     IslandNBTData = NbtIo.readCompressed(rs.getInputStream());
                 } catch (final IOException ex) {
                     LOGGER.error("Could not load mod's internal island.nbt file!!!");
