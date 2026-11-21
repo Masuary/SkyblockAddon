@@ -49,14 +49,27 @@ public class SkyblockAddonWorldCapability {
     }
 
     /**
-     * Save data into NBT.
+     * Save the island grid state into capabilities.dat. Until the islands are loaded the allocator holds nothing real
+     * (a failed load stops the server, which still saves on the way down), so the state read at start is written back
+     * unchanged instead.
      */
     public void saveNBTData(final CompoundTag nbt) {
-        nbt.put("lastIsland", NBTUtil.Vec3iToNBT(IslandManager.getInstance().getNextFreshSlot()));
+        if (!this.islandsLoaded) {
+            LOGGER.warn("Islands are not loaded; writing back the island grid state read at start unchanged.");
+            writeGridState(nbt, this.persistedNextFreshSlot, this.persistedReusableSlots, this.persistedAdminReservedSlots);
+            return;
+        }
+        writeGridState(nbt, IslandManager.getInstance().getNextFreshSlot(), IslandManager.getInstance().getReusableLocations(),
+                IslandManager.getInstance().getAdminReservedSlots());
+    }
+
+    private static void writeGridState(final CompoundTag nbt, final Vec3i nextFreshSlot, final Collection<Vec3i> reusableSlots,
+                                       final Collection<IslandSlot> adminReservedSlots) {
+        nbt.put("lastIsland", NBTUtil.Vec3iToNBT(nextFreshSlot));
         nbt.putInt("nbt-v", 6);
 
         ListTag listTag = new ListTag();
-        for (Vec3i vec : IslandManager.getInstance().getReusableLocations()) {
+        for (Vec3i vec : reusableSlots) {
             CompoundTag vecTag = new CompoundTag();
             vecTag.putInt("x", vec.getX());
             vecTag.putInt("y", vec.getY());
@@ -66,7 +79,7 @@ public class SkyblockAddonWorldCapability {
         nbt.put("reusableLocations", listTag);
 
         final ListTag reservedSlotsTag = new ListTag();
-        for (final IslandSlot reservedSlot : IslandManager.getInstance().getAdminReservedSlots()) {
+        for (final IslandSlot reservedSlot : adminReservedSlots) {
             final CompoundTag slotTag = new CompoundTag();
             slotTag.putInt("x", reservedSlot.x());
             slotTag.putInt("z", reservedSlot.z());
@@ -84,6 +97,10 @@ public class SkyblockAddonWorldCapability {
     public void saveIslandsToDisk() {
         if (!serverInstance.isSameThread()) {
             throw new IllegalStateException("Islands are saved from the live objects and must be saved on the server thread, not on " + Thread.currentThread().getName());
+        }
+        if (!this.islandsLoaded) {
+            LOGGER.warn("Islands are not loaded; skipping the island file save so no island file is touched.");
+            return;
         }
         final long saveStartNanos = System.nanoTime();
         final NBTEncoder.IslandSaveReport report = NBTEncoder.saveChangedToFile(IslandManager.getInstance().getIslands().stream()
