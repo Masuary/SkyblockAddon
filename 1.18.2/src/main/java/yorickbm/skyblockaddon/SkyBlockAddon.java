@@ -41,6 +41,7 @@ import yorickbm.skyblockaddon.islands.IslandCreationQueue;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -110,12 +111,21 @@ public class SkyBlockAddon {
         //Register guis
         GUILibraryRegistry.registerFolder(SkyblockAddonCore.MOD_ID, FMLPaths.CONFIGDIR.get().resolve(SkyblockAddonCore.MOD_ID + "/guis/"));
 
-        //Register permissions
-        final int permissionCount = PermissionManager.getInstance().loadPermissions(FMLPaths.CONFIGDIR.get().resolve(SkyblockAddonCore.MOD_ID + "/registries/PermissionRegistry.json"));
-        LOGGER.info("Loaded {} island permissions.", permissionCount);
+        loadIslandPermissions();
 
         //Init Version Checker
         VersionChecker.startVersionCheck();
+    }
+
+    /**
+     * Load the server's permission registry and report each known trigger it leaves unprotected.
+     */
+    public static void loadIslandPermissions() {
+        final Path registryPath = FMLPaths.CONFIGDIR.get().resolve(SkyblockAddonCore.MOD_ID + "/registries/PermissionRegistry.json");
+        final int permissionCount = PermissionManager.getInstance().loadPermissions(registryPath);
+        LOGGER.info("Loaded {} island permissions.", permissionCount);
+        PermissionManager.getInstance().findUnreferencedTriggers().forEach(trigger ->
+                LOGGER.error("No island permission in '{}' lists trigger '{}', so every action on it is allowed for everyone on every island", registryPath, trigger));
     }
 
     /**

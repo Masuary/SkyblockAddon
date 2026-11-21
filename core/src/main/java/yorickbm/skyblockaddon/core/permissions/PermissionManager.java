@@ -76,6 +76,17 @@ public class PermissionManager {
     }
 
     /**
+     * Known triggers that no loaded permission lists. The mod allows every action on such a trigger, so a missing
+     * entry in the registry silently switches that protection off.
+     */
+    public List<String> findUnreferencedTriggers() {
+        final List<Permission> loadedPermissions = this.permissions;
+        return PermissionTriggers.knownTriggers().stream()
+                .filter(trigger -> loadedPermissions.stream().noneMatch(permission -> permission.hasTrigger(trigger)))
+                .toList();
+    }
+
+    /**
      * Run permission filter logic check, runs several checks to determine if the action matches the permission.
      * @return MatchResult SKIP, ALLOW, or DENIED
      */

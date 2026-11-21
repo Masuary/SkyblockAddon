@@ -11,9 +11,9 @@ import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.loading.FMLPaths;
 import org.slf4j.Logger;
 import yorickbm.guilibrary.GUILibraryRegistry;
+import yorickbm.skyblockaddon.SkyBlockAddon;
 import yorickbm.skyblockaddon.commands.interfaces.Cmds;
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
-import yorickbm.skyblockaddon.core.permissions.PermissionManager;
 import yorickbm.skyblockaddon.core.util.RegistrySelector;
 import yorickbm.skyblockaddon.core.util.ResourceManager;
 
@@ -64,7 +64,6 @@ public class ConfigReloadCommand {
         //Register guis
         GUILibraryRegistry.registerFolder(SkyblockAddonCore.MOD_ID, FMLPaths.CONFIGDIR.get().resolve(SkyblockAddonCore.MOD_ID + "/guis/"));
 
-        //Register permissions
-        LOGGER.info("Loaded {} island permissions.", PermissionManager.getInstance().loadPermissions(FMLPaths.CONFIGDIR.get().resolve(SkyblockAddonCore.MOD_ID + "/registries/PermissionRegistry.json")));
+        SkyBlockAddon.loadIslandPermissions();
     }
 }
