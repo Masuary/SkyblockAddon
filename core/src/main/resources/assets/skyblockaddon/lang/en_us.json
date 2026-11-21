@@ -120,7 +120,6 @@
   "island.action.group.default": "The default groups cannot be removed.",
   "island.action.no.change": "Nothing changed.",
 
-  "commands.target.single": "Name exactly one player.",
   "commands.transfer.confirm": "Click here to confirm making %s the owner of this island. You stay on the island as a member.",
   "commands.transfer.success": "%s is now the owner of this island; you are a member in the Members group.",
   "commands.transfer.received": "%s made you the owner of their island.",
@@ -129,6 +128,9 @@
   "commands.expel.notify": "You have been sent off %s's island.",
   "commands.ban.success": "%s is banned from your island.",
   "commands.ban.notify": "You have been banned from %s's island.",
+  "commands.ban.lookup": "Looking up %s...",
+  "commands.ban.lookup.failed": "Could not look up %s right now; try again in a moment.",
+  "commands.ban.unknown.player": "No Minecraft player named %s was found.",
   "commands.unban.success": "%s is no longer banned from your island.",
   "commands.bans.none": "Nobody is banned from this island.",
   "commands.bans.header": "Banned from this island (%s):",
