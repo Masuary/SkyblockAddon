@@ -1,5 +1,6 @@
 package yorickbm.skyblockaddon.core.registries;
 
+import yorickbm.skyblockaddon.core.GuiDataKeys;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.core.registries.interfaces.SkyblockAddonRegistry;
@@ -25,7 +26,7 @@ public class GroupMemberRegistry extends SkyblockAddonRegistry<DataComponent> {
         component.put("SkullOwner", username);
         component.put("owner_name", username);
         component.put("group_name", group.getName());
-        component.put("player_id", this.members.get(this.index));
+        component.put(GuiDataKeys.PLAYER_ID, this.members.get(this.index));
 
         this.index++;
     }

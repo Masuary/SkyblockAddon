@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import yorickbm.guilibrary.GUILibraryRegistry;
+import yorickbm.skyblockaddon.core.GuiDataKeys;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
@@ -22,7 +23,7 @@ public final class ConfirmCreateGroupGui {
     private ConfirmCreateGroupGui() {}
 
     public static void open(ServerPlayer player, CompoundTag data) {
-        if (!data.contains("island_id")) return;
+        if (!data.contains(GuiDataKeys.ISLAND_ID)) return;
 
         ItemStack heldItem = player.getMainHandItem();
         boolean hasItem = !heldItem.isEmpty() && heldItem.getItem() != Items.AIR;
@@ -47,7 +48,7 @@ public final class ConfirmCreateGroupGui {
             GUILibraryRegistry.openGUIForPlayer(player, "skyblockaddon:groups", data);
             return;
         }
-        Island island = IslandManager.getInstance().getIslandByUUID(data.getUUID("island_id"));
+        Island island = IslandManager.getInstance().getIslandByUUID(data.getUUID(GuiDataKeys.ISLAND_ID));
         if (island == null) return;
         String newGroupName = held.getDisplayName().getString().trim();
         boolean nameExists = island.getGroups().stream().anyMatch(group -> group.getName().equalsIgnoreCase(newGroupName));

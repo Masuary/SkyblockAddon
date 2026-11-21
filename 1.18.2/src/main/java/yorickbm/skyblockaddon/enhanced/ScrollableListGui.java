@@ -24,6 +24,7 @@ import net.minecraft.world.item.Items;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.registries.ForgeRegistries;
 import yorickbm.guilibrary.GUILibraryRegistry;
+import yorickbm.skyblockaddon.core.GuiDataKeys;
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
@@ -83,8 +84,8 @@ public final class ScrollableListGui {
     }
 
     private static void openGroupsLayout(ServerPlayer player, CompoundTag data, String variant) {
-        if (!data.contains("island_id")) return;
-        Island island = IslandManager.getInstance().getIslandByUUID(data.getUUID("island_id"));
+        if (!data.contains(GuiDataKeys.ISLAND_ID)) return;
+        Island island = IslandManager.getInstance().getIslandByUUID(data.getUUID(GuiDataKeys.ISLAND_ID));
         if (island == null) return;
 
         List<ItemStack> defaultItems = buildDefaultGroupItems(island);
@@ -121,7 +122,7 @@ public final class ScrollableListGui {
         for (ItemStack item : items) {
             List<Component> lore = EnhancedGuiHelper.lore(item);
             ListRow row = ListRow.of(item.copy(), item.getHoverName().getString()).withTooltip(lore);
-            if (item.getOrCreateTagElement("skyblockaddon").contains("group_id") && !lore.isEmpty()) {
+            if (item.getOrCreateTagElement("skyblockaddon").contains(GuiDataKeys.GROUP_ID) && !lore.isEmpty()) {
                 row = row.withCells(Cell.of(lore.get(0).getString().replace(" members", ""), 0xAAAAAA));
             }
             rows.add(row);
@@ -137,17 +138,17 @@ public final class ScrollableListGui {
 
         switch (variant) {
             case "travel" -> {
-                if (itemData.contains("island_id")) {
+                if (itemData.contains(GuiDataKeys.ISLAND_ID)) {
                     MasuGui.closeFor(player);
                     ForgeIsland island = (ForgeIsland) IslandManager.getInstance()
-                            .getIslandByUUID(itemData.getUUID("island_id"));
+                            .getIslandByUUID(itemData.getUUID(GuiDataKeys.ISLAND_ID));
                     if (island != null) island.teleportTo(player);
                 }
             }
             case "members" -> {
-                if (itemData.contains("player_id")) {
+                if (itemData.contains(GuiDataKeys.PLAYER_ID)) {
                     CompoundTag newData = data.copy();
-                    newData.putUUID("player_id", itemData.getUUID("player_id"));
+                    newData.putUUID(GuiDataKeys.PLAYER_ID, itemData.getUUID(GuiDataKeys.PLAYER_ID));
                     MasuGui.closeFor(player);
                     GUILibraryRegistry.openGUIForPlayer(player, "skyblockaddon:set_group", newData);
                 }
@@ -156,7 +157,7 @@ public final class ScrollableListGui {
                 if (itemData.contains("biome")) {
                     MasuGui.closeFor(player);
                     ForgeIsland island = (ForgeIsland) IslandManager.getInstance()
-                            .getIslandByUUID(data.getUUID("island_id"));
+                            .getIslandByUUID(data.getUUID(GuiDataKeys.ISLAND_ID));
                     if (island != null) {
                         island.updateBiome(itemData.getString("biome"), player.getLevel());
                         player.sendMessage(new TextComponent("Biome updated to " + itemData.getString("biome"))
@@ -166,30 +167,30 @@ public final class ScrollableListGui {
                 }
             }
             case "groups" -> {
-                if (itemData.contains("group_id")) {
+                if (itemData.contains(GuiDataKeys.GROUP_ID)) {
                     CompoundTag newData = data.copy();
-                    newData.putUUID("group_id", itemData.getUUID("group_id"));
+                    newData.putUUID(GuiDataKeys.GROUP_ID, itemData.getUUID(GuiDataKeys.GROUP_ID));
                     MasuGui.closeFor(player);
                     GUILibraryRegistry.openGUIForPlayer(player, "skyblockaddon:permissions", newData);
                 }
             }
             case "members_group" -> {
-                if (itemData.contains("player_id")) {
+                if (itemData.contains(GuiDataKeys.PLAYER_ID)) {
                     CompoundTag newData = data.copy();
-                    newData.putUUID("player_id", itemData.getUUID("player_id"));
+                    newData.putUUID(GuiDataKeys.PLAYER_ID, itemData.getUUID(GuiDataKeys.PLAYER_ID));
                     MasuGui.closeFor(player);
                     GUILibraryRegistry.openGUIForPlayer(player, "skyblockaddon:set_group", newData);
                 }
             }
             case "set_group" -> {
-                if (itemData.contains("group_id") && data.contains("player_id")) {
+                if (itemData.contains(GuiDataKeys.GROUP_ID) && data.contains(GuiDataKeys.PLAYER_ID)) {
                     MasuGui.closeFor(player);
                     ForgeIsland island = (ForgeIsland) IslandManager.getInstance()
-                            .getIslandByUUID(data.getUUID("island_id"));
+                            .getIslandByUUID(data.getUUID(GuiDataKeys.ISLAND_ID));
                     if (island != null) {
-                        IslandGroup targetGroup = island.getGroup(itemData.getUUID("group_id"));
+                        IslandGroup targetGroup = island.getGroup(itemData.getUUID(GuiDataKeys.GROUP_ID));
                         if (targetGroup != null) {
-                            UUID playerId = data.getUUID("player_id");
+                            UUID playerId = data.getUUID(GuiDataKeys.PLAYER_ID);
                             boolean assigned = island.isPartOf(playerId)
                                     ? island.addMember(playerId, targetGroup.getId())
                                     : IslandGroupAssignments.assignWithoutMembership(island, playerId, targetGroup);
@@ -206,8 +207,8 @@ public final class ScrollableListGui {
     }
 
     private static String resolveTitle(CompoundTag data, String variant) {
-        if (data.contains("island_id")) {
-            Island island = IslandManager.getInstance().getIslandByUUID(data.getUUID("island_id"));
+        if (data.contains(GuiDataKeys.ISLAND_ID)) {
+            Island island = IslandManager.getInstance().getIslandByUUID(data.getUUID(GuiDataKeys.ISLAND_ID));
             if (island != null) {
                 String owner = UsernameCache.getBlocking(island.getOwner());
                 return switch (variant) {
@@ -216,8 +217,8 @@ public final class ScrollableListGui {
                     case "biomes" -> owner + "'s Island - Biomes";
                     case "groups" -> owner + "'s Island - Groups";
                     case "members_group" -> {
-                        if (data.contains("group_id")) {
-                            IslandGroup group = island.getGroup(data.getUUID("group_id"));
+                        if (data.contains(GuiDataKeys.GROUP_ID)) {
+                            IslandGroup group = island.getGroup(data.getUUID(GuiDataKeys.GROUP_ID));
                             yield group != null ? group.getName() + " - Members" : "Group Members";
                         }
                         yield "Group Members";
@@ -273,15 +274,15 @@ public final class ScrollableListGui {
                     ItemStack head = EnhancedGuiHelper.getPlayerHead(island.getOwner());
                     head.setHoverName(new TextComponent(ownerName + "'s Island").withStyle(ChatFormatting.GOLD));
                     CompoundTag tag = head.getOrCreateTagElement("skyblockaddon");
-                    tag.putUUID("island_id", island.getId());
+                    tag.putUUID(GuiDataKeys.ISLAND_ID, island.getId());
                     return head;
                 })
                 .collect(Collectors.toList());
     }
 
     private static List<ItemStack> buildMemberItems(CompoundTag data) {
-        if (!data.contains("island_id")) return List.of();
-        Island island = IslandManager.getInstance().getIslandByUUID(data.getUUID("island_id"));
+        if (!data.contains(GuiDataKeys.ISLAND_ID)) return List.of();
+        Island island = IslandManager.getInstance().getIslandByUUID(data.getUUID(GuiDataKeys.ISLAND_ID));
         if (island == null) return List.of();
 
         return island.getMembers().stream()
@@ -295,7 +296,7 @@ public final class ScrollableListGui {
                     EnhancedGuiHelper.addLore(head,
                             new TextComponent("Group: " + groupName).withStyle(ChatFormatting.GRAY));
                     CompoundTag tag = head.getOrCreateTagElement("skyblockaddon");
-                    tag.putUUID("player_id", uuid);
+                    tag.putUUID(GuiDataKeys.PLAYER_ID, uuid);
                     return head;
                 })
                 .collect(Collectors.toList());
@@ -303,8 +304,8 @@ public final class ScrollableListGui {
 
     private static List<ItemStack> buildBiomeItems(ServerPlayer player, CompoundTag data) {
         String currentBiome = "";
-        if (data.contains("island_id")) {
-            Island island = IslandManager.getInstance().getIslandByUUID(data.getUUID("island_id"));
+        if (data.contains(GuiDataKeys.ISLAND_ID)) {
+            Island island = IslandManager.getInstance().getIslandByUUID(data.getUUID(GuiDataKeys.ISLAND_ID));
             if (island != null) currentBiome = island.getBiome();
         }
 
@@ -359,7 +360,7 @@ public final class ScrollableListGui {
         List<ItemStack> items = new ArrayList<>();
         for (IslandGroup group : island.getGroups()) {
             UUID groupId = group.getId();
-            if (!groupId.equals(SkyblockAddonCore.MOD_UUID) && !groupId.equals(SkyblockAddonCore.MOD_UUID2)) continue;
+            if (!groupId.equals(SkyblockAddonCore.MEMBERS_GROUP_ID) && !groupId.equals(SkyblockAddonCore.VISITORS_GROUP_ID)) continue;
             items.add(buildGroupItemStack(group));
         }
         return items;
@@ -369,7 +370,7 @@ public final class ScrollableListGui {
         List<ItemStack> items = new ArrayList<>();
         for (IslandGroup group : island.getGroups()) {
             UUID groupId = group.getId();
-            if (groupId.equals(SkyblockAddonCore.MOD_UUID) || groupId.equals(SkyblockAddonCore.MOD_UUID2)) continue;
+            if (groupId.equals(SkyblockAddonCore.MEMBERS_GROUP_ID) || groupId.equals(SkyblockAddonCore.VISITORS_GROUP_ID)) continue;
             items.add(buildGroupItemStack(group));
         }
         return items;
@@ -381,15 +382,15 @@ public final class ScrollableListGui {
         EnhancedGuiHelper.addLore(item,
                 new TextComponent(group.getMembers().size() + " members").withStyle(ChatFormatting.GRAY));
         CompoundTag tag = item.getOrCreateTagElement("skyblockaddon");
-        tag.putUUID("group_id", group.getId());
+        tag.putUUID(GuiDataKeys.GROUP_ID, group.getId());
         return item;
     }
 
     private static List<ItemStack> buildGroupMemberItems(CompoundTag data) {
-        if (!data.contains("island_id") || !data.contains("group_id")) return List.of();
-        Island island = IslandManager.getInstance().getIslandByUUID(data.getUUID("island_id"));
+        if (!data.contains(GuiDataKeys.ISLAND_ID) || !data.contains(GuiDataKeys.GROUP_ID)) return List.of();
+        Island island = IslandManager.getInstance().getIslandByUUID(data.getUUID(GuiDataKeys.ISLAND_ID));
         if (island == null) return List.of();
-        IslandGroup group = island.getGroup(data.getUUID("group_id"));
+        IslandGroup group = island.getGroup(data.getUUID(GuiDataKeys.GROUP_ID));
         if (group == null) return List.of();
 
         return group.getMembers().stream()
@@ -398,7 +399,7 @@ public final class ScrollableListGui {
                     ItemStack head = EnhancedGuiHelper.getPlayerHead(uuid);
                     head.setHoverName(new TextComponent(name).withStyle(ChatFormatting.GREEN));
                     CompoundTag tag = head.getOrCreateTagElement("skyblockaddon");
-                    tag.putUUID("player_id", uuid);
+                    tag.putUUID(GuiDataKeys.PLAYER_ID, uuid);
                     return head;
                 })
                 .collect(Collectors.toList());

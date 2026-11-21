@@ -1,9 +1,7 @@
 package yorickbm.skyblockaddon.events;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -28,9 +26,9 @@ import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import yorickbm.skyblockaddon.SkyBlockAddon;
-import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
+import yorickbm.skyblockaddon.islands.InteractionHandler;
 import yorickbm.skyblockaddon.util.ForgeConverter;
 
 import java.lang.reflect.Method;
@@ -121,10 +119,7 @@ public class PneumaticCraftProtectionEvents {
 
     private static void notifyDeny(final Entity actor) {
         if (actor instanceof ServerPlayer player) {
-            player.displayClientMessage(
-                    new TextComponent(SkyBlockAddonLanguage.getLocalizedString("toolbar.overlay.nothere"))
-                            .withStyle(ChatFormatting.DARK_RED),
-                    true);
+            InteractionHandler.sendDeniedMessage(player);
         }
     }
 

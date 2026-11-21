@@ -8,6 +8,7 @@ import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import yorickbm.skyblockaddon.core.GuiDataKeys;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.util.geometry.Vec3i;
@@ -20,10 +21,10 @@ public final class ConfirmSetSpawnGui {
     private ConfirmSetSpawnGui() {}
 
     public static void open(ServerPlayer player, CompoundTag data) {
-        if (!data.contains("island_id")) return;
+        if (!data.contains(GuiDataKeys.ISLAND_ID)) return;
 
         ForgeIsland island = (ForgeIsland) IslandManager.getInstance()
-                .getIslandByUUID(data.getUUID("island_id"));
+                .getIslandByUUID(data.getUUID(GuiDataKeys.ISLAND_ID));
         if (island == null) return;
 
         int x = player.blockPosition().getX();

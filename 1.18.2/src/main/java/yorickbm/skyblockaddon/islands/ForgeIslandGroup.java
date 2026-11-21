@@ -3,6 +3,7 @@ package yorickbm.skyblockaddon.islands;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import yorickbm.skyblockaddon.core.GuiDataKeys;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.util.NBTSerializable;
 import yorickbm.skyblockaddon.util.NBTUtil;
@@ -43,7 +44,7 @@ public class ForgeIslandGroup extends IslandGroup implements NBTSerializable {
 
         ItemStack withData = this.item.copy();
         withData.getOrCreateTag().putString("group_name", this.getName());
-        withData.getOrCreateTag().putUUID("group_id", this.getId());
+        withData.getOrCreateTag().putUUID(GuiDataKeys.GROUP_ID, this.getId());
 
         return withData;
     }

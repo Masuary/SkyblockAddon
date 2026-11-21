@@ -4,8 +4,6 @@ import com.direwolf20.buildinggadgets.common.items.GadgetBuilding;
 import com.direwolf20.buildinggadgets.common.items.GadgetCopyPaste;
 import com.direwolf20.buildinggadgets.common.items.GadgetDestruction;
 import com.direwolf20.buildinggadgets.common.items.GadgetExchanger;
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -17,8 +15,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
+import yorickbm.skyblockaddon.core.permissions.PermissionTriggers;
 import yorickbm.skyblockaddon.islands.InteractionHandler;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -34,11 +32,11 @@ public class BuildingGadgetsMixinConfig {
         if(InteractionHandler.verifyEntity(player, standingOn).asBoolean()) return;
 
         if(
-                InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) player, (ServerLevel) player.getLevel(), player.getOnPos(), player.getMainHandItem(),  "onPlaceBlock")
+                InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) player, (ServerLevel) player.getLevel(), player.getOnPos(), player.getMainHandItem(),  PermissionTriggers.ON_PLACE_BLOCK)
                 ||
-                InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) player, (ServerLevel) player.getLevel(), player.getOnPos(), player.getMainHandItem(),  "onBreakBlock")
+                InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) player, (ServerLevel) player.getLevel(), player.getOnPos(), player.getMainHandItem(),  PermissionTriggers.ON_BREAK_BLOCK)
         ) {
-            player.displayClientMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("toolbar.overlay.nothere")).withStyle(ChatFormatting.DARK_RED), true);
+            InteractionHandler.sendDeniedMessage(player);
             cir.setReturnValue(InteractionResultHolder.fail(stack));
         }
     }

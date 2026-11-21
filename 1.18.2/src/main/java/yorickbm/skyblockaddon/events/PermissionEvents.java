@@ -1,7 +1,5 @@
 package yorickbm.skyblockaddon.events;
 
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -30,12 +28,12 @@ import yorickbm.skyblockaddon.SkyBlockAddon;
 import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldCapability;
 import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldProvider;
 import yorickbm.skyblockaddon.core.JSON.PermissionDataJson;
-import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.permissions.Permission;
 import yorickbm.skyblockaddon.core.permissions.PermissionManager;
+import yorickbm.skyblockaddon.core.permissions.PermissionTriggers;
 import yorickbm.skyblockaddon.core.util.MatchResult;
 import yorickbm.skyblockaddon.islands.InteractionHandler;
 import yorickbm.skyblockaddon.util.ForgeConverter;
@@ -56,7 +54,7 @@ public class PermissionEvents {
         final Optional<IslandGroup> group = verifyPermissionAndGroup(event.getEntity(), event);
         if (group.isEmpty()) return;
 
-        final List<Permission> perms = PermissionManager.getInstance().getPermissionsForTrigger("onTrample");
+        final List<Permission> perms = PermissionManager.getInstance().getPermissionsForTrigger(PermissionTriggers.ON_TRAMPLE);
         if(perms.isEmpty()) {
             return; //No permission to protect against it
         }
@@ -65,7 +63,7 @@ public class PermissionEvents {
         if (runFail) { //Group may not run this
             if (event.isCancelable()) event.setCanceled(true);
             else event.setResult(Event.Result.DENY);
-            sendFailureMessage((ServerPlayer) event.getEntity());
+            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
         }
     }
     @SubscribeEvent
@@ -73,7 +71,7 @@ public class PermissionEvents {
         final Optional<IslandGroup> group = verifyPermissionAndGroup(event.getEntity(), event);
         if (group.isEmpty()) return;
 
-        final List<Permission> perms = PermissionManager.getInstance().getPermissionsForTrigger("onEnderPearl");
+        final List<Permission> perms = PermissionManager.getInstance().getPermissionsForTrigger(PermissionTriggers.ON_ENDER_PEARL);
         if(perms.isEmpty()) {
             return; //No permission to protect against it
         }
@@ -82,7 +80,7 @@ public class PermissionEvents {
         if (runFail) { //Group may not run this
             if (event.isCancelable()) event.setCanceled(true);
             else event.setResult(Event.Result.DENY);
-            sendFailureMessage((ServerPlayer) event.getEntity());
+            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
         }
     }
     @SubscribeEvent
@@ -90,7 +88,7 @@ public class PermissionEvents {
         final Optional<IslandGroup> group = verifyPermissionAndGroup(event.getEntity(), event);
         if (group.isEmpty()) return;
 
-        final List<Permission> perms = PermissionManager.getInstance().getPermissionsForTrigger("onChorusFruit");
+        final List<Permission> perms = PermissionManager.getInstance().getPermissionsForTrigger(PermissionTriggers.ON_CHORUS_FRUIT);
         if(perms.isEmpty()) {
             return; //No permission to protect against it
         }
@@ -99,7 +97,7 @@ public class PermissionEvents {
         if (runFail) { //Group may not run this
             if (event.isCancelable()) event.setCanceled(true);
             else event.setResult(Event.Result.DENY);
-            sendFailureMessage((ServerPlayer) event.getEntity());
+            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
         }
     }
 
@@ -108,7 +106,7 @@ public class PermissionEvents {
         final Optional<IslandGroup> group = verifyPermissionAndGroup(event.getEntity(), event);
         if (group.isEmpty()) return;
 
-        final List<Permission> perms = PermissionManager.getInstance().getPermissionsForTrigger("onSleepInBed");
+        final List<Permission> perms = PermissionManager.getInstance().getPermissionsForTrigger(PermissionTriggers.ON_SLEEP_IN_BED);
         if(perms.isEmpty()) {
             return; //No permission to protect against it
         }
@@ -117,7 +115,7 @@ public class PermissionEvents {
         if (runFail) { //Group may not run this
             if (event.isCancelable()) event.setCanceled(true);
             else event.setResult(Event.Result.DENY);
-            sendFailureMessage((ServerPlayer) event.getEntity());
+            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
         }
     }
     @SubscribeEvent
@@ -125,7 +123,7 @@ public class PermissionEvents {
         final Optional<IslandGroup> group = verifyPermissionAndGroup(event.getEntity(), event);
         if (group.isEmpty()) return;
 
-        final List<Permission> perms = PermissionManager.getInstance().getPermissionsForTrigger("onXp");
+        final List<Permission> perms = PermissionManager.getInstance().getPermissionsForTrigger(PermissionTriggers.ON_XP);
         if(perms.isEmpty()) {
             return; //No permission to protect against it
         }
@@ -134,7 +132,7 @@ public class PermissionEvents {
         if (runFail) { //Group may not run this
             if (event.isCancelable()) event.setCanceled(true);
             else event.setResult(Event.Result.DENY);
-            sendFailureMessage((ServerPlayer) event.getEntity());
+            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
         }
     }
     @SubscribeEvent
@@ -142,7 +140,7 @@ public class PermissionEvents {
         final Optional<IslandGroup> group = verifyPermissionAndGroup(event.getEntity(), event);
         if (group.isEmpty()) return;
 
-        final List<Permission> perms = PermissionManager.getInstance().getPermissionsForTrigger("onBonemeal");
+        final List<Permission> perms = PermissionManager.getInstance().getPermissionsForTrigger(PermissionTriggers.ON_BONEMEAL);
         if(perms.isEmpty()) {
             return; //No permission to protect against it
         }
@@ -151,7 +149,7 @@ public class PermissionEvents {
         if (runFail) { //Group may not run this
             if (event.isCancelable()) event.setCanceled(true);
             else event.setResult(Event.Result.DENY);
-            sendFailureMessage((ServerPlayer) event.getEntity());
+            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
         }
     }
 
@@ -161,7 +159,7 @@ public class PermissionEvents {
         if (group.isEmpty()) return;
 
         final boolean runFail = processPermissions(
-                group, "onPickup",
+                group, PermissionTriggers.ON_PICKUP,
                 Objects.requireNonNull(event.getItem().getItem().getItem().getRegistryName()).toString(),
                 PermissionDataJson::getItemsData
         );
@@ -169,7 +167,7 @@ public class PermissionEvents {
         if (runFail) {
             if (event.isCancelable()) event.setCanceled(true);
             else event.setResult(Event.Result.DENY);
-            sendFailureMessage((ServerPlayer) event.getEntity());
+            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
         }
     }
 
@@ -179,7 +177,7 @@ public class PermissionEvents {
         if (group.isEmpty()) return;
 
         final boolean runFail = processPermissions(
-                group, "onDrop",
+                group, PermissionTriggers.ON_DROP,
                 Objects.requireNonNull(event.getEntityItem().getItem().getItem().getRegistryName()).toString(),
                 PermissionDataJson::getItemsData
         );
@@ -187,7 +185,7 @@ public class PermissionEvents {
         if (runFail) {
             if (event.isCancelable()) event.setCanceled(true);
             else event.setResult(Event.Result.DENY);
-            sendFailureMessage((ServerPlayer) event.getPlayer());
+            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getPlayer());
 
             event.getPlayer().addItem(event.getEntityItem().getItem());
             event.getPlayer().getInventory().setChanged();
@@ -202,7 +200,7 @@ public class PermissionEvents {
         ItemStack bucket = event.getFilledBucket() == null ? event.getEmptyBucket() : event.getFilledBucket();
 
         final boolean runFail = processPermissions(
-                group, "onBucket",
+                group, PermissionTriggers.ON_BUCKET,
                 Objects.requireNonNull(bucket.getItem().getRegistryName()).toString(),
                 PermissionDataJson::getItemsData
         );
@@ -210,7 +208,7 @@ public class PermissionEvents {
         if (runFail) {
             if (event.isCancelable()) event.setCanceled(true);
             else event.setResult(Event.Result.DENY);
-            sendFailureMessage((ServerPlayer) event.getEntity());
+            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
         }
     }
 
@@ -220,7 +218,7 @@ public class PermissionEvents {
         if (group.isEmpty()) return;
 
         final boolean runFail = processPermissions(
-                group, "onMount",
+                group, PermissionTriggers.ON_MOUNT,
                 Objects.requireNonNull(EntityType.getKey(event.getEntityBeingMounted().getType())).toString(),
                 PermissionDataJson::getEntitiesData
         );
@@ -228,7 +226,7 @@ public class PermissionEvents {
         if (runFail) {
             if (event.isCancelable()) event.setCanceled(true);
             else event.setResult(Event.Result.DENY);
-            sendFailureMessage((ServerPlayer) event.getEntity());
+            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
         }
     }
 
@@ -236,8 +234,8 @@ public class PermissionEvents {
     public void onClickEntity(PlayerInteractEvent.EntityInteract event) {
         final AtomicReference<Island> standingOn = new AtomicReference<>();
         if(!InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) {
-            if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getPlayer(), (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(),  "onRightClickEntity")) {
-                event.getPlayer().displayClientMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("toolbar.overlay.nothere")).withStyle(ChatFormatting.DARK_RED), true);
+            if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getPlayer(), (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(),  PermissionTriggers.ON_RIGHT_CLICK_ENTITY)) {
+                InteractionHandler.sendDeniedMessage(event.getPlayer());
                 if(event.isCancelable()) event.setCanceled(true);
                 else event.setResult(Event.Result.DENY);
             }
@@ -251,10 +249,10 @@ public class PermissionEvents {
         if(!InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) {
             final BlockState state = event.getWorld().getBlockState(event.getPos());
             final BlockEntity be = event.getWorld().getBlockEntity(event.getPos());
-            final String trigger = BlockInteractability.isRightClickInteraction(event.getWorld(), event.getPos(), event.getPlayer(), event.getHand()) ? "onRightClickBlock" : "onPlaceBlock";
+            final String trigger = BlockInteractability.isRightClickInteraction(event.getWorld(), event.getPos(), event.getPlayer(), event.getHand()) ? PermissionTriggers.ON_RIGHT_CLICK_BLOCK : PermissionTriggers.ON_PLACE_BLOCK;
 
             if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getPlayer(), (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(),  trigger)) {
-                event.getPlayer().displayClientMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("toolbar.overlay.nothere")).withStyle(ChatFormatting.DARK_RED), true);
+                InteractionHandler.sendDeniedMessage(event.getPlayer());
                 if(event.isCancelable()) event.setCanceled(true);
                 else event.setResult(Event.Result.DENY);
             }
@@ -266,8 +264,8 @@ public class PermissionEvents {
             if(!item.isEmpty() && item.getItem() == Items.FLINT_AND_STEEL) {
                 final BlockState state = event.getWorld().getBlockState(event.getPos());
                 if(!state.isAir() && state.getBlock().asItem() == Items.OBSIDIAN) {
-                    if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getPlayer(), (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(), "onPortalIgnition")) {
-                        event.getPlayer().displayClientMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("toolbar.overlay.nothere")).withStyle(ChatFormatting.DARK_RED), true);
+                    if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getPlayer(), (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(), PermissionTriggers.ON_PORTAL_IGNITION)) {
+                        InteractionHandler.sendDeniedMessage(event.getPlayer());
                         if(event.isCancelable()) event.setCanceled(true);
                         else event.setResult(Event.Result.DENY);
                     }
@@ -280,8 +278,8 @@ public class PermissionEvents {
         final AtomicReference<Island> standingOn = new AtomicReference<>();
         if(InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) return;
 
-        if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getPlayer(), (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(), "onRightClickEmpty")) {
-            event.getPlayer().displayClientMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("toolbar.overlay.nothere")).withStyle(ChatFormatting.DARK_RED), true);
+        if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getPlayer(), (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(), PermissionTriggers.ON_RIGHT_CLICK_EMPTY)) {
+            InteractionHandler.sendDeniedMessage(event.getPlayer());
             if(event.isCancelable()) event.setCanceled(true);
             else event.setResult(Event.Result.DENY);
         }
@@ -291,8 +289,8 @@ public class PermissionEvents {
         final AtomicReference<Island> standingOn = new AtomicReference<>();
         if(InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) return;
 
-        if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getPlayer(), (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(), "onRightClickItem")) {
-            event.getPlayer().displayClientMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("toolbar.overlay.nothere")).withStyle(ChatFormatting.DARK_RED), true);
+        if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getPlayer(), (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(), PermissionTriggers.ON_RIGHT_CLICK_ITEM)) {
+            InteractionHandler.sendDeniedMessage(event.getPlayer());
             if(event.isCancelable()) event.setCanceled(true);
             else event.setResult(Event.Result.DENY);
         }
@@ -303,10 +301,10 @@ public class PermissionEvents {
         if(!InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) {
             final BlockState state = event.getWorld().getBlockState(event.getPos());
             final BlockEntity be = event.getWorld().getBlockEntity(event.getPos());
-            final String trigger = "onPlaceBlock";
+            final String trigger = PermissionTriggers.ON_PLACE_BLOCK;
 
             if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getEntity(), (ServerLevel) event.getWorld(), event.getPos(), ((ServerPlayer) event.getEntity()).getMainHandItem(),  trigger)) {
-                ((ServerPlayer) event.getEntity()).displayClientMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("toolbar.overlay.nothere")).withStyle(ChatFormatting.DARK_RED), true);
+                InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
                 if(event.isCancelable()) event.setCanceled(true);
                 else event.setResult(Event.Result.DENY);
             }
@@ -318,8 +316,8 @@ public class PermissionEvents {
             if(!item.isEmpty() && item.getItem() == Items.FLINT_AND_STEEL) {
                 final BlockState state = event.getWorld().getBlockState(event.getPos());
                 if(!state.isAir() && state.getBlock().asItem() == Items.OBSIDIAN) {
-                    if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getEntity(), (ServerLevel) event.getWorld(), event.getPos(), ((ServerPlayer) event.getEntity()).getMainHandItem(), "onPortalIgnition")) {
-                        ((ServerPlayer) event.getEntity()).displayClientMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("toolbar.overlay.nothere")).withStyle(ChatFormatting.DARK_RED), true);
+                    if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getEntity(), (ServerLevel) event.getWorld(), event.getPos(), ((ServerPlayer) event.getEntity()).getMainHandItem(), PermissionTriggers.ON_PORTAL_IGNITION)) {
+                        InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
                         if(event.isCancelable()) event.setCanceled(true);
                         else event.setResult(Event.Result.DENY);
                     }
@@ -333,8 +331,8 @@ public class PermissionEvents {
         final AtomicReference<Island> standingOn = new AtomicReference<>();
         if(InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) return;
 
-        if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getPlayer(), (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(), "onLeftClickBlock")) {
-            event.getPlayer().displayClientMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("toolbar.overlay.nothere")).withStyle(ChatFormatting.DARK_RED), true);
+        if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getPlayer(), (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(), PermissionTriggers.ON_LEFT_CLICK_BLOCK)) {
+            InteractionHandler.sendDeniedMessage(event.getPlayer());
             if(event.isCancelable()) event.setCanceled(true);
             else event.setResult(Event.Result.DENY);
         }
@@ -344,8 +342,8 @@ public class PermissionEvents {
         final AtomicReference<Island> standingOn = new AtomicReference<>();
         if(InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) return;
 
-        if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getPlayer(), (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(), "onLeftClickEmpty")) {
-            event.getPlayer().displayClientMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("toolbar.overlay.nothere")).withStyle(ChatFormatting.DARK_RED), true);
+        if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getPlayer(), (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(), PermissionTriggers.ON_LEFT_CLICK_EMPTY)) {
+            InteractionHandler.sendDeniedMessage(event.getPlayer());
             if(event.isCancelable()) event.setCanceled(true);
             else event.setResult(Event.Result.DENY);
         }
@@ -358,7 +356,7 @@ public class PermissionEvents {
 
         final boolean runFail = processPermissions(
                 group,
-                "onAttack",
+                PermissionTriggers.ON_ATTACK,
                 Objects.requireNonNull(EntityType.getKey(event.getTarget().getType())).toString(),
                 PermissionDataJson::getEntitiesData
         );
@@ -366,7 +364,7 @@ public class PermissionEvents {
         if (runFail) {
             if (event.isCancelable()) event.setCanceled(true);
             else event.setResult(Event.Result.DENY);
-            sendFailureMessage((ServerPlayer) event.getPlayer());
+            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getPlayer());
         }
     }
 
@@ -377,7 +375,7 @@ public class PermissionEvents {
 
         final boolean runFail = processPermissions(
                 group,
-                "onUse",
+                PermissionTriggers.ON_USE,
                 Objects.requireNonNull(event.getItem().getItem().getRegistryName()).toString(),
                 PermissionDataJson::getItemsData
         );
@@ -385,7 +383,7 @@ public class PermissionEvents {
         if (runFail) {
             if (event.isCancelable()) event.setCanceled(true);
             else event.setResult(Event.Result.DENY);
-            sendFailureMessage((ServerPlayer) event.getEntity());
+            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
         }
     }
 
@@ -396,7 +394,7 @@ public class PermissionEvents {
 
         final boolean runFail = processPermissions(
                 group,
-                "onPlayerChangedDimension",
+                PermissionTriggers.ON_PLAYER_CHANGED_DIMENSION,
                 event.getDimension().location().toString(),
                 data -> data.getSkyblockaddonData().stream()
                         .filter(s -> s.startsWith("dimension:"))
@@ -407,7 +405,7 @@ public class PermissionEvents {
         if (runFail) {
             if (event.isCancelable()) event.setCanceled(true);
             else event.setResult(Event.Result.DENY);
-            sendFailureMessage((ServerPlayer) event.getEntity());
+            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
 
             final ServerPlayer player = (ServerPlayer) event.getEntity();
             final double radianYaw = Math.toRadians(player.getYRot());
@@ -427,7 +425,7 @@ public class PermissionEvents {
         if (group.isEmpty()) {
             if (event.isCancelable()) event.setCanceled(true);
             else event.setResult(Event.Result.DENY);
-            sendFailureMessage((ServerPlayer) entity);
+            InteractionHandler.sendDeniedMessage((ServerPlayer) entity);
             return Optional.empty();
         }
 
@@ -445,7 +443,7 @@ public class PermissionEvents {
 
         final boolean runFail = processPermissions(
                 island.getGroupForEntityUUID(event.getEntity().getUUID()),
-                (entityType.getCategory() == MobCategory.MONSTER ? "OnHostileMobSpawn" : "OnPassiveMobSpawn"),
+                (entityType.getCategory() == MobCategory.MONSTER ? PermissionTriggers.ON_HOSTILE_MOB_SPAWN : PermissionTriggers.ON_PASSIVE_MOB_SPAWN),
                 EntityType.getKey(event.getEntity().getType()).toString(),
                 PermissionDataJson::getEntitiesData,
                 false
@@ -492,12 +490,6 @@ public class PermissionEvents {
             }
         }
         return runFail;
-    }
-
-    private void sendFailureMessage(final ServerPlayer player) {
-        player.displayClientMessage(
-                new TextComponent(SkyBlockAddonLanguage.getLocalizedString("toolbar.overlay.nothere")).withStyle(ChatFormatting.DARK_RED), true
-        );
     }
 
 }

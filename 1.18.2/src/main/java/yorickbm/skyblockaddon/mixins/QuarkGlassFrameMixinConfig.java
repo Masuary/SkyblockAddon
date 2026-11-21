@@ -1,8 +1,6 @@
 package yorickbm.skyblockaddon.mixins;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -16,8 +14,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import vazkii.quark.content.building.entity.GlassItemFrame;
-import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
+import yorickbm.skyblockaddon.core.permissions.PermissionTriggers;
 import yorickbm.skyblockaddon.islands.InteractionHandler;
 import yorickbm.skyblockaddon.util.BlockInteractability;
 
@@ -37,8 +35,8 @@ public abstract class QuarkGlassFrameMixinConfig {
         if (!player.isShiftKeyDown() && !item.isEmpty() && !(item.getItem() instanceof BannerItem)) {
             if (!BlockInteractability.isInteractable(player.getLevel(), this.getBehindPos())) return;
 
-            if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) player, (ServerLevel) player.getLevel(), this.getBehindPos(), item,  "onRightClickBlock")) {
-                player.displayClientMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("toolbar.overlay.nothere")).withStyle(ChatFormatting.DARK_RED), true);
+            if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) player, (ServerLevel) player.getLevel(), this.getBehindPos(), item,  PermissionTriggers.ON_RIGHT_CLICK_BLOCK)) {
+                InteractionHandler.sendDeniedMessage(player);
                 cir.setReturnValue(InteractionResult.FAIL); //Force success
             }
         }

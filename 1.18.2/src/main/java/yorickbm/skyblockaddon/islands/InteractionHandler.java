@@ -1,11 +1,14 @@
 package yorickbm.skyblockaddon.islands;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -14,17 +17,20 @@ import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraftforge.common.util.FakePlayer;
+import net.minecraftforge.eventbus.api.Event;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import yorickbm.skyblockaddon.SkyBlockAddon;
 import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldCapability;
 import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldProvider;
+import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.permissions.EntityVerification;
 import yorickbm.skyblockaddon.core.permissions.Permission;
 import yorickbm.skyblockaddon.core.permissions.PermissionManager;
+import yorickbm.skyblockaddon.core.permissions.PermissionTriggers;
 import yorickbm.skyblockaddon.core.util.MatchResult;
 import yorickbm.skyblockaddon.util.ForgeConverter;
 import yorickbm.skyblockaddon.util.ServerHelper;
@@ -36,6 +42,16 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class InteractionHandler {
     private static final Logger LOGGER = LogManager.getLogger();
+
+    public static void deny(final Event event, final Player player) {
+        if (event.isCancelable()) event.setCanceled(true);
+        else event.setResult(Event.Result.DENY);
+        sendDeniedMessage(player);
+    }
+
+    public static void sendDeniedMessage(final Player player) {
+        player.displayClientMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("toolbar.overlay.nothere")).withStyle(ChatFormatting.DARK_RED), true);
+    }
 
     /**
      * Run requirement check for entity. This check determines if it may override on the event.
@@ -168,7 +184,7 @@ public class InteractionHandler {
 
             if(!blocksData.isEmpty()) {
                 final Block subjectBlock;
-                if("onPlaceBlock".equals(trigger)) {
+                if(PermissionTriggers.ON_PLACE_BLOCK.equals(trigger)) {
                     subjectBlock = (handItem.getItem() instanceof BlockItem heldBlockItem) ? heldBlockItem.getBlock() : null;
                 } else if(!clickedState.isAir()) {
                     subjectBlock = clickedState.getBlock();

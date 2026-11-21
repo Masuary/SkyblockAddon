@@ -25,6 +25,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import yorickbm.guilibrary.GUILibraryRegistry;
+import yorickbm.skyblockaddon.core.GuiDataKeys;
 import yorickbm.skyblockaddon.core.JSON.ItemStackJson;
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.islands.Island;
@@ -51,10 +52,10 @@ public final class PermissionTogglesGui {
     private PermissionTogglesGui() {}
 
     public static void open(ServerPlayer player, CompoundTag data) {
-        if (!data.contains("island_id") || !data.contains("group_id")) return;
-        Island island = IslandManager.getInstance().getIslandByUUID(data.getUUID("island_id"));
+        if (!data.contains(GuiDataKeys.ISLAND_ID) || !data.contains(GuiDataKeys.GROUP_ID)) return;
+        Island island = IslandManager.getInstance().getIslandByUUID(data.getUUID(GuiDataKeys.ISLAND_ID));
         if (island == null) return;
-        IslandGroup group = island.getGroup(data.getUUID("group_id"));
+        IslandGroup group = island.getGroup(data.getUUID(GuiDataKeys.GROUP_ID));
         if (group == null) return;
         String categoryId = data.getCompound(GUILibraryRegistry.MOD_ID).getString("category_id");
         open(player, data, categoryId.isEmpty() ? CATEGORIES[0][0] : categoryId, group);
@@ -133,9 +134,9 @@ public final class PermissionTogglesGui {
                 .onClick(p -> setAll(p, data, categoryId, group, permissions, false)).fallbackSlot(48));
         gui.add(new Button("members", 302, 179, 70, 15).style(ButtonStyle.SECONDARY).label(new TextComponent("Members"))
                 .onClick(p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:members_group", data)).fallbackSlot(50));
-        boolean defaultGroup = group.getId().equals(SkyblockAddonCore.MOD_UUID) || group.getId().equals(SkyblockAddonCore.MOD_UUID2);
+        boolean defaultGroup = group.getId().equals(SkyblockAddonCore.MEMBERS_GROUP_ID) || group.getId().equals(SkyblockAddonCore.VISITORS_GROUP_ID);
         if (!defaultGroup) {
-            Island island = IslandManager.getInstance().getIslandByUUID(data.getUUID("island_id"));
+            Island island = IslandManager.getInstance().getIslandByUUID(data.getUUID(GuiDataKeys.ISLAND_ID));
             gui.add(new Button("remove_group", 6, 179, 100, 15).style(ButtonStyle.DANGER).label(new TextComponent("Remove group"))
                     .onClick(p -> ConfirmRemoveGroupGui.open(p, data, island, group)).fallbackSlot(52));
         }

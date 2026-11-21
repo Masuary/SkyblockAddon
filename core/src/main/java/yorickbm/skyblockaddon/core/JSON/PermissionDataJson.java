@@ -5,7 +5,9 @@ import yorickbm.skyblockaddon.core.util.JSON.JSONSerializable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class PermissionDataJson implements JSONSerializable {
 
@@ -37,6 +39,10 @@ public class PermissionDataJson implements JSONSerializable {
     public List<String> getItemsData() { return Arrays.stream(this.items).collect(Collectors.toList()); }
     public List<String> getBlocksData() { return Arrays.stream(this.blocks).collect(Collectors.toList()); }
     public List<String> getEntitiesData() { return Arrays.stream(this.entities).collect(Collectors.toList()); }
+
+    public Stream<String> getItemBlockAndEntityRules() {
+        return Stream.of(this.items, this.blocks, this.entities).filter(Objects::nonNull).flatMap(Arrays::stream);
+    }
 
     public boolean getDefault() {
         return this.defaults;

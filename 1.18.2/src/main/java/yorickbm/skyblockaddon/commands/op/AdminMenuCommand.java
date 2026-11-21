@@ -12,6 +12,7 @@ import yorickbm.guilibrary.GUILibraryRegistry;
 import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldProvider;
 import yorickbm.skyblockaddon.commands.interfaces.Cmds;
 import yorickbm.skyblockaddon.commands.interfaces.OverWorldCommandStack;
+import yorickbm.skyblockaddon.core.GuiDataKeys;
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
@@ -58,7 +59,7 @@ public class AdminMenuCommand extends OverWorldCommandStack {
             }
 
             final CompoundTag tag = new CompoundTag();
-            tag.putUUID("island_id", island.getId());
+            tag.putUUID(GuiDataKeys.ISLAND_ID, island.getId());
             GUILibraryRegistry.openGUIForPlayer(executor, SkyblockAddonCore.MOD_ID + ":overview", tag);
         });
         return Command.SINGLE_SUCCESS;

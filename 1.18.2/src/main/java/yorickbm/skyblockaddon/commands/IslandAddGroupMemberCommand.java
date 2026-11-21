@@ -62,7 +62,7 @@ public class IslandAddGroupMemberCommand extends OverWorldCommandStack {
         }
 
         island.getGroups().forEach(g -> {
-            if(g.getId().equals(SkyblockAddonCore.MOD_UUID) || g.getId().equals(SkyblockAddonCore.MOD_UUID2)) return; //Skip basic groups
+            if(g.getId().equals(SkyblockAddonCore.MEMBERS_GROUP_ID) || g.getId().equals(SkyblockAddonCore.VISITORS_GROUP_ID)) return; //Skip basic groups
             builder.suggest("\"" + g.getName() + "\"");
         });
 
@@ -85,7 +85,7 @@ public class IslandAddGroupMemberCommand extends OverWorldCommandStack {
         }
 
         final IslandGroup group = island.getGroup(groupId.get());
-        if(group.getId().equals(SkyblockAddonCore.MOD_UUID) || group.getId().equals(SkyblockAddonCore.MOD_UUID2)) {
+        if(group.getId().equals(SkyblockAddonCore.MEMBERS_GROUP_ID) || group.getId().equals(SkyblockAddonCore.VISITORS_GROUP_ID)) {
             command.sendFailure(new TextComponent(String.format(SkyBlockAddonLanguage.getLocalizedString("commands.group.not.found"), groupId)));
             return Command.SINGLE_SUCCESS;
         }

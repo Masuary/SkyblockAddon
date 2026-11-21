@@ -17,6 +17,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import yorickbm.guilibrary.GUILibraryRegistry;
+import yorickbm.skyblockaddon.core.GuiDataKeys;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.util.UsernameCache;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
@@ -37,10 +38,10 @@ public final class IslandHubGui {
     private IslandHubGui() {}
 
     public static void open(ServerPlayer player, CompoundTag data) {
-        if (!data.contains("island_id")) return;
+        if (!data.contains(GuiDataKeys.ISLAND_ID)) return;
 
         ForgeIsland island = (ForgeIsland) IslandManager.getInstance()
-                .getIslandByUUID(data.getUUID("island_id"));
+                .getIslandByUUID(data.getUUID(GuiDataKeys.ISLAND_ID));
         if (island == null) return;
 
         String ownerName = UsernameCache.getBlocking(island.getOwner());

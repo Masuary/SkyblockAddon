@@ -1,5 +1,6 @@
 package yorickbm.skyblockaddon.core.registries;
 
+import yorickbm.skyblockaddon.core.GuiDataKeys;
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.registries.interfaces.SkyblockAddonRegistry;
@@ -16,7 +17,7 @@ public class IslandRegistry extends SkyblockAddonRegistry<DataComponent> {
     public IslandRegistry(List<Island> islands) {
         this.islands = islands.stream()
                 .filter(Island::isVisible) //Only public islands
-                .filter(i -> !Objects.equals(i.getOwner(), SkyblockAddonCore.MOD_UUID)) //No islands with no owner
+                .filter(i -> !Objects.equals(i.getOwner(), SkyblockAddonCore.NO_OWNER_ID)) //No islands with no owner
                 .sorted(Comparator.comparing(Island::getName)) //Sort alphabetically
                 .toList();
     }
@@ -32,8 +33,8 @@ public class IslandRegistry extends SkyblockAddonRegistry<DataComponent> {
 
         component.put("biome", island.getBiome());
 
-        component.put("island_id", island.getId());
-        component.put("player_id", island.getOwner());
+        component.put(GuiDataKeys.ISLAND_ID, island.getId());
+        component.put(GuiDataKeys.PLAYER_ID, island.getOwner());
 
         index++;
     }

@@ -75,7 +75,7 @@ public class AdminAddMemberCommand {
             }
 
             //Add target to islands basic group
-            if(!island.addMember(target, SkyblockAddonCore.MOD_UUID)) {
+            if(!island.addMember(target, SkyblockAddonCore.MEMBERS_GROUP_ID)) {
                 command.sendFailure(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.admin.island.member.failure").formatted(UsernameCache.getBlocking(target), UsernameCache.getBlocking(island.getOwner()))));
                 return;
             }

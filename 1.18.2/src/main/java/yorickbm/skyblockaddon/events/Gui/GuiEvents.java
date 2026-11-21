@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import yorickbm.guilibrary.GUILibraryRegistry;
 import yorickbm.guilibrary.events.GuiDrawItemEvent;
 import yorickbm.guilibrary.events.OpenMenuEvent;
+import yorickbm.skyblockaddon.core.GuiDataKeys;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
@@ -28,9 +29,9 @@ public class GuiEvents {
         if(event.isCanceled()) return; //Skip if canceled
 
         //Ignore condition filter if no island_id is set
-        if(!event.getHolder().getData().contains("island_id")) { return; }
+        if(!event.getHolder().getData().contains(GuiDataKeys.ISLAND_ID)) { return; }
 
-        final ForgeIsland island = (ForgeIsland) IslandManager.getInstance().getIslandByUUID(event.getHolder().getData().getUUID("island_id"));
+        final ForgeIsland island = (ForgeIsland) IslandManager.getInstance().getIslandByUUID(event.getHolder().getData().getUUID(GuiDataKeys.ISLAND_ID));
 
         //Ignore condition if not found
         if(island == null) { return; }
@@ -67,9 +68,9 @@ public class GuiEvents {
         if(event.isCanceled()) return; //Skip if canceled
 
         //Ignore condition filter if no island_id is set
-        if(!event.getData().contains("island_id")) { return; }
+        if(!event.getData().contains(GuiDataKeys.ISLAND_ID)) { return; }
 
-        final ForgeIsland island = (ForgeIsland)IslandManager.getInstance().getIslandByUUID(event.getData().getUUID("island_id"));
+        final ForgeIsland island = (ForgeIsland)IslandManager.getInstance().getIslandByUUID(event.getData().getUUID(GuiDataKeys.ISLAND_ID));
 
         //Ignore condition if not found
         if (island == null) {
@@ -90,8 +91,8 @@ public class GuiEvents {
         }};
 
         //Add group variables
-        if(event.getData().contains("group_id")) {
-            final IslandGroup group = island.getGroup(event.getData().getUUID("group_id"));
+        if(event.getData().contains(GuiDataKeys.GROUP_ID)) {
+            final IslandGroup group = island.getGroup(event.getData().getUUID(GuiDataKeys.GROUP_ID));
             replacements.put("%group_name%", group.getName());
             replacements.put("%group_id%", group.getId().toString());
             replacements.put("%group_member_count%", group.getMembers().size()+"");
@@ -120,9 +121,9 @@ public class GuiEvents {
         if(event.isCanceled()) return; //Skip if canceled
 
         //Ignore condition filter if no island_id is set
-        if(!event.getHolder().getData().contains("island_id")) { return; }
+        if(!event.getHolder().getData().contains(GuiDataKeys.ISLAND_ID)) { return; }
 
-        final ForgeIsland island = (ForgeIsland)IslandManager.getInstance().getIslandByUUID(event.getHolder().getData().getUUID("island_id"));
+        final ForgeIsland island = (ForgeIsland)IslandManager.getInstance().getIslandByUUID(event.getHolder().getData().getUUID(GuiDataKeys.ISLAND_ID));
 
         //Ignore condition if not found
         if(island == null) { return; }
@@ -139,8 +140,8 @@ public class GuiEvents {
             put("%visibility%", island.isVisible() ? SkyBlockAddonLanguage.getLocalizedString("island.public") : SkyBlockAddonLanguage.getLocalizedString("island.private"));
         }};
 
-        if(event.getHolder().getData().contains("group_id")) {
-            final IslandGroup group = island.getGroup(event.getHolder().getData().getUUID("group_id"));
+        if(event.getHolder().getData().contains(GuiDataKeys.GROUP_ID)) {
+            final IslandGroup group = island.getGroup(event.getHolder().getData().getUUID(GuiDataKeys.GROUP_ID));
             replacements.put("%group_name%", group.getName());
             replacements.put("%group_id%", group.getId().toString());
             replacements.put("%group_member_count%", group.getMembers().size()+"");
