@@ -6,6 +6,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -57,7 +59,8 @@ public class PermissionEvents {
             TriggerRule.firstPermission(BlockEvent.FarmlandTrampleEvent.class, PermissionTriggers.ON_TRAMPLE, BlockEvent.FarmlandTrampleEvent::getEntity),
             TriggerRule.firstPermission(EntityTeleportEvent.EnderPearl.class, PermissionTriggers.ON_ENDER_PEARL, EntityTeleportEvent.EnderPearl::getEntity),
             TriggerRule.firstPermission(EntityTeleportEvent.ChorusFruit.class, PermissionTriggers.ON_CHORUS_FRUIT, EntityTeleportEvent.ChorusFruit::getEntity),
-            TriggerRule.firstPermission(PlayerSleepInBedEvent.class, PermissionTriggers.ON_SLEEP_IN_BED, PlayerSleepInBedEvent::getEntity),
+            TriggerRule.firstPermission(PlayerSleepInBedEvent.class, PermissionTriggers.ON_SLEEP_IN_BED, PlayerSleepInBedEvent::getEntity)
+                    .withDenialEffect((event, player) -> event.setResult(Player.BedSleepingProblem.OTHER_PROBLEM)),
             TriggerRule.firstPermission(PlayerXpEvent.PickupXp.class, PermissionTriggers.ON_XP, PlayerXpEvent.PickupXp::getEntity),
             TriggerRule.firstPermission(BonemealEvent.class, PermissionTriggers.ON_BONEMEAL, BonemealEvent::getEntity),
 
@@ -168,9 +171,21 @@ public class PermissionEvents {
         return !group.get().canDo(permissions.get(0).getId());
     }
 
+    /**
+     * The cancelled toss already took the stack out of the inventory; put it back, and drop what does not fit at the
+     * player's feet (spawned directly, since a player drop would fire this event again).
+     */
     private static void returnTossedItem(final ItemTossEvent event, final ServerPlayer player) {
-        player.addItem(event.getEntityItem().getItem());
+        final ItemStack tossedStack = event.getEntityItem().getItem();
+        player.getInventory().add(tossedStack);
         player.getInventory().setChanged();
+        if (tossedStack.isEmpty()) return;
+
+        final ItemEntity returnedItem = new ItemEntity(player.getLevel(), player.getX(), player.getY(), player.getZ(), tossedStack.copy());
+        returnedItem.setNoPickUpDelay();
+        returnedItem.setThrower(player.getUUID());
+        returnedItem.setUnlimitedLifetime();
+        player.getLevel().addFreshEntity(returnedItem);
     }
 
     private static String bucketItemId(final FillBucketEvent event) {
