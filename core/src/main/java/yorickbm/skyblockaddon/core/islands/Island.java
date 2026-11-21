@@ -24,6 +24,8 @@ public abstract class Island {
 
     protected final List<UUID> members = new ArrayList<>();
     protected final Map<UUID, IslandGroup> islandGroups = new HashMap<>();
+    protected final Set<UUID> bannedPlayers = new LinkedHashSet<>();
+    protected long lastActiveEpochMillis = 0L;
 
     /**
      * Empty constructor
@@ -179,7 +181,55 @@ public abstract class Island {
             if(!this.assignGroup(entity, id)) return false;
             if(!id.equals(SkyblockAddonCore.VISITORS_GROUP_ID) && !this.members.contains(entity)) this.members.add(entity);
         }
+        if(isPartOf(entity)) this.bannedPlayers.remove(entity);
         return true;
+    }
+
+    /**
+     * Make a member the owner. The old owner becomes a member in the Members group; the new owner leaves the
+     * member list and every group, like {@link #handOverOwnershipToNextMember()}.
+     * @param newOwner - Member that becomes the owner
+     * @return - False when the island has no owner or newOwner is not a member
+     */
+    public boolean transferOwnershipTo(final UUID newOwner) {
+        final UUID previousOwner = getOwner();
+        if (previousOwner.equals(SkyblockAddonCore.NO_OWNER_ID) || !this.members.contains(newOwner)) return false;
+
+        this.members.remove(newOwner);
+        this.islandGroups.values().forEach(group -> group.removeMember(newOwner));
+        setOwner(newOwner);
+        return addMember(previousOwner, SkyblockAddonCore.MEMBERS_GROUP_ID);
+    }
+
+    /**
+     * Ban a player from the island. The owner and members cannot be banned; a banned guest loses every group.
+     * @param entity - Player to ban
+     * @return - If the player was added to the ban list
+     */
+    public boolean banPlayer(final UUID entity) {
+        if (isPartOf(entity)) return false;
+        this.islandGroups.values().forEach(group -> group.removeMember(entity));
+        return this.bannedPlayers.add(entity);
+    }
+
+    public boolean unbanPlayer(final UUID entity) {
+        return this.bannedPlayers.remove(entity);
+    }
+
+    public boolean isBanned(final UUID entity) {
+        return this.bannedPlayers.contains(entity);
+    }
+
+    public List<UUID> getBannedPlayers() {
+        return List.copyOf(this.bannedPlayers);
+    }
+
+    public long getLastActiveEpochMillis() {
+        return this.lastActiveEpochMillis;
+    }
+
+    public void setLastActiveEpochMillis(final long lastActiveEpochMillis) {
+        this.lastActiveEpochMillis = lastActiveEpochMillis;
     }
 
     /**
@@ -292,6 +342,7 @@ public abstract class Island {
         return owner;
     }
     public void setOwner(final UUID owner) {
+        if (!Objects.equals(this.owner, owner)) this.name = "";
         this.owner = owner;
     }
 
