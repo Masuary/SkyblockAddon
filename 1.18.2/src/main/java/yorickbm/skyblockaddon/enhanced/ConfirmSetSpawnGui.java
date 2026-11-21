@@ -13,6 +13,7 @@ import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.util.geometry.Vec3i;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
+import yorickbm.skyblockaddon.islands.IslandActionService;
 
 import java.util.List;
 
@@ -26,6 +27,7 @@ public final class ConfirmSetSpawnGui {
         ForgeIsland island = (ForgeIsland) IslandManager.getInstance()
                 .getIslandByUUID(data.getUUID(GuiDataKeys.ISLAND_ID));
         if (island == null) return;
+        if (closeUnlessAllowedToSetSpawn(player, island)) return;
 
         int x = player.blockPosition().getX();
         int y = player.blockPosition().getY();
@@ -36,6 +38,7 @@ public final class ConfirmSetSpawnGui {
                         new TextComponent("Visitors arrive here too.").withStyle(ChatFormatting.GRAY)),
                 "Set spawn", ButtonStyle.PRIMARY,
                 p -> {
+                    if (closeUnlessAllowedToSetSpawn(p, island)) return;
                     Vec3i position = new Vec3i(p.blockPosition().getX(), p.blockPosition().getY(), p.blockPosition().getZ());
                     if (!island.getIslandBoundingBox().isInside(position)) {
                         p.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("island.setspawn.outside"))
@@ -49,5 +52,13 @@ public final class ConfirmSetSpawnGui {
                     IslandHubGui.open(p, data);
                 },
                 p -> IslandHubGui.open(p, data));
+    }
+
+    private static boolean closeUnlessAllowedToSetSpawn(ServerPlayer player, ForgeIsland island) {
+        if (IslandActionService.canSetSpawn(island, player)) return false;
+        MasuGui.closeFor(player);
+        player.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("island.setspawn.not.allowed"))
+                .withStyle(ChatFormatting.RED), player.getUUID());
+        return true;
     }
 }

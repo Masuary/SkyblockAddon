@@ -1,5 +1,6 @@
 package yorickbm.skyblockaddon.enhanced;
 
+import com.masuary.masugui.api.MasuGui;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 import net.minecraft.nbt.CompoundTag;
@@ -8,12 +9,15 @@ import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.server.ServerLifecycleHooks;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import yorickbm.skyblockaddon.core.islands.IslandActionResult;
+import yorickbm.skyblockaddon.islands.IslandActionService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +31,17 @@ public final class EnhancedGuiHelper {
     private static final ConcurrentHashMap<UUID, GameProfile> RESOLVED_PROFILES = new ConcurrentHashMap<>();
 
     private EnhancedGuiHelper() {}
+
+    /**
+     * A click in an open screen re-checks the right the screen was opened with, since it may be gone by now; without it
+     * the screen closes with the denial message. Returns whether the click was denied.
+     */
+    public static boolean closeWhenDenied(ServerPlayer player, boolean allowed, IslandActionResult denial) {
+        if (allowed) return false;
+        MasuGui.closeFor(player);
+        IslandActionService.sendFailure(player, denial, "");
+        return true;
+    }
 
     public static void addLore(ItemStack item, Component... lines) {
         CompoundTag display = item.getOrCreateTagElement("display");

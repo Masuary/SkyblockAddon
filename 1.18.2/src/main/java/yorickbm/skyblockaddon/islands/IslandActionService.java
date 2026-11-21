@@ -35,6 +35,13 @@ public final class IslandActionService {
         return IslandActions.canManage(island, actorOf(player));
     }
 
+    /**
+     * Only the owner or a server admin (the level the legacy Set spawn button has always required) moves the island spawn.
+     */
+    public static boolean canSetSpawn(final Island island, final ServerPlayer player) {
+        return island.isOwner(player.getUUID()) || player.hasPermissions(Commands.LEVEL_ADMINS);
+    }
+
     public static IslandActionResult assignGroup(final ServerPlayer actor, final Island island, final UUID target, final UUID groupId) {
         return IslandActions.assignGroup(island, actorOf(actor), target, groupId);
     }

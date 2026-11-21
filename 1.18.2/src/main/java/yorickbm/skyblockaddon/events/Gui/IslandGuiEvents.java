@@ -1,7 +1,6 @@
 package yorickbm.skyblockaddon.events.Gui;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.commands.Commands;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Style;
@@ -56,8 +55,8 @@ public class IslandGuiEvents {
     public void onSetSpawnPointEvent(final IslandEvents.SetSpawnPoint event) {
         if(event.isCanceled()) return; //Skip if canceled
 
-        if(!event.getIsland().isOwner(event.getTarget().getUUID())
-                && !event.getTarget().hasPermissions(Commands.LEVEL_ADMINS)) {
+        if (!IslandActionService.canSetSpawn(event.getIsland(), event.getTarget())) {
+            event.getHolder().close();
             event.getTarget().sendMessage(new TextComponent(
                     SkyBlockAddonLanguage.getLocalizedString("island.setspawn.not.allowed")
             ).withStyle(ChatFormatting.RED),event.getTarget().getUUID());
@@ -186,6 +185,7 @@ public class IslandGuiEvents {
             event.setResult(Event.Result.DENY);
             return;
         }
+        if (closeUnlessAllowedToManage(event)) return;
 
         final String biome = modData.getString("biome");
         event.getIsland().updateBiome(biome, event.getTarget().server);
@@ -370,6 +370,16 @@ public class IslandGuiEvents {
         event.setResult(Event.Result.DENY);
     }
 
+    /**
+     * Clicks in a manager menu re-check the right the menu was opened with, since it may be gone by now.
+     */
+    private static boolean closeUnlessAllowedToManage(final IslandEvents event) {
+        if (IslandActionService.canManage(event.getIsland(), event.getTarget())) return false;
+        event.getHolder().close();
+        denyWithMessage(event, IslandActionResult.NOT_ALLOWED, "");
+        return true;
+    }
+
     @SubscribeEvent
     public void onSetGroupPermissionEvent(final IslandEvents.SetGroupPermission event) {
         final CompoundTag itemData = event.getClickedItem().getOrCreateTagElement(SkyblockAddonCore.MOD_ID);
@@ -379,6 +389,7 @@ public class IslandGuiEvents {
             event.setResult(Event.Result.DENY);
             return;
         }
+        if (closeUnlessAllowedToManage(event)) return;
 
         final UUID groupUUID = guiData.getUUID(GuiDataKeys.GROUP_ID);
         final String permissionId = itemData.getString("permission_id");

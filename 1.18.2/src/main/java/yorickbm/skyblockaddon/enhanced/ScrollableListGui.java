@@ -214,6 +214,7 @@ public final class ScrollableListGui {
             }
             case "biomes" -> {
                 if (itemData.contains("biome")) {
+                    if (EnhancedGuiHelper.closeWhenDenied(player, canManage(player, data), IslandActionResult.NOT_ALLOWED)) return;
                     MasuGui.closeFor(player);
                     ForgeIsland island = (ForgeIsland) IslandManager.getInstance()
                             .getIslandByUUID(data.getUUID(GuiDataKeys.ISLAND_ID));

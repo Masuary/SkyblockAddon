@@ -60,9 +60,11 @@ public final class IslandHubGui {
             MasuGui.closeFor(p);
             island.teleportTo(p);
         }));
-        if (canManageIsland) {
+        if (IslandActionService.canSetSpawn(island, player)) {
             actions.add(new Action(Card.of(new ItemStack(Items.LODESTONE), "Set spawn", "Use your position"),
                     p -> ConfirmSetSpawnGui.open(p, data)));
+        }
+        if (canManageIsland) {
             actions.add(new Action(Card.of(new ItemStack(Items.ENDER_EYE), "Visibility", visibility + ", click to "
                     + (island.isVisible() ? "hide" : "show")), p -> {
                 IslandActionResult result = IslandActionService.toggleVisibility(p, island);
