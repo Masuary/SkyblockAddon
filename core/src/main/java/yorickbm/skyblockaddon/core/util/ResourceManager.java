@@ -91,7 +91,8 @@ public class ResourceManager {
             if (!Files.exists(dir)) {
                 Files.createDirectories(dir);
             }
-        } catch (IOException ignored) {
+        } catch (final IOException creationFailure) {
+            throw new IllegalStateException("Failed to create config folder '" + dir.toAbsolutePath() + "'", creationFailure);
         }
     }
 }
