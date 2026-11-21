@@ -13,6 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
+import yorickbm.skyblockaddon.islands.IslandActionService;
 import yorickbm.skyblockaddon.util.ForgeConverter;
 
 public class PlayerEvents {
@@ -31,7 +32,11 @@ public class PlayerEvents {
                 event.setCanceled(true); //Cancel damage
 
                 entity.resetFallDistance();
-                island.teleportTo(entity);
+                if (entity instanceof final ServerPlayer player && IslandActionService.isBannedFrom(island, player)) {
+                    ForgeIsland.sendToWorldSpawn(player);
+                } else {
+                    island.teleportTo(entity);
+                }
                 entity.resetFallDistance();
             }
         }

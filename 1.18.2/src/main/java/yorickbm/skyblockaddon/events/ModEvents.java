@@ -18,8 +18,11 @@ import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldProvider;
 import yorickbm.skyblockaddon.commands.*;
 import yorickbm.skyblockaddon.commands.op.*;
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
+import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.util.UsernameCache;
+
+import java.util.UUID;
 
 public class ModEvents {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -36,6 +39,9 @@ public class ModEvents {
         new IslandTravelCommand(event.getDispatcher());
         new IslandHubCommand(event.getDispatcher());
         new IslandAddGroupMemberCommand(event.getDispatcher());
+        new IslandTransferCommand(event.getDispatcher());
+        new IslandExpelCommand(event.getDispatcher());
+        new IslandBanCommand(event.getDispatcher());
 
         //Functional commands
         new FunctionRegistryCommand(event.getDispatcher());
@@ -92,5 +98,16 @@ public class ModEvents {
             //Load user island into cache
             IslandManager.getInstance().loadIslandIntoReverseCache(event.getPlayer().getUUID());
         });
+        markIslandActive(event.getPlayer().getUUID());
+    }
+
+    @SubscribeEvent
+    public void onPlayerLeave(final PlayerEvent.PlayerLoggedOutEvent event) {
+        markIslandActive(event.getPlayer().getUUID());
+    }
+
+    private static void markIslandActive(final UUID playerId) {
+        final Island island = IslandManager.getInstance().getIslandByEntityUUID(playerId);
+        if (island != null) island.setLastActiveEpochMillis(System.currentTimeMillis());
     }
 }

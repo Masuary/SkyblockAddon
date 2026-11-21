@@ -1,0 +1,99 @@
+{
+  "title": [
+    "{\"text\": \"%owner%'s Island - Transfer\"}"
+  ],
+  "rows": 5,
+  "key": "transfer",
+  "fillers": [
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"\"}"
+        ],
+        "item": "minecraft:GRAY_STAINED_GLASS_PANE"
+      },
+      "pattern": "EDGES"
+    },
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"%data_owner_name%\", \"color\": \"blue\"}"
+        ],
+        "item": "minecraft:PLAYER_HEAD",
+        "lore": [
+          [
+            "{\"text\": \"\u00bb Click to make this member the owner.\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"\u00bb You confirm in chat and stay on as a member.\", \"color\": \"dark_gray\"}"
+          ]
+        ],
+        "data": {}
+      },
+      "pattern": "INSIDE",
+      "action": {
+        "onClick": "yorickbm.skyblockaddon.events.IslandEvents$TransferOwnership"
+      },
+      "event": "yorickbm.skyblockaddon.events.RegistryEvents$MembersRegistry"
+    }
+  ],
+  "items": [
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"Back\", \"color\": \"red\", \"bold\": true}"
+        ],
+        "item": "minecraft:ARROW",
+        "lore": [],
+        "data": {}
+      },
+      "slot": 44,
+      "action": {
+        "onClick": "yorickbm.guilibrary.events.ItemOpenMenuEvent",
+        "data": {
+          "gui": "skyblockaddon:overview"
+        }
+      }
+    },
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"%pagenum% / %maxpage%\", \"color\": \"blue\", \"bold\": true}"
+        ],
+        "item": "minecraft:PAPER",
+        "lore": [],
+        "data": {}
+      },
+      "slot": 40,
+      "action": {}
+    },
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"Previous\", \"color\": \"red\", \"bold\": true}"
+        ],
+        "item": "minecraft:RED_BANNER",
+        "lore": [],
+        "data": {}
+      },
+      "slot": 39,
+      "action": {
+        "onClick": "yorickbm.guilibrary.events.ItemPreviousPageEvent"
+      }
+    },
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"Next\", \"color\": \"green\", \"bold\": true}"
+        ],
+        "item": "minecraft:GREEN_BANNER",
+        "lore": [],
+        "data": {}
+      },
+      "slot": 41,
+      "action": {
+        "onClick": "yorickbm.guilibrary.events.ItemNextPageEvent"
+      }
+    }
+  ]
+}

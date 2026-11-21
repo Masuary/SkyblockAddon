@@ -1,0 +1,96 @@
+{
+  "title": [
+    "{\"text\": \"%owner%'s Island - Bans\"}"
+  ],
+  "rows": 5,
+  "key": "bans",
+  "fillers": [
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"\"}"
+        ],
+        "item": "minecraft:GRAY_STAINED_GLASS_PANE"
+      },
+      "pattern": "EDGES"
+    },
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"%data_owner_name%\", \"color\": \"blue\"}"
+        ],
+        "item": "minecraft:PLAYER_HEAD",
+        "lore": [
+          [
+            "{\"text\": \"\u00bb Click to lift the ban.\", \"color\": \"dark_gray\"}"
+          ]
+        ],
+        "data": {}
+      },
+      "pattern": "INSIDE",
+      "action": {
+        "onClick": "yorickbm.skyblockaddon.events.IslandEvents$UnbanPlayer"
+      },
+      "event": "yorickbm.skyblockaddon.events.RegistryEvents$BannedPlayersRegistry"
+    }
+  ],
+  "items": [
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"Back\", \"color\": \"red\", \"bold\": true}"
+        ],
+        "item": "minecraft:ARROW",
+        "lore": [],
+        "data": {}
+      },
+      "slot": 44,
+      "action": {
+        "onClick": "yorickbm.guilibrary.events.ItemOpenMenuEvent",
+        "data": {
+          "gui": "skyblockaddon:overview"
+        }
+      }
+    },
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"%pagenum% / %maxpage%\", \"color\": \"blue\", \"bold\": true}"
+        ],
+        "item": "minecraft:PAPER",
+        "lore": [],
+        "data": {}
+      },
+      "slot": 40,
+      "action": {}
+    },
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"Previous\", \"color\": \"red\", \"bold\": true}"
+        ],
+        "item": "minecraft:RED_BANNER",
+        "lore": [],
+        "data": {}
+      },
+      "slot": 39,
+      "action": {
+        "onClick": "yorickbm.guilibrary.events.ItemPreviousPageEvent"
+      }
+    },
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"Next\", \"color\": \"green\", \"bold\": true}"
+        ],
+        "item": "minecraft:GREEN_BANNER",
+        "lore": [],
+        "data": {}
+      },
+      "slot": 41,
+      "action": {
+        "onClick": "yorickbm.guilibrary.events.ItemNextPageEvent"
+      }
+    }
+  ]
+}

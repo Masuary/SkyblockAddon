@@ -6,6 +6,7 @@ import com.masuary.masugui.element.ButtonStyle;
 import com.masuary.masugui.element.ListView;
 import com.masuary.masugui.element.Section;
 import com.masuary.masugui.element.StatusBar;
+import com.masuary.masugui.element.TextField;
 import com.masuary.masugui.element.Window;
 import com.masuary.masugui.element.data.Cell;
 import com.masuary.masugui.element.data.Chip;
@@ -17,6 +18,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -26,31 +28,40 @@ import net.minecraftforge.registries.ForgeRegistries;
 import yorickbm.guilibrary.GUILibraryRegistry;
 import yorickbm.skyblockaddon.core.GuiDataKeys;
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
+import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
+import yorickbm.skyblockaddon.core.islands.IslandActionResult;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
+import yorickbm.skyblockaddon.core.islands.IslandTravelListing;
 import yorickbm.skyblockaddon.components.ItemStackComponent;
 import yorickbm.skyblockaddon.core.registries.BiomeRegistry;
 import yorickbm.skyblockaddon.core.util.UsernameCache;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
 import yorickbm.skyblockaddon.islands.ForgeIslandGroup;
-import yorickbm.skyblockaddon.util.IslandGroupAssignments;
+import yorickbm.skyblockaddon.islands.IslandActionService;
+import yorickbm.skyblockaddon.util.PlayerNames;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-/** The island lists (travel, members, biomes, groups, group members, assign group) as named rows with a back button. */
+/** The island lists (travel, members, biomes, groups, group members, assign group, visitors, bans, transfer) as named rows with a back button. */
 public final class ScrollableListGui {
 
     private static final int WIDTH = 300;
     private static final int HEIGHT = 214;
     private static final int LIST_TOP = 34;
+    private static final String TRAVEL_QUERY_KEY = "travel_query";
 
     private ScrollableListGui() {}
 
     public static void open(ServerPlayer player, CompoundTag data, String variant) {
         if ("groups".equals(variant) || "set_group".equals(variant)) {
             openGroupsLayout(player, data, variant);
+            return;
+        }
+        if ("travel".equals(variant)) {
+            openTravelList(player, data);
             return;
         }
         openGenericList(player, data, variant);
@@ -78,9 +89,65 @@ public final class ScrollableListGui {
         MasuGui gui = frame(variant, data, items.size());
         gui.add(new Section("list_header", 1, 21, WIDTH - 2).label(new TextComponent(resolveTitle(data, variant))));
         gui.add(new ListView("list", 1, LIST_TOP, WIDTH - 2, HEIGHT - LIST_TOP - 14).rows(rows(items))
+                .interactive(!"members".equals(variant) || canManage(player, data))
                 .emptyText(new TextComponent("Nothing here yet"))
                 .onClick((p, index, click) -> handleItemClick(p, data, variant, index, items)));
         gui.openFor(player);
+    }
+
+    /** Public islands, most recently active first, with their player count and last activity; Enter in the field filters by owner name. */
+    private static void openTravelList(ServerPlayer player, CompoundTag data) {
+        MinecraftServer server = Objects.requireNonNull(player.getServer());
+        String query = data.getString(TRAVEL_QUERY_KEY);
+        List<Island> destinations = IslandTravelListing.travelDestinations(IslandManager.getInstance().getIslands(),
+                player.getUUID(), query, island -> PlayerNames.nameOf(server, island.getOwner()));
+        long now = System.currentTimeMillis();
+
+        List<ListRow> rows = new ArrayList<>();
+        for (Island island : destinations) {
+            ItemStack head = EnhancedGuiHelper.getPlayerHead(island.getOwner());
+            rows.add(ListRow.of(head, PlayerNames.nameOf(server, island.getOwner()) + "'s Island")
+                    .withCells(Cell.of(String.valueOf(IslandTravelListing.playerCount(island)), 0xFFFFFF),
+                            Cell.of(IslandTravelListing.describeLastActive(island.getLastActiveEpochMillis(), now), 0xAAAAAA)));
+        }
+
+        MasuGui gui = frame("travel", data, destinations.size());
+        gui.add(new TextField("search", 4, 21, 140, 12).modern(true).searchIcon(true).maxLength(16)
+                .placeholder("Search owner").value(query)
+                .onSubmit((p, text) -> {
+                    CompoundTag filtered = data.copy();
+                    filtered.putString(TRAVEL_QUERY_KEY, text.trim());
+                    open(p, filtered, "travel");
+                }));
+        gui.add(new ListView("list", 1, LIST_TOP, WIDTH - 2, HEIGHT - LIST_TOP - 14).rows(rows)
+                .columns(List.of(ListColumn.of("Members", 96), ListColumn.of("Last active", 8)))
+                .emptyText(new TextComponent(query.isEmpty() ? "No public islands yet" : "No island owner matches \"" + query + "\""))
+                .onClick((p, index, click) -> {
+                    if (index >= 0 && index < destinations.size()) travelTo(p, destinations.get(index).getId());
+                }));
+        gui.openFor(player);
+    }
+
+    private static void travelTo(ServerPlayer player, UUID islandId) {
+        MasuGui.closeFor(player);
+        ForgeIsland island = (ForgeIsland) IslandManager.getInstance().getIslandByUUID(islandId);
+        if (island == null) return;
+        if (IslandActionService.isBannedFrom(island, player)) {
+            player.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("island.banned.travel"))
+                    .withStyle(ChatFormatting.RED), player.getUUID());
+            return;
+        }
+        island.teleportTo(player);
+    }
+
+    private static boolean canManage(ServerPlayer player, CompoundTag data) {
+        Island island = islandOf(data);
+        return island != null && IslandActionService.canManage(island, player);
+    }
+
+    private static Island islandOf(CompoundTag data) {
+        if (!data.hasUUID(GuiDataKeys.ISLAND_ID)) return null;
+        return IslandManager.getInstance().getIslandByUUID(data.getUUID(GuiDataKeys.ISLAND_ID));
     }
 
     private static void openGroupsLayout(ServerPlayer player, CompoundTag data, String variant) {
@@ -137,14 +204,6 @@ public final class ScrollableListGui {
         CompoundTag itemData = clicked.getOrCreateTagElement("skyblockaddon");
 
         switch (variant) {
-            case "travel" -> {
-                if (itemData.contains(GuiDataKeys.ISLAND_ID)) {
-                    MasuGui.closeFor(player);
-                    ForgeIsland island = (ForgeIsland) IslandManager.getInstance()
-                            .getIslandByUUID(itemData.getUUID(GuiDataKeys.ISLAND_ID));
-                    if (island != null) island.teleportTo(player);
-                }
-            }
             case "members" -> {
                 if (itemData.contains(GuiDataKeys.PLAYER_ID)) {
                     CompoundTag newData = data.copy();
@@ -185,22 +244,29 @@ public final class ScrollableListGui {
             case "set_group" -> {
                 if (itemData.contains(GuiDataKeys.GROUP_ID) && data.contains(GuiDataKeys.PLAYER_ID)) {
                     MasuGui.closeFor(player);
-                    ForgeIsland island = (ForgeIsland) IslandManager.getInstance()
-                            .getIslandByUUID(data.getUUID(GuiDataKeys.ISLAND_ID));
+                    Island island = islandOf(data);
                     if (island != null) {
-                        IslandGroup targetGroup = island.getGroup(itemData.getUUID(GuiDataKeys.GROUP_ID));
-                        if (targetGroup != null) {
-                            UUID playerId = data.getUUID(GuiDataKeys.PLAYER_ID);
-                            boolean assigned = island.isPartOf(playerId)
-                                    ? island.addMember(playerId, targetGroup.getId())
-                                    : IslandGroupAssignments.assignWithoutMembership(island, playerId, targetGroup);
-                            if (assigned) {
-                                player.sendMessage(new TextComponent("Player assigned to group: " + targetGroup.getName())
-                                        .withStyle(ChatFormatting.GREEN), player.getUUID());
-                            }
+                        UUID groupId = itemData.getUUID(GuiDataKeys.GROUP_ID);
+                        UUID playerId = data.getUUID(GuiDataKeys.PLAYER_ID);
+                        IslandActionResult result = IslandActionService.assignGroup(player, island, playerId, groupId);
+                        if (result.succeeded()) {
+                            player.sendMessage(new TextComponent("Player assigned to group: " + island.getGroup(groupId).getName())
+                                    .withStyle(ChatFormatting.GREEN), player.getUUID());
+                        } else {
+                            IslandActionService.sendFailure(player, result, UsernameCache.getBlocking(playerId));
                         }
                     }
                     GUILibraryRegistry.openGUIForPlayer(player, "skyblockaddon:members", data);
+                }
+            }
+            case "visitors", "bans", "transfer" -> {
+                Island island = islandOf(data);
+                if (island == null || !itemData.hasUUID(GuiDataKeys.PLAYER_ID)) return;
+                UUID playerId = itemData.getUUID(GuiDataKeys.PLAYER_ID);
+                switch (variant) {
+                    case "visitors" -> VisitorActionGui.open(player, data, (ForgeIsland) island, playerId);
+                    case "bans" -> ConfirmUnbanGui.open(player, data, island, playerId);
+                    default -> ConfirmTransferGui.open(player, data, (ForgeIsland) island, playerId);
                 }
             }
         }
@@ -224,6 +290,9 @@ public final class ScrollableListGui {
                         yield "Group Members";
                     }
                     case "set_group" -> owner + "'s Island - Assign Group";
+                    case "visitors" -> owner + "'s Island - Visitors";
+                    case "bans" -> owner + "'s Island - Banned players";
+                    case "transfer" -> owner + "'s Island - Transfer ownership";
                     default -> "List";
                 };
             }
@@ -240,6 +309,9 @@ public final class ScrollableListGui {
             case "groups" -> "Click a group to edit permissions";
             case "members_group" -> "Click a member to reassign";
             case "set_group" -> "Click a group to assign the player";
+            case "visitors" -> "Click a visitor to expel or ban them";
+            case "bans" -> "Click a player to lift their ban";
+            case "transfer" -> "Click the member who becomes the owner";
             default -> null;
         };
     }
@@ -252,29 +324,32 @@ public final class ScrollableListGui {
             case "groups" -> "skyblockaddon:settings";
             case "members_group" -> "skyblockaddon:permissions";
             case "set_group" -> "skyblockaddon:members";
+            case "visitors", "bans", "transfer" -> "skyblockaddon:overview";
             default -> null;
         };
     }
 
     private static List<ItemStack> buildItems(ServerPlayer player, CompoundTag data, String variant) {
+        Island island = islandOf(data);
         return switch (variant) {
-            case "travel" -> buildTravelItems(player);
             case "members" -> buildMemberItems(data);
             case "biomes" -> buildBiomeItems(player, data);
             case "members_group" -> buildGroupMemberItems(data);
+            case "visitors" -> island == null ? List.of() : buildPlayerItems(((ForgeIsland) island)
+                    .visitorsStandingOn(Objects.requireNonNull(player.getServer())).stream().map(ServerPlayer::getUUID).toList(), "Visiting");
+            case "bans" -> island == null ? List.of() : buildPlayerItems(island.getBannedPlayers(), "Banned");
+            case "transfer" -> island == null ? List.of() : buildPlayerItems(island.getMembers(), "Member");
             default -> List.of();
         };
     }
 
-    private static List<ItemStack> buildTravelItems(ServerPlayer player) {
-        return IslandManager.getInstance().getIslands().stream()
-                .filter(Island::isVisible)
-                .map(island -> {
-                    String ownerName = UsernameCache.getBlocking(island.getOwner());
-                    ItemStack head = EnhancedGuiHelper.getPlayerHead(island.getOwner());
-                    head.setHoverName(new TextComponent(ownerName + "'s Island").withStyle(ChatFormatting.GOLD));
-                    CompoundTag tag = head.getOrCreateTagElement("skyblockaddon");
-                    tag.putUUID(GuiDataKeys.ISLAND_ID, island.getId());
+    private static List<ItemStack> buildPlayerItems(List<UUID> players, String description) {
+        return players.stream()
+                .map(uuid -> {
+                    ItemStack head = EnhancedGuiHelper.getPlayerHead(uuid);
+                    head.setHoverName(new TextComponent(UsernameCache.getBlocking(uuid)).withStyle(ChatFormatting.GREEN));
+                    EnhancedGuiHelper.addLore(head, new TextComponent(description).withStyle(ChatFormatting.GRAY));
+                    head.getOrCreateTagElement("skyblockaddon").putUUID(GuiDataKeys.PLAYER_ID, uuid);
                     return head;
                 })
                 .collect(Collectors.toList());

@@ -16,9 +16,11 @@ import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldProvider;
 import yorickbm.skyblockaddon.commands.interfaces.Cmds;
 import yorickbm.skyblockaddon.commands.interfaces.OverWorldCommandStack;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
+import yorickbm.skyblockaddon.core.islands.IslandActionResult;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.util.UsernameCache;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
+import yorickbm.skyblockaddon.islands.IslandActionService;
 import yorickbm.skyblockaddon.util.FunctionRegistry;
 
 import java.util.UUID;
@@ -103,6 +105,11 @@ public class IslandTeleportCommand extends OverWorldCommandStack {
                 return;
             }
 
+            if (IslandActionService.isBannedFrom(island, executor)) {
+                command.sendFailure(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("island.banned.travel")));
+                return;
+            }
+
             //Determine if it is a public island
             //Determine if user is OP
             if(island.isVisible() || executor.hasPermissions(Commands.LEVEL_MODERATORS)) {
@@ -119,6 +126,10 @@ public class IslandTeleportCommand extends OverWorldCommandStack {
             final UUID functionKey = UUID.randomUUID();
             FunctionRegistry.registerFunction(functionKey, (e) -> {
                 if(!super.isInOverworld(e)) return true;
+                if (IslandActionService.isBannedFrom(island, executor)) {
+                    e.sendMessage(IslandActionService.failureMessage(IslandActionResult.TARGET_IS_BANNED, executor.getDisplayName().getString()), e.getUUID());
+                    return true;
+                }
 
                 executor.sendMessage(new TextComponent(
                     SkyBlockAddonLanguage.getLocalizedString("commands.teleporting.other")

@@ -71,10 +71,16 @@ public final class IslandActions {
         return IslandActionResult.SUCCESS;
     }
 
-    public static IslandActionResult transferOwnership(final Island island, final IslandActor actor, final UUID newOwner) {
+    public static IslandActionResult checkTransferOwnership(final Island island, final IslandActor actor, final UUID newOwner) {
         if (!island.isOwner(actor.playerId())) return IslandActionResult.OWNER_ONLY;
         if (newOwner.equals(actor.playerId())) return IslandActionResult.TARGET_IS_SELF;
         if (!island.getMembers().contains(newOwner)) return IslandActionResult.TARGET_NOT_MEMBER;
+        return IslandActionResult.SUCCESS;
+    }
+
+    public static IslandActionResult transferOwnership(final Island island, final IslandActor actor, final UUID newOwner) {
+        final IslandActionResult check = checkTransferOwnership(island, actor, newOwner);
+        if (!check.succeeded()) return check;
         return island.transferOwnershipTo(newOwner) ? IslandActionResult.SUCCESS : IslandActionResult.NO_CHANGE;
     }
 

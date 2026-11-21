@@ -10,7 +10,6 @@ import com.masuary.masugui.element.data.Card;
 import com.masuary.masugui.element.data.Chip;
 import com.masuary.masugui.element.data.KeyHint;
 import com.masuary.masugui.fallback.FallbackType;
-import net.minecraft.commands.Commands;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
@@ -18,19 +17,23 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import yorickbm.guilibrary.GUILibraryRegistry;
 import yorickbm.skyblockaddon.core.GuiDataKeys;
+import yorickbm.skyblockaddon.core.islands.IslandActionResult;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.util.UsernameCache;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
+import yorickbm.skyblockaddon.islands.IslandActionService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /** The island menu: one card per action with its current state; staff-only actions are hidden from members. */
 public final class IslandHubGui {
 
     private static final int WIDTH = 320;
-    private static final int HEIGHT = 168;
+    private static final int HEIGHT = 236;
+    private static final int GRID_HEIGHT = 176;
 
     private record Action(Card card, Consumer<ServerPlayer> run) {
     }
@@ -45,12 +48,8 @@ public final class IslandHubGui {
         if (island == null) return;
 
         String ownerName = UsernameCache.getBlocking(island.getOwner());
-        boolean hasAdminGroupPermission = island.getGroupForEntityUUID(player.getUUID())
-                .map(g -> g.canDo("admin_menu"))
-                .orElse(true);
-        boolean isAdmin = island.isOwner(player.getUUID())
-                || player.hasPermissions(Commands.LEVEL_ADMINS)
-                || hasAdminGroupPermission;
+        boolean canManageIsland = IslandActionService.canManage(island, player);
+        boolean isOwner = island.isOwner(player.getUUID());
         boolean isPart = island.isPartOf(player.getUUID());
         String rawBiome = island.getBiome() != null ? island.getBiome() : "Unknown";
         String biome = rawBiome.contains(":") ? rawBiome.substring(rawBiome.indexOf(':') + 1) : rawBiome;
@@ -61,22 +60,32 @@ public final class IslandHubGui {
             MasuGui.closeFor(p);
             island.teleportTo(p);
         }));
-        if (isAdmin) {
+        if (canManageIsland) {
             actions.add(new Action(Card.of(new ItemStack(Items.LODESTONE), "Set spawn", "Use your position"),
                     p -> ConfirmSetSpawnGui.open(p, data)));
+            actions.add(new Action(Card.of(new ItemStack(Items.ENDER_EYE), "Visibility", visibility + ", click to "
+                    + (island.isVisible() ? "hide" : "show")), p -> {
+                IslandActionResult result = IslandActionService.toggleVisibility(p, island);
+                if (!result.succeeded()) IslandActionService.sendFailure(p, result, "");
+                open(p, data);
+            }));
         }
-        actions.add(new Action(Card.of(new ItemStack(Items.ENDER_EYE), "Visibility", visibility + ", click to "
-                + (island.isVisible() ? "hide" : "show")), p -> {
-            island.toggleVisibility();
-            open(p, data);
-        }));
         actions.add(new Action(Card.of(new ItemStack(Items.PLAYER_HEAD), "Members", island.getMembers().size() + " members"),
                 p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:members", data)));
-        if (isAdmin) {
+        if (canManageIsland) {
+            int visitorCount = island.visitorsStandingOn(Objects.requireNonNull(player.getServer())).size();
+            actions.add(new Action(Card.of(new ItemStack(Items.SPYGLASS), "Visitors", visitorCount + " on the island"),
+                    p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:visitors", data)));
+            actions.add(new Action(Card.of(new ItemStack(Items.IRON_BARS), "Bans", island.getBannedPlayers().size() + " banned"),
+                    p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:bans", data)));
             actions.add(new Action(Card.of(new ItemStack(Items.GRASS_BLOCK), "Biome", biome),
                     p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:biomes", data)));
             actions.add(new Action(Card.of(new ItemStack(Items.WRITABLE_BOOK), "Permissions", island.getGroups().size() + " groups"),
                     p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:groups", data)));
+        }
+        if (isOwner) {
+            actions.add(new Action(Card.of(new ItemStack(Items.GOLDEN_HELMET), "Transfer", "Hand the island to a member"),
+                    p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:transfer", data)));
         }
 
         MasuGui gui = MasuGui.create("island_hub")
@@ -88,7 +97,7 @@ public final class IslandHubGui {
                 .chip(Chip.of("", visibility, island.isVisible() ? 0x55FF55 : 0xAAAAAA))
                 .chip(Chip.of("Members", String.valueOf(island.getMembers().size()), 0xFFFFFF))
                 .fallbackIcon(new ItemStack(Items.GRASS_BLOCK)));
-        gui.add(new CardGrid("actions", 8, 28, WIDTH - 16, 108).columns(2).cardHeight(32).gap(4)
+        gui.add(new CardGrid("actions", 8, 28, WIDTH - 16, GRID_HEIGHT).columns(2).cardHeight(32).gap(4)
                 .cards(actions.stream().map(Action::card).toList())
                 .onClick((p, index, click) -> {
                     if (index >= 0 && index < actions.size()) actions.get(index).run().accept(p);

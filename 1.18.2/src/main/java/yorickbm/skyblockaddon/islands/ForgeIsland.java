@@ -38,6 +38,8 @@ import java.util.*;
 
 public class ForgeIsland extends Island implements NBTSerializable {
     private static final Logger LOGGER = LogManager.getLogger();
+    private static final String BANNED_PLAYERS_TAG = "bannedPlayers";
+    private static final String LAST_ACTIVE_TAG = "lastActive";
     private final List<ChunkPos> playerLoadedChunks = new ArrayList<>();
 
     public ForgeIsland() {
@@ -51,6 +53,7 @@ public class ForgeIsland extends Island implements NBTSerializable {
         super.setVisibility(island.isVisible());
         super.setSkullTexture(island.getSkullTexture());
         super.setBiome(island.getBiome());
+        super.setLastActiveEpochMillis(island.getLastActiveEpochMillis());
         setChunks(((ForgeIsland)island).getModifiedChunks());
 
         island.getGroups().forEach(group -> {
@@ -69,6 +72,7 @@ public class ForgeIsland extends Island implements NBTSerializable {
                 LOGGER.warn("Failed to copy member {} into island {} during snapshot", m, getId());
             }
         });
+        island.getBannedPlayers().forEach(super::banPlayer);
     }
     public ForgeIsland(UUID uuid, Vec3i vec) {
         super.setId(UUID.randomUUID());
@@ -128,15 +132,43 @@ public class ForgeIsland extends Island implements NBTSerializable {
         //CLear player from cache
         IslandManager.getInstance().clearCacheForPlayer(entity);
 
-        //Teleport entity to world spawn
-        final BlockPos worldSpawn = Objects.requireNonNull(Objects.requireNonNull(source.getServer()).getLevel(Level.OVERWORLD)).getSharedSpawnPos();
-        final ServerPlayer player = source.getServer().getPlayerList().getPlayer(entity); //Get entity from online player list
-        if(player != null //Check if we found entity as an online player
-                && player.getLevel().dimension() == Level.OVERWORLD //Check player is found
-                && getIslandBoundingBox().isInside(ForgeConverter.ForgeToInternalVec3i(player.getOnPos())) //Determine if player is on the island
-        ) {
-            player.teleportTo(worldSpawn.getX(), worldSpawn.getY(), worldSpawn.getZ()); //Teleport player
+        sendToWorldSpawnIfStandingOn(Objects.requireNonNull(source.getServer()), entity);
+    }
+
+    /**
+     * Teleport an online player standing on this island to the overworld spawn.
+     * @return - If the player was on the island and has been moved
+     */
+    public boolean sendToWorldSpawnIfStandingOn(final MinecraftServer server, final UUID entity) {
+        final ServerPlayer player = server.getPlayerList().getPlayer(entity);
+        if (player == null || !isStandingOn(player)) return false;
+        sendToWorldSpawn(player);
+        return true;
+    }
+
+    /**
+     * Online players standing on the island who are neither its owner nor a member.
+     */
+    public List<ServerPlayer> visitorsStandingOn(final MinecraftServer server) {
+        return server.getPlayerList().getPlayers().stream()
+                .filter(player -> !isPartOf(player.getUUID()))
+                .filter(this::isStandingOn)
+                .toList();
+    }
+
+    public boolean isStandingOn(final ServerPlayer player) {
+        return player.getLevel().dimension() == Level.OVERWORLD
+                && getIslandBoundingBox().isInside(ForgeConverter.ForgeToInternalVec3i(player.getOnPos()));
+    }
+
+    public static void sendToWorldSpawn(final ServerPlayer player) {
+        final ServerLevel overworld = Objects.requireNonNull(player.getServer()).overworld();
+        final BlockPos worldSpawn = overworld.getSharedSpawnPos();
+        if (player.getLevel() != overworld) {
+            player.teleportTo(overworld, worldSpawn.getX(), worldSpawn.getY(), worldSpawn.getZ(), player.getYRot(), player.getXRot());
+            return;
         }
+        player.teleportTo(worldSpawn.getX(), worldSpawn.getY(), worldSpawn.getZ());
     }
 
     /**
@@ -264,6 +296,7 @@ public class ForgeIsland extends Island implements NBTSerializable {
         tag.putString("biome", getBiome());
         tag.putString("skullTexture", getSkullTexture());
         tag.putBoolean("travelability", isVisible());
+        tag.putLong(LAST_ACTIVE_TAG, getLastActiveEpochMillis());
         tag.put("spawn", NBTUtil.Vec3iToNBT(getSpawn()));
         tag.put("center", NBTUtil.Vec3iToNBT(getCenter()));
 
@@ -278,6 +311,13 @@ public class ForgeIsland extends Island implements NBTSerializable {
             members.putUUID(i+"", super.members.get(i));
         }
         tag.put("members", members);
+
+        final CompoundTag bannedPlayers = new CompoundTag();
+        final List<UUID> bannedPlayerIds = getBannedPlayers();
+        for(int i = 0; i < bannedPlayerIds.size(); i++) {
+            bannedPlayers.putUUID(i+"", bannedPlayerIds.get(i));
+        }
+        tag.put(BANNED_PLAYERS_TAG, bannedPlayers);
 
         final CompoundTag chunks = new CompoundTag();
         List<ChunkPos> chunksData = this.getModifiedChunks();
@@ -297,6 +337,7 @@ public class ForgeIsland extends Island implements NBTSerializable {
         final String storedBiome = tag.getString("biome");
         setBiome(storedBiome.isEmpty() || storedBiome.contains(":") ? storedBiome : "minecraft:" + storedBiome);
         setVisibility(tag.getBoolean("travelability"));
+        setLastActiveEpochMillis(tag.getLong(LAST_ACTIVE_TAG));
         setSkullTexture(tag.getString("skullTexture"));
         setSpawn(NBTUtil.NBTToVec3i(tag.getCompound("spawn")));
         setCenter(NBTUtil.NBTToVec3i(tag.getCompound("center")));
@@ -325,6 +366,11 @@ public class ForgeIsland extends Island implements NBTSerializable {
         final CompoundTag members = tag.getCompound("members");
         for(final String key : members.getAllKeys()) {
             super.members.add(members.getUUID(key));
+        }
+
+        final CompoundTag bannedPlayers = tag.getCompound(BANNED_PLAYERS_TAG);
+        for(final String key : bannedPlayers.getAllKeys()) {
+            super.bannedPlayers.add(bannedPlayers.getUUID(key));
         }
 
         final CompoundTag chunks = tag.getCompound("chunks");

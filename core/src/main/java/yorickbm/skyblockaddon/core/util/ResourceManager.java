@@ -10,8 +10,13 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 
 public class ResourceManager {
+    private static final List<String> BUNDLED_GUI_FILES = List.of(
+            "overview.json", "settings.json", "biomes.json", "travel.json", "members.json", "groups.json",
+            "set_group.json", "permissions.json", "set_permission.json", "members_group.json", "confirm_setspawn.json",
+            "visitors.json", "bans.json", "transfer.json");
 
     /**
      * Generate resource file from projects resources folder
@@ -68,21 +73,10 @@ public class ResourceManager {
         }
 
 
-        //Generate GUIS
-        if (!Files.exists(FMLPath.resolve(SkyblockAddonCore.MOD_ID + "/guis/"))) {
-            ResourceManager.getOrCreateDirectory(FMLPath.resolve(SkyblockAddonCore.MOD_ID + "/"), "guis");
-
-            generateFile(FMLPath, "guis/overview.json", "guis/overview.json");
-            generateFile(FMLPath, "guis/settings.json", "guis/settings.json");
-            generateFile(FMLPath, "guis/biomes.json", "guis/biomes.json");
-            generateFile(FMLPath, "guis/travel.json", "guis/travel.json");
-            generateFile(FMLPath, "guis/members.json", "guis/members.json");
-            generateFile(FMLPath, "guis/groups.json", "guis/groups.json");
-            generateFile(FMLPath, "guis/set_group.json", "guis/set_group.json");
-            generateFile(FMLPath, "guis/permissions.json", "guis/permissions.json");
-            generateFile(FMLPath, "guis/set_permission.json", "guis/set_permission.json");
-            generateFile(FMLPath, "guis/members_group.json", "guis/members_group.json");
-            generateFile(FMLPath, "guis/confirm_setspawn.json", "guis/confirm_setspawn.json");
+        //Generate GUIS: every bundled GUI missing from the server's folder is added, existing files are kept
+        ResourceManager.getOrCreateDirectory(FMLPath.resolve(SkyblockAddonCore.MOD_ID + "/"), "guis");
+        for (final String guiFile : BUNDLED_GUI_FILES) {
+            generateFile(FMLPath, "guis/" + guiFile, "guis/" + guiFile);
         }
     }
 

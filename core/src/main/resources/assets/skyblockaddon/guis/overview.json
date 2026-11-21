@@ -95,6 +95,69 @@
       },
       "conditions": [ "is_admin" ]
     },
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"Visitors\",\"bold\": true,\"color\": \"blue\"}"
+        ],
+        "item": "minecraft:SPYGLASS",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Send visitors on your island to spawn or ban them.\",\"color\":\"dark_gray\"}"
+          ]
+        ]
+      },
+      "slot": 20,
+      "action": {
+        "onClick": "yorickbm.guilibrary.events.ItemOpenMenuEvent",
+        "data": {
+          "gui": "skyblockaddon:visitors"
+        }
+      },
+      "conditions": [ "is_admin" ]
+    },
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"Banned players\",\"bold\": true,\"color\": \"blue\"}"
+        ],
+        "item": "minecraft:IRON_BARS",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb See who is banned and lift bans.\",\"color\":\"dark_gray\"}"
+          ]
+        ]
+      },
+      "slot": 22,
+      "action": {
+        "onClick": "yorickbm.guilibrary.events.ItemOpenMenuEvent",
+        "data": {
+          "gui": "skyblockaddon:bans"
+        }
+      },
+      "conditions": [ "is_admin" ]
+    },
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"Transfer ownership\",\"bold\": true,\"color\": \"blue\"}"
+        ],
+        "item": "minecraft:GOLDEN_HELMET",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Make a member the owner of this island.\",\"color\":\"dark_gray\"}"
+          ]
+        ]
+      },
+      "slot": 24,
+      "action": {
+        "onClick": "yorickbm.guilibrary.events.ItemOpenMenuEvent",
+        "data": {
+          "gui": "skyblockaddon:transfer"
+        }
+      },
+      "conditions": [ "is_owner" ]
+    },
 //    {
 //      "item": {
 //        "display_name": [
