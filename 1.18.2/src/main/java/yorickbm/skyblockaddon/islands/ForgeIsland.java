@@ -115,11 +115,7 @@ public class ForgeIsland extends Island implements NBTSerializable {
      */
     public void kickMember(final Entity source, final UUID entity) {
         if(isOwner(entity)) {
-            if(!getMembers().isEmpty()) super.setOwner(getMembers().get(0));
-            else {
-                super.setOwner(SkyblockAddonCore.MOD_UUID);
-                super.setVisibility(false); //Close island if we are the last one
-            }
+            handOverOwnershipToNextMember();
         } else {
             final Optional<IslandGroup> group = getGroupForEntityUUID(entity);
             group.ifPresentOrElse(

@@ -446,7 +446,7 @@ public class PermissionEvents {
         final boolean runFail = processPermissions(
                 island.getGroupForEntityUUID(event.getEntity().getUUID()),
                 (entityType.getCategory() == MobCategory.MONSTER ? "OnHostileMobSpawn" : "OnPassiveMobSpawn"),
-                event.getEntity().getType().toString(),
+                EntityType.getKey(event.getEntity().getType()).toString(),
                 PermissionDataJson::getEntitiesData,
                 false
         );

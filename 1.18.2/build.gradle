@@ -226,3 +226,6 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.compilerArgs.addAll(['-Xlint:all', '-Xlint:-processing', '-Xlint:-classfile'])
 }
+tasks.named('check') {
+    dependsOn gradle.includedBuild('core').task(':test')
+}

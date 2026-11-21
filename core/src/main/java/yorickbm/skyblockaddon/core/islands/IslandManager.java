@@ -9,15 +9,17 @@ import yorickbm.skyblockaddon.core.util.geometry.Vec3i;
 
 import javax.annotation.Nonnull;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class IslandManager {
     private Vec3i lastLocation;
     private Queue<Vec3i> reusableLocations;
-    private HashMap<UUID, Island> islandsByUUID;
+    private final Map<UUID, Island> islandsByUUID = new ConcurrentHashMap<>();
 
     LoadingCache<UUID, Optional<UUID>> CACHE_islandByPlayerUUID;
     LoadingCache<BoundingBox, Optional<UUID>> CACHE_islandByBoundingBox;
@@ -28,7 +30,6 @@ public class IslandManager {
     }
 
     public IslandManager() {
-        islandsByUUID = new HashMap<>();
         lastLocation = new Vec3i(0,0,0);
         reusableLocations = new LinkedList();
     }
@@ -57,7 +58,7 @@ public class IslandManager {
                 .build(new CacheLoader<>() {
                     @Override
                     public Optional<UUID> load(@Nonnull final UUID key) {
-                        return safeFindIslandId(isl -> isl.isPartOf(key));
+                        return findIslandId(isl -> isl.isPartOf(key));
                     }
                 });
 
@@ -67,25 +68,13 @@ public class IslandManager {
                 .build(new CacheLoader<>() {
                     @Override
                     public Optional<UUID> load(@Nonnull final BoundingBox key) {
-                        return safeFindIslandId(isl -> isl.getIslandBoundingBox().isInside(key.getCenter()));
+                        return findIslandId(isl -> isl.getIslandBoundingBox().isInside(key.getCenter()));
                     }
                 });
     }
 
-    /**
-     * Stream over {@code islandsByUUID} defensively. The map is mutated from the server thread
-     * but {@code CacheLoader.load} may run from any caller's thread, so a concurrent modification
-     * can surface as {@link java.util.ConcurrentModificationException} mid-iteration. We catch it,
-     * log it, and return empty so the caller falls back to a fresh slow-path lookup rather than
-     * crashing the player join / command handler.
-     */
-    private Optional<UUID> safeFindIslandId(final java.util.function.Predicate<Island> match) {
-        try {
-            return islandsByUUID.values().stream().filter(match).findFirst().map(Island::getId);
-        } catch (final java.util.ConcurrentModificationException cme) {
-            org.apache.logging.log4j.LogManager.getLogger().warn("CME during island lookup; returning empty for this attempt", cme);
-            return Optional.empty();
-        }
+    private Optional<UUID> findIslandId(final Predicate<Island> match) {
+        return islandsByUUID.values().stream().filter(match).findFirst().map(Island::getId);
     }
 
     /**
@@ -267,5 +256,5 @@ public class IslandManager {
     public Queue<Vec3i> getReusableLocations() {
         return reusableLocations;
     }
-    public HashMap<UUID, Island> getEntrySet() { return this.islandsByUUID; }
+    public Map<UUID, Island> getEntrySet() { return this.islandsByUUID; }
 }

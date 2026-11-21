@@ -36,8 +36,7 @@ public abstract class Island {
      * @param base64 - Texture string as base64
      */
     public void setSkullTexture(String base64) {
-        if(base64.length() < 10) this.skullTexture = "";
-        this.skullTexture = base64;
+        this.skullTexture = base64.length() < 10 ? "" : base64;
     }
     public String getSkullTexture() {
         return this.skullTexture;
@@ -181,6 +180,22 @@ public abstract class Island {
             if(!id.equals(SkyblockAddonCore.MOD_UUID2) && !this.members.contains(entity)) this.members.add(entity);
         }
         return true;
+    }
+
+    /**
+     * Make the first member the owner, removing them from the member list and every group.
+     * With no members left the island becomes ownerless and private.
+     */
+    public void handOverOwnershipToNextMember() {
+        if (this.members.isEmpty()) {
+            setOwner(SkyblockAddonCore.MOD_UUID);
+            setVisibility(false);
+            return;
+        }
+
+        final UUID newOwner = this.members.remove(0);
+        this.islandGroups.values().forEach(group -> group.removeMember(newOwner));
+        setOwner(newOwner);
     }
 
     /**
