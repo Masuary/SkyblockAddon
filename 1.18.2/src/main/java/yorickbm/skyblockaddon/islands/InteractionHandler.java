@@ -1,30 +1,43 @@
 package yorickbm.skyblockaddon.islands;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
+import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.util.FakePlayer;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.eventbus.api.Event;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import yorickbm.skyblockaddon.SkyBlockAddon;
 import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldCapability;
 import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldProvider;
+import yorickbm.skyblockaddon.core.JSON.PermissionDataJson;
+import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.permissions.EntityVerification;
 import yorickbm.skyblockaddon.core.permissions.Permission;
 import yorickbm.skyblockaddon.core.permissions.PermissionManager;
+import yorickbm.skyblockaddon.core.permissions.PermissionTriggers;
 import yorickbm.skyblockaddon.core.util.MatchResult;
 import yorickbm.skyblockaddon.util.ForgeConverter;
 import yorickbm.skyblockaddon.util.ServerHelper;
@@ -33,9 +46,62 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 public class InteractionHandler {
     private static final Logger LOGGER = LogManager.getLogger();
+
+    public static void deny(final Event event, final Player player) {
+        if (event.isCancelable()) event.setCanceled(true);
+        else event.setResult(Event.Result.DENY);
+        sendDeniedMessage(player);
+    }
+
+    public static void sendDeniedMessage(final Player player) {
+        player.displayClientMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("toolbar.overlay.nothere")).withStyle(ChatFormatting.DARK_RED), true);
+    }
+
+    public static void pushPlayerBack(final ServerPlayer player) {
+        final double radianYaw = Math.toRadians(player.getYRot());
+        final Vec3 direction = new Vec3(Math.sin(radianYaw), 0, -Math.cos(radianYaw));
+        player.setDeltaMovement(new Vec3(direction.x * 0.4, 0.28, direction.z * 0.4));
+        player.connection.send(new ClientboundSetEntityMotionPacket(player));
+    }
+
+    /**
+     * Match a value (item, entity or dimension id) against the data of every permission on the trigger that the group
+     * lacks. A lacked permission without data denies outright.
+     */
+    public static boolean isDeniedByMatchData(final Optional<IslandGroup> group, final String trigger, final String matchValue, final Function<PermissionDataJson, List<String>> dataExtractor, final boolean logDecision) {
+        if(logDecision) SkyBlockAddon.CustomDebugMessages(LOGGER, trigger);
+
+        final List<Permission> perms = PermissionManager.getInstance().getPermissionsForTrigger(trigger);
+        if (perms.isEmpty()) {
+            if(logDecision) SkyBlockAddon.CustomDebugMessages(LOGGER, "No permissions found for trigger (ALLOWED)");
+            return false;
+        }
+        if(group.isEmpty()) return false;
+
+        boolean runFail = false;
+        for (final Permission perm : perms) {
+            if (group.get().canDo(perm.getId())) {
+                if(logDecision) SkyBlockAddon.CustomDebugMessages(LOGGER, "action is ALLOWED on " + perm.getId() + " in group " + group.get().getName());
+                continue;
+            }
+            if (runFail) break;
+
+            final List<String> data = dataExtractor.apply(perm.getData());
+            if (data.isEmpty()) {
+                if(logDecision) SkyBlockAddon.CustomDebugMessages(LOGGER, "action is BLOCKED on " + perm.getId() + " in group " + group.get().getName());
+                runFail = true;
+            } else {
+                final MatchResult rslt = PermissionManager.checkMatch(data, matchValue);
+                if(logDecision) SkyBlockAddon.CustomDebugMessages(LOGGER, matchValue + " is " + rslt + " on " + perm.getId() + " in group " + group.get().getName());
+                if (rslt == MatchResult.BLOCK) runFail = true;
+            }
+        }
+        return runFail;
+    }
 
     /**
      * Run requirement check for entity. This check determines if it may override on the event.
@@ -98,25 +164,46 @@ public class InteractionHandler {
     }
 
     /**
-     * Run player interaction handler to determine if event is to be canceld or not.
+     * Decide whether the interaction is denied; on denial the block at the position is resent to the player so the
+     * client drops any predicted change.
      *
      * @param standingOn - Island player is standing on
      * @param trigger - Trigger type to use
      */
     public static boolean checkPlayerInteraction(final AtomicReference<Island> standingOn, final ServerPlayer player, final ServerLevel world, final BlockPos position, final ItemStack handItem, final String trigger) {
-        SkyBlockAddon.CustomDebugMessages(LOGGER, trigger);
-
-        //Update doors
-        if (player.getLevel().getBlockState(position).getBlock() instanceof DoorBlock) {
-            final DoubleBlockHalf half = (player).getLevel().getBlockState(position).getValue(DoorBlock.HALF);
-            if (half == DoubleBlockHalf.LOWER) {
-                final BlockState other = (player).getLevel().getBlockState(position.above());
-                ServerHelper.SendPacket(player, new ClientboundBlockUpdatePacket(position.above(), other));
-            } else {
-                final BlockState other = (player).getLevel().getBlockState(position.below());
-                ServerHelper.SendPacket(player, new ClientboundBlockUpdatePacket(position.below(), other));
-            }
+        final boolean denied = isInteractionDenied(standingOn, player, world, position, handItem, trigger);
+        if (denied) {
+            resendBlockToPlayer(player, world, position);
         }
+        return denied;
+    }
+
+    public static void resendBlockToPlayer(final ServerPlayer player, final ServerLevel world, final BlockPos position) {
+        final BlockState clickedState = world.getBlockState(position);
+        ServerHelper.SendPacket(player, new ClientboundBlockUpdatePacket(position, clickedState));
+
+        if (clickedState.getBlock() instanceof DoorBlock) {
+            final BlockPos otherHalf = clickedState.getValue(DoorBlock.HALF) == DoubleBlockHalf.LOWER ? position.above() : position.below();
+            ServerHelper.SendPacket(player, new ClientboundBlockUpdatePacket(otherHalf, world.getBlockState(otherHalf)));
+        }
+
+        final BlockEntity blockEntity = world.getBlockEntity(position);
+        if (blockEntity != null) {
+            final Packet<ClientGamePacketListener> blockEntityUpdate = blockEntity.getUpdatePacket();
+            if (blockEntityUpdate != null) ServerHelper.SendPacket(player, blockEntityUpdate);
+        }
+    }
+
+    /**
+     * Deny a right-click on a block and close any screen the click may have opened.
+     */
+    public static void denyBlockClick(final PlayerInteractEvent.RightClickBlock event, final ServerPlayer player) {
+        deny(event, player);
+        if (player.containerMenu != player.inventoryMenu) player.closeContainer();
+    }
+
+    public static boolean isInteractionDenied(final AtomicReference<Island> standingOn, final ServerPlayer player, final ServerLevel world, final BlockPos position, final ItemStack handItem, final String trigger) {
+        SkyBlockAddon.CustomDebugMessages(LOGGER, trigger);
 
         final Optional<IslandGroup> group = standingOn.get().getGroupForEntityUUID(player.getUUID());
         if(group.isEmpty()) {
@@ -161,7 +248,7 @@ public class InteractionHandler {
 
             if(!blocksData.isEmpty()) {
                 final Block subjectBlock;
-                if("onPlaceBlock".equals(trigger)) {
+                if(PermissionTriggers.ON_PLACE_BLOCK.equals(trigger)) {
                     subjectBlock = (handItem.getItem() instanceof BlockItem heldBlockItem) ? heldBlockItem.getBlock() : null;
                 } else if(!clickedState.isAir()) {
                     subjectBlock = clickedState.getBlock();
@@ -181,11 +268,6 @@ public class InteractionHandler {
             }
 
             runFail = (!blockAllowed || !itemAllowed);
-        }
-
-        //Update redstone signals to cancel
-        if(runFail) {
-            ServerHelper.forceUnpowerOrTogglePoweredBlock(world, position);
         }
 
         return runFail;

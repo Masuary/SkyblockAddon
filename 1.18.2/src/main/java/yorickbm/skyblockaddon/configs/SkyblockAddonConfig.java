@@ -2,6 +2,7 @@ package yorickbm.skyblockaddon.configs;
 
 import net.minecraftforge.common.ForgeConfigSpec;
 import yorickbm.skyblockaddon.core.islands.IslandSlot;
+import yorickbm.skyblockaddon.util.BlockInteractability;
 
 import java.util.HashMap;
 import java.util.List;
@@ -30,6 +31,8 @@ public class SkyblockAddonConfig {
 
 
         register("permissions.debug", "FALSE", "Print debug messages on island permission events into console. This helps verifying and adding new permissions into your configuration.");
+        register(BlockInteractability.INTERACTABLE_BLOCKS_CONFIG_KEY, "", "Comma-separated block ids (for example minecraft:jukebox) whose right-clicks are always checked as onRightClickBlock (interaction). Wins over non_interactable_blocks.");
+        register(BlockInteractability.NON_INTERACTABLE_BLOCKS_CONFIG_KEY, "", "Comma-separated block ids whose right-clicks are always checked as onPlaceBlock (placing against the block).");
 
         register("purge.batch_time", "15", "Amount of ticks (20 ticks +- 1 second) in between filling batch buffer.");
         register("purge.concurrent", "1", "Amount of chunks allowed to be processed concurrent.");

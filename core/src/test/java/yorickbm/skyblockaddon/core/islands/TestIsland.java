@@ -11,8 +11,8 @@ final class TestIsland extends Island {
     static final UUID OWNER = UUID.fromString("00000000-0000-0000-0000-0000000000a1");
 
     TestIsland() {
-        addGroup(new TestGroup(SkyblockAddonCore.MOD_UUID, "Members", true));
-        addGroup(new TestGroup(SkyblockAddonCore.MOD_UUID2, "Visitors", false));
+        addGroup(new TestGroup(SkyblockAddonCore.MEMBERS_GROUP_ID, "Members", true));
+        addGroup(new TestGroup(SkyblockAddonCore.VISITORS_GROUP_ID, "Visitors", false));
         setOwner(OWNER);
         setCenter(new Vec3i(0, 110, 0));
     }

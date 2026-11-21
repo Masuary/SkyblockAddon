@@ -7,6 +7,7 @@ import net.minecraftforge.eventbus.api.Cancelable;
 import yorickbm.guilibrary.GUIItem;
 import yorickbm.guilibrary.interfaces.GuiClickItemEvent;
 import yorickbm.guilibrary.interfaces.ServerInterface;
+import yorickbm.skyblockaddon.core.GuiDataKeys;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
@@ -21,9 +22,9 @@ public class IslandEvents extends GuiClickItemEvent {
         final CompoundTag guiData = instance.getData();
 
         //If GUI does not contain an IslandId we do not add an island Object
-        if(!guiData.contains("island_id")) return;
+        if(!guiData.contains(GuiDataKeys.ISLAND_ID)) return;
 
-        final Island island = IslandManager.getInstance().getIslandByUUID(guiData.getUUID("island_id"));
+        final Island island = IslandManager.getInstance().getIslandByUUID(guiData.getUUID(GuiDataKeys.ISLAND_ID));
 
         //Fail action if island not found
         if(island == null) {

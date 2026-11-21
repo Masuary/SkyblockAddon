@@ -63,8 +63,8 @@ public class ForgeIsland extends Island implements NBTSerializable {
         island.getMembers().forEach(m -> {
             final UUID groupId = island.getGroupForEntityUUID(m)
                     .map(IslandGroup::getId)
-                    .filter(gid -> !gid.equals(SkyblockAddonCore.MOD_UUID2))
-                    .orElse(SkyblockAddonCore.MOD_UUID);
+                    .filter(gid -> !gid.equals(SkyblockAddonCore.VISITORS_GROUP_ID))
+                    .orElse(SkyblockAddonCore.MEMBERS_GROUP_ID);
             if(!super.addMember(m, groupId)) {
                 LOGGER.warn("Failed to copy member {} into island {} during snapshot", m, getId());
             }
@@ -91,8 +91,8 @@ public class ForgeIsland extends Island implements NBTSerializable {
         item2.setHoverName(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("gui.group.nonmember.name")).withStyle(ChatFormatting.BOLD).withStyle(ChatFormatting.BLUE));
 
 
-        super.addGroup(new ForgeIslandGroup(SkyblockAddonCore.MOD_UUID, item, true));
-        super.addGroup(new ForgeIslandGroup(SkyblockAddonCore.MOD_UUID2, item2, false));
+        super.addGroup(new ForgeIslandGroup(SkyblockAddonCore.MEMBERS_GROUP_ID, item, true));
+        super.addGroup(new ForgeIslandGroup(SkyblockAddonCore.VISITORS_GROUP_ID, item2, false));
     }
 
     /**
@@ -121,7 +121,7 @@ public class ForgeIsland extends Island implements NBTSerializable {
             final Optional<IslandGroup> group = getGroupForEntityUUID(entity);
             group.ifPresentOrElse(
                     g -> super.removeMember(entity, g.getId()),
-                    () -> super.removeMember(entity, SkyblockAddonCore.MOD_UUID)
+                    () -> super.removeMember(entity, SkyblockAddonCore.MEMBERS_GROUP_ID)
             );
         }
 
@@ -146,7 +146,7 @@ public class ForgeIsland extends Island implements NBTSerializable {
      * @param entity - UUID of entity to add
      */
     public boolean addMember(final Entity source, final UUID entity) {
-        if(!super.addMember(entity, SkyblockAddonCore.MOD_UUID)) return false;
+        if(!super.addMember(entity, SkyblockAddonCore.MEMBERS_GROUP_ID)) return false;
 
         //Teleport entity to island
         final ServerPlayer player = Objects.requireNonNull(source.getServer()).getPlayerList().getPlayer(entity); //Get entity from online player list
@@ -312,13 +312,13 @@ public class ForgeIsland extends Island implements NBTSerializable {
             final ItemStack item = new ItemStack(Items.RED_MUSHROOM);
             item.setHoverName(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("gui.group.default.name")).withStyle(ChatFormatting.BOLD).withStyle(ChatFormatting.BLUE));
 
-            final IslandGroup defaultG = new ForgeIslandGroup(SkyblockAddonCore.MOD_UUID, item, true);
+            final IslandGroup defaultG = new ForgeIslandGroup(SkyblockAddonCore.MEMBERS_GROUP_ID, item, true);
             super.islandGroups.put(defaultG.getId(), defaultG);
 
             final ItemStack item2 = new ItemStack(Items.BROWN_MUSHROOM);
             item2.setHoverName(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("gui.group.nonmember.name")).withStyle(ChatFormatting.BOLD).withStyle(ChatFormatting.BLUE));
 
-            final IslandGroup defaultG2 = new ForgeIslandGroup(SkyblockAddonCore.MOD_UUID2, item2, false);
+            final IslandGroup defaultG2 = new ForgeIslandGroup(SkyblockAddonCore.VISITORS_GROUP_ID, item2, false);
             super.islandGroups.put(defaultG2.getId(), defaultG2);
         }
 

@@ -1,0 +1,14 @@
+{
+  "required": false,
+  "package": "yorickbm.skyblockaddon.mixins",
+  "compatibilityLevel": "JAVA_11",
+  "minVersion": "0.8",
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "server": [
+    "EasyVillagersBlockMixinConfig",
+    "EasyVillagersPickupMixinConfig"
+  ],
+  "refmap": "skyblockaddon.refmap.json"
+}

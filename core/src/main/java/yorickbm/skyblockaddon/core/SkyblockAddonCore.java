@@ -4,8 +4,9 @@ import java.util.UUID;
 
 public class SkyblockAddonCore {
 
-    public static final UUID MOD_UUID = UUID.fromString("36916271-8ff4-483c-9379-bde032a01270");
-    public static final UUID MOD_UUID2 = UUID.fromString("36916271-8ff4-483c-9379-bde032a01271");
+    public static final UUID MEMBERS_GROUP_ID = UUID.fromString("36916271-8ff4-483c-9379-bde032a01270");
+    public static final UUID VISITORS_GROUP_ID = UUID.fromString("36916271-8ff4-483c-9379-bde032a01271");
+    public static final UUID NO_OWNER_ID = MEMBERS_GROUP_ID;
     public static final String MOD_ID = "skyblockaddon";
     public static final String VERSION = "8.0";
 

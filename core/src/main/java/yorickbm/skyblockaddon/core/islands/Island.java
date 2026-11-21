@@ -11,7 +11,7 @@ import java.util.*;
 
 public abstract class Island {
     private UUID id = UUID.randomUUID(); //UUID Of island
-    protected UUID owner = SkyblockAddonCore.MOD_UUID; //UUID Of owner
+    protected UUID owner = SkyblockAddonCore.NO_OWNER_ID; //UUID Of owner
 
     protected Vec3i spawn; //Spawn coordinates of island
     protected Vec3i center; //Spawn coordinates of island
@@ -80,7 +80,7 @@ public abstract class Island {
      *         - Fails if it tries to remove default group, or non existed one
      */
     public boolean removeGroup(final UUID uuid) {
-        if(islandGroups.size() <= 1 || uuid.equals(SkyblockAddonCore.MOD_UUID) || uuid.equals(SkyblockAddonCore.MOD_UUID2)) return false;
+        if(islandGroups.size() <= 1 || uuid.equals(SkyblockAddonCore.MEMBERS_GROUP_ID) || uuid.equals(SkyblockAddonCore.VISITORS_GROUP_ID)) return false;
         if(!islandGroups.containsKey(uuid)) return false;
 
         if(!islandGroups.get(uuid).getMembers().isEmpty()) { //Move them all to default group
@@ -140,7 +140,7 @@ public abstract class Island {
     public void removeGroupMember(final UUID entity, final UUID id) {
         this.islandGroups.get(id).removeMember(entity);
         if(this.members.contains(entity) && !this.isInAnyGroup(entity)) {
-            this.addMember(entity, SkyblockAddonCore.MOD_UUID); //Add back into default group since he/she is an island member
+            this.addMember(entity, SkyblockAddonCore.MEMBERS_GROUP_ID); //Add back into default group since he/she is an island member
         }
     }
 
@@ -173,11 +173,11 @@ public abstract class Island {
     public boolean addMember(final UUID entity, final UUID id) {
         if(getOwner().equals(entity)) return false;
 
-        if(this.getOwner().equals(SkyblockAddonCore.MOD_UUID)) {
+        if(this.getOwner().equals(SkyblockAddonCore.NO_OWNER_ID)) {
             setOwner(entity);
         } else {
             if(!this.assignGroup(entity, id)) return false;
-            if(!id.equals(SkyblockAddonCore.MOD_UUID2) && !this.members.contains(entity)) this.members.add(entity);
+            if(!id.equals(SkyblockAddonCore.VISITORS_GROUP_ID) && !this.members.contains(entity)) this.members.add(entity);
         }
         return true;
     }
@@ -188,7 +188,7 @@ public abstract class Island {
      */
     public void handOverOwnershipToNextMember() {
         if (this.members.isEmpty()) {
-            setOwner(SkyblockAddonCore.MOD_UUID);
+            setOwner(SkyblockAddonCore.NO_OWNER_ID);
             setVisibility(false);
             return;
         }
@@ -203,7 +203,7 @@ public abstract class Island {
      * @return true - if abandoned
      */
     public boolean isAbandoned() {
-        final boolean hasOwner = !this.getOwner().equals(SkyblockAddonCore.MOD_UUID);
+        final boolean hasOwner = !this.getOwner().equals(SkyblockAddonCore.NO_OWNER_ID);
         final boolean hasMembers = !this.getMembers().isEmpty();
 
         //If members found, but no owner we make a random member owner
@@ -214,7 +214,7 @@ public abstract class Island {
     }
 
     public boolean hasNoOwnerAndNoMembers() {
-        return this.getOwner().equals(SkyblockAddonCore.MOD_UUID) && this.getMembers().isEmpty();
+        return this.getOwner().equals(SkyblockAddonCore.NO_OWNER_ID) && this.getMembers().isEmpty();
     }
 
     /**
@@ -277,8 +277,8 @@ public abstract class Island {
     /**
      * Simple getters & setters for island data
      */
-    public IslandGroup getDefaultGroup() { return this.getGroup(SkyblockAddonCore.MOD_UUID2); }
-    public IslandGroup getMembersGroup() { return this.getGroup(SkyblockAddonCore.MOD_UUID); }
+    public IslandGroup getDefaultGroup() { return this.getGroup(SkyblockAddonCore.VISITORS_GROUP_ID); }
+    public IslandGroup getMembersGroup() { return this.getGroup(SkyblockAddonCore.MEMBERS_GROUP_ID); }
 
     public UUID getId() {
         return id;
@@ -288,7 +288,7 @@ public abstract class Island {
     }
 
     public UUID getOwner() {
-        if (owner == null) return SkyblockAddonCore.MOD_UUID;
+        if (owner == null) return SkyblockAddonCore.NO_OWNER_ID;
         return owner;
     }
     public void setOwner(final UUID owner) {

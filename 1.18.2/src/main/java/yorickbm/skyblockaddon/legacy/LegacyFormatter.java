@@ -33,7 +33,7 @@ public class LegacyFormatter {
                     final CompoundTag members = group.getCompound("members");
                     for(int i = 0; i < members.getInt("count"); i++) {
                         final UUID member = members.getUUID("member-" + i);
-                        if(!island.addMember(member, SkyblockAddonCore.MOD_UUID)) {
+                        if(!island.addMember(member, SkyblockAddonCore.MEMBERS_GROUP_ID)) {
                             LOGGER.warn("Failure to added {} as a member to {}", member.toString(), island.getId().toString());
                         }
                     }
@@ -79,7 +79,7 @@ public class LegacyFormatter {
                     final CompoundTag members = group.getCompound("members");
                     for(int z = 0; z < members.getInt("count"); z++) {
                         final UUID member = members.getUUID("member-" + z);
-                        if(!island.addMember(member, SkyblockAddonCore.MOD_UUID)) {
+                        if(!island.addMember(member, SkyblockAddonCore.MEMBERS_GROUP_ID)) {
                             LOGGER.warn("Failure to added {} as a member to {}", member.toString(), islandId);
                         }
                     }

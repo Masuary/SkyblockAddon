@@ -33,7 +33,7 @@ class AbandonedIslandQueryTest {
         final TestIsland island = ownerlessIslandWithMemberAt(0, 0);
 
         assertFalse(island.hasNoOwnerAndNoMembers());
-        assertEquals(SkyblockAddonCore.MOD_UUID, island.getOwner());
+        assertEquals(SkyblockAddonCore.NO_OWNER_ID, island.getOwner());
         assertTrue(island.getMembers().contains(MEMBER));
     }
 
@@ -49,7 +49,7 @@ class AbandonedIslandQueryTest {
                 List.of(owned, abandonedEast, ownerlessWithMember, abandonedWest, abandonedWestNorth));
 
         assertEquals(List.of(abandonedWestNorth, abandonedWest, abandonedEast), abandoned);
-        assertEquals(SkyblockAddonCore.MOD_UUID, ownerlessWithMember.getOwner());
+        assertEquals(SkyblockAddonCore.NO_OWNER_ID, ownerlessWithMember.getOwner());
     }
 
     @Test
@@ -63,15 +63,15 @@ class AbandonedIslandQueryTest {
 
     private static TestIsland ownerlessIslandAt(final int centerX, final int centerZ) {
         final TestIsland island = new TestIsland();
-        island.setOwner(SkyblockAddonCore.MOD_UUID);
+        island.setOwner(SkyblockAddonCore.NO_OWNER_ID);
         island.setCenter(new Vec3i(centerX, 110, centerZ));
         return island;
     }
 
     private static TestIsland ownerlessIslandWithMemberAt(final int centerX, final int centerZ) {
         final TestIsland island = new TestIsland();
-        island.addMember(MEMBER, SkyblockAddonCore.MOD_UUID);
-        island.setOwner(SkyblockAddonCore.MOD_UUID);
+        island.addMember(MEMBER, SkyblockAddonCore.MEMBERS_GROUP_ID);
+        island.setOwner(SkyblockAddonCore.NO_OWNER_ID);
         island.setCenter(new Vec3i(centerX, 110, centerZ));
         return island;
     }

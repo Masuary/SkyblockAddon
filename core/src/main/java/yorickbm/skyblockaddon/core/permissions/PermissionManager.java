@@ -7,10 +7,15 @@ import yorickbm.skyblockaddon.core.util.MatchResult;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 public class PermissionManager {
+    private static final Map<String, MatchRule> COMPILED_MATCH_RULES = new ConcurrentHashMap<>();
+
     private volatile List<Permission> permissions;
 
     private static final PermissionManager instance = new PermissionManager();
@@ -26,7 +31,8 @@ public class PermissionManager {
      * permission list switches island protection off.
      * @param path Path for JSON file
      * @return Amount of permissions loaded
-     * @throws IllegalStateException when the file cannot be read or parsed, or defines no permissions
+     * @throws IllegalStateException when the file cannot be read or parsed, defines no permissions or holds an invalid
+     * item, block or entity pattern
      */
     public int loadPermissions(final Path path) {
         final List<Permission> loadedPermissions;
@@ -38,6 +44,7 @@ public class PermissionManager {
         if (loadedPermissions == null || loadedPermissions.isEmpty()) {
             throw new IllegalStateException("'" + path.toAbsolutePath() + "' defines no permissions; refusing to run with island protection switched off");
         }
+        compileMatchRules(path, loadedPermissions);
         this.permissions = List.copyOf(loadedPermissions);
         return loadedPermissions.size();
     }
@@ -78,11 +85,10 @@ public class PermissionManager {
 
         if(rules.isEmpty()) return MatchResult.BLOCK; //If its EMPTY we always block
         for (final String rule : rules) {
-            final boolean isNegation = rule.startsWith("!");
-            final String patternString = isNegation ? rule.substring(1) : rule;
-            final Pattern pattern = Pattern.compile(patternString, Pattern.CASE_INSENSITIVE);
+            final MatchRule matchRule = COMPILED_MATCH_RULES.computeIfAbsent(rule, MatchRule::compile);
+            final boolean isNegation = matchRule.negation();
 
-            if (pattern.matcher(item).matches()) {
+            if (matchRule.pattern().matcher(item).matches()) {
                 if (isNegation) {
                     return MatchResult.SKIP; // If a negated rule matches, return SKIP immediately
                 } else {
@@ -97,6 +103,26 @@ public class PermissionManager {
 
         // If no non-negated matches were found, and all rules were negations, return BLOCK
         return foundNonNegatedMatch ? MatchResult.BLOCK : (onlyNegations ? MatchResult.BLOCK : MatchResult.SKIP);
+    }
+
+    private static void compileMatchRules(final Path path, final List<Permission> loadedPermissions) {
+        for (final Permission permission : loadedPermissions) {
+            if (permission.getData() == null) continue;
+            permission.getData().getItemBlockAndEntityRules().forEach(rule -> {
+                try {
+                    COMPILED_MATCH_RULES.computeIfAbsent(rule, MatchRule::compile);
+                } catch (final PatternSyntaxException invalidPattern) {
+                    throw new IllegalStateException("'" + path.toAbsolutePath() + "' permission '" + permission.getId() + "' has an invalid pattern '" + rule + "': " + invalidPattern.getDescription(), invalidPattern);
+                }
+            });
+        }
+    }
+
+    private record MatchRule(boolean negation, Pattern pattern) {
+        private static MatchRule compile(final String rule) {
+            final boolean negation = rule.startsWith("!");
+            return new MatchRule(negation, Pattern.compile(negation ? rule.substring(1) : rule, Pattern.CASE_INSENSITIVE));
+        }
     }
 
 }

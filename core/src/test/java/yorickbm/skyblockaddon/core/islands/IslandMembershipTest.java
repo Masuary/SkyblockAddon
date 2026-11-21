@@ -18,7 +18,7 @@ class IslandMembershipTest {
     void memberMovedIntoCustomGroupStaysMember() {
         final TestIsland island = new TestIsland();
         final UUID helpers = island.addCustomGroup("Helpers");
-        island.addMember(FIRST_MEMBER, SkyblockAddonCore.MOD_UUID);
+        island.addMember(FIRST_MEMBER, SkyblockAddonCore.MEMBERS_GROUP_ID);
 
         assertTrue(island.addMember(FIRST_MEMBER, helpers));
 
@@ -31,7 +31,7 @@ class IslandMembershipTest {
         final TestIsland island = new TestIsland();
         final UUID helpers = island.addCustomGroup("Helpers");
         final UUID builders = island.addCustomGroup("Builders");
-        island.addMember(FIRST_MEMBER, SkyblockAddonCore.MOD_UUID);
+        island.addMember(FIRST_MEMBER, SkyblockAddonCore.MEMBERS_GROUP_ID);
 
         island.addMember(FIRST_MEMBER, helpers);
         island.assignGroup(FIRST_MEMBER, builders);
@@ -57,7 +57,7 @@ class IslandMembershipTest {
         final TestIsland island = new TestIsland();
         final UUID helpers = island.addCustomGroup("Helpers");
         island.addMember(FIRST_MEMBER, helpers);
-        island.addMember(SECOND_MEMBER, SkyblockAddonCore.MOD_UUID);
+        island.addMember(SECOND_MEMBER, SkyblockAddonCore.MEMBERS_GROUP_ID);
 
         island.handOverOwnershipToNextMember();
 
@@ -70,8 +70,8 @@ class IslandMembershipTest {
     @Test
     void newOwnerCanLeaveAfterHandOver() {
         final TestIsland island = new TestIsland();
-        island.addMember(FIRST_MEMBER, SkyblockAddonCore.MOD_UUID);
-        island.addMember(SECOND_MEMBER, SkyblockAddonCore.MOD_UUID);
+        island.addMember(FIRST_MEMBER, SkyblockAddonCore.MEMBERS_GROUP_ID);
+        island.addMember(SECOND_MEMBER, SkyblockAddonCore.MEMBERS_GROUP_ID);
 
         island.handOverOwnershipToNextMember();
         island.handOverOwnershipToNextMember();

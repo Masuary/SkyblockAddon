@@ -63,12 +63,12 @@
         "items": [],
         "blocks": [],
         "entities": [
-          "*:minecart",
+          "minecraft:minecart",
           ".*:.*_minecart",
-          "*:.*_boat",
+          ".*:.*_boat",
           "minecraft:armor_stand",
-          "*:item_frame",
-          "*:*_item_frame"
+          ".*:item_frame",
+          ".*:.*_item_frame"
         ]
       }
     },
@@ -241,7 +241,8 @@
       "category": "Transport",
       "triggers": [
         "onPortalIgnition",
-        "onPlayerChangedDimension"
+        "onPlayerChangedDimension",
+        "onEnterNetherPortal"
       ],
       "data": {
         "skyblockaddon": [
@@ -559,12 +560,12 @@
         "items": [],
         "blocks": [],
         "entities": [
-          "!*:minecart",
+          "!minecraft:minecart",
           "!.*:.*_minecart",
-          "!*:.*_boat",
+          "!.*:.*_boat",
           "!minecraft:armor_stand",
-          "!*:item_frame",
-          "!*:*_item_frame"
+          "!.*:item_frame",
+          "!.*:.*_item_frame"
         ]
       }
     },

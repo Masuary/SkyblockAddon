@@ -1,5 +1,6 @@
 package yorickbm.skyblockaddon.core.registries;
 
+import yorickbm.skyblockaddon.core.GuiDataKeys;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.core.registries.interfaces.ComponentObjectCoupling;
@@ -22,7 +23,7 @@ public class GroupsRegistry extends SkyblockAddonRegistry<DataComponent> impleme
 
     @Override
     public void getNextData(DataComponent tag) {
-        tag.put("group_id", this.groups.get(this.index).getId());
+        tag.put(GuiDataKeys.GROUP_ID, this.groups.get(this.index).getId());
         this.index++;
     }
 
@@ -38,10 +39,10 @@ public class GroupsRegistry extends SkyblockAddonRegistry<DataComponent> impleme
      * @return Optional of IslandGroup object
      */
     public Optional<IslandGroup> getDataForComponent(DataComponent component) {
-        if(!component.contains("group_id")) return Optional.empty();
+        if(!component.contains(GuiDataKeys.GROUP_ID)) return Optional.empty();
 
         return Optional.ofNullable(
-                this.island.getGroup(component.getObject("group_id", UUID.class))
+                this.island.getGroup(component.getObject(GuiDataKeys.GROUP_ID, UUID.class))
         );
     }
 }

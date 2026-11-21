@@ -162,6 +162,8 @@ dependencies {
     compileOnly fg.deobf("curse.maven:camera-289310:3970106")
     compileOnly fg.deobf("curse.maven:ftbessentials-410811:4560421")
     compileOnly fg.deobf("curse.maven:easy_villagers-400514:3887794")
+    compileOnly fg.deobf("curse.maven:easy-piglins-419372:3798287")
+    compileOnly fg.deobf("curse.maven:openblocks-elevator-250832:3670034")
     compileOnly fg.deobf("curse.maven:appliedenergistics2-223794:4733112")
     compileOnly fg.deobf("curse.maven:refinedstorage-243076:4902316")
     compileOnly fg.deobf("curse.maven:building-gadgets-298187:4412996")

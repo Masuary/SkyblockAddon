@@ -13,6 +13,7 @@ import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import yorickbm.skyblockaddon.core.GuiDataKeys;
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
@@ -89,12 +90,12 @@ public class IslandGuiEvents {
     public void onTravelToIslandEvent(final IslandEvents.TravelToIsland event) {
         final CompoundTag modData = event.getClickedItem().getOrCreateTagElement(SkyblockAddonCore.MOD_ID);
 
-        if(!modData.contains("island_id")) {
+        if(!modData.contains(GuiDataKeys.ISLAND_ID)) {
             event.setResult(Event.Result.DENY);
             return;
         }
 
-        final ForgeIsland island = (ForgeIsland) IslandManager.getInstance().getIslandByUUID(modData.getUUID("island_id"));
+        final ForgeIsland island = (ForgeIsland) IslandManager.getInstance().getIslandByUUID(modData.getUUID(GuiDataKeys.ISLAND_ID));
 
         //Island is not found
         if(island == null) {
@@ -116,7 +117,7 @@ public class IslandGuiEvents {
 
         LOGGER.info(guiData);
 
-        if(!guiData.contains("group_id")) {
+        if(!guiData.contains(GuiDataKeys.GROUP_ID)) {
             event.setResult(Event.Result.DENY);
             return;
         }
@@ -126,7 +127,7 @@ public class IslandGuiEvents {
                         .withStyle(ChatFormatting.GREEN)
                         .withStyle(Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,
                                 "/island group \""
-                                        +  event.getIsland().getGroup(guiData.getUUID("group_id")).getName()
+                                        +  event.getIsland().getGroup(guiData.getUUID(GuiDataKeys.GROUP_ID)).getName()
                                         + "\" addMember "
                                         + event.getTarget().getName().getString().trim())))
                 ,event.getTarget().getUUID());
@@ -206,12 +207,12 @@ public class IslandGuiEvents {
     public void onKickMemberEvent(final IslandEvents.KickMember event) {
         final CompoundTag guiData = event.getHolder().getData().getCompound(SkyblockAddonCore.MOD_ID);
 
-        if(!guiData.contains("player_id")) {
+        if(!guiData.contains(GuiDataKeys.PLAYER_ID)) {
             event.setResult(Event.Result.DENY);
             return;
         }
 
-        final UUID playerUUID = guiData.getUUID("player_id");
+        final UUID playerUUID = guiData.getUUID(GuiDataKeys.PLAYER_ID);
         event.getIsland().kickMember(event.getTarget(), playerUUID);
         event.getHolder().close();
 
@@ -228,13 +229,13 @@ public class IslandGuiEvents {
         final CompoundTag modData = event.getClickedItem().getOrCreateTag();
         final CompoundTag guiData = event.getHolder().getData().getCompound(SkyblockAddonCore.MOD_ID);
 
-        if(!guiData.contains("player_id") || !modData.contains("group_id")) {
+        if(!guiData.contains(GuiDataKeys.PLAYER_ID) || !modData.contains(GuiDataKeys.GROUP_ID)) {
             event.setResult(Event.Result.DENY);
             return;
         }
 
-        final UUID groupUUID = modData.getUUID("group_id");
-        final UUID playerUUID = guiData.getUUID("player_id");
+        final UUID groupUUID = modData.getUUID(GuiDataKeys.GROUP_ID);
+        final UUID playerUUID = guiData.getUUID(GuiDataKeys.PLAYER_ID);
         final var targetGroup = event.getIsland().getGroup(groupUUID);
 
         final boolean assigned = event.getIsland().isPartOf(playerUUID)
@@ -260,12 +261,12 @@ public class IslandGuiEvents {
     @SubscribeEvent
     public void onRemoveGroup(final IslandEvents.RemoveGroup event) {
         final CompoundTag guiData = event.getHolder().getData();
-        if(!guiData.contains("group_id")) {
+        if(!guiData.contains(GuiDataKeys.GROUP_ID)) {
             event.setResult(Event.Result.DENY);
             return;
         }
 
-        final UUID groupUUID = guiData.getUUID("group_id");
+        final UUID groupUUID = guiData.getUUID(GuiDataKeys.GROUP_ID);
         final ForgeIslandGroup group = (ForgeIslandGroup) event.getIsland().getGroup(groupUUID);
         event.getHolder().close();
 
@@ -291,12 +292,12 @@ public class IslandGuiEvents {
         final CompoundTag itemData = event.getClickedItem().getOrCreateTagElement(SkyblockAddonCore.MOD_ID);
         final CompoundTag guiData = event.getHolder().getData();
 
-        if(!guiData.contains("group_id") || !itemData.contains("permission_id")) {
+        if(!guiData.contains(GuiDataKeys.GROUP_ID) || !itemData.contains("permission_id")) {
             event.setResult(Event.Result.DENY);
             return;
         }
 
-        final UUID groupUUID = guiData.getUUID("group_id");
+        final UUID groupUUID = guiData.getUUID(GuiDataKeys.GROUP_ID);
         final String permissionId = itemData.getString("permission_id");
 
         event.getIsland().getGroup(groupUUID).inversePermission(permissionId);

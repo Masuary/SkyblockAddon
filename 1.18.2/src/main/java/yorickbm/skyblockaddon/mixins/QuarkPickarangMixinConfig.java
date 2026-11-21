@@ -1,7 +1,5 @@
 package yorickbm.skyblockaddon.mixins;
 
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -15,8 +13,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import vazkii.quark.content.tools.item.PickarangItem;
-import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
+import yorickbm.skyblockaddon.core.permissions.PermissionTriggers;
 import yorickbm.skyblockaddon.islands.InteractionHandler;
 
 import java.util.concurrent.Executors;
@@ -34,8 +32,8 @@ public abstract class QuarkPickarangMixinConfig {
         if(InteractionHandler.verifyEntity(playerIn, standingOn).asBoolean()) return;
 
         final ItemStack handItem = playerIn.getItemInHand(handIn);
-        if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) playerIn, (ServerLevel) worldIn, playerIn.getOnPos(), handItem, "onQuarkPickarangMixin")) {
-            playerIn.displayClientMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("toolbar.overlay.nothere")).withStyle(ChatFormatting.DARK_RED), true);
+        if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) playerIn, (ServerLevel) worldIn, playerIn.getOnPos(), handItem, PermissionTriggers.ON_QUARK_PICKARANG)) {
+            InteractionHandler.sendDeniedMessage(playerIn);
             playerIn.containerMenu.broadcastChanges(); //Force sync
             cir.setReturnValue(InteractionResultHolder.success(handItem)); //Force success
 

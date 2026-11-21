@@ -153,6 +153,7 @@
           "!.*:.*_door",
           "!.*:.*_trapdoor",
           "!easy_villagers:.*",
+          "!easy_piglins:.*",
           "!sophisticatedstorage:.*",
           "!ae2:.*",
           "!refinedstorage:.*",
@@ -319,7 +320,8 @@
       "category": "Transport",
       "triggers": [
         "onPortalIgnition",
-        "onPlayerChangedDimension"
+        "onPlayerChangedDimension",
+        "onEnterNetherPortal"
       ],
       "data": {
         "skyblockaddon": [
@@ -435,6 +437,37 @@
       "triggers": [
         "onEnderPearl",
         "onChorusFruit"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [],
+        "entities": []
+      }
+    },
+    {
+      "id": "use_elevators",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Use Elevators\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "elevatorid:elevator_white",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Transport",
+      "triggers": [
+        "onElevatorUse"
       ],
       "data": {
         "skyblockaddon": [],
@@ -927,7 +960,9 @@
       },
       "category": "Interactables",
       "triggers": [
-        "onRightClickBlock"
+        "onRightClickBlock",
+        "onEVBlockInteract",
+        "onPickupVillager"
       ],
       "data": {
         "skyblockaddon": [],
@@ -939,6 +974,45 @@
         ],
         "entities": [
           "minecraft:villager"
+        ]
+      }
+    },
+    {
+      "id": "interact_easy_piglins",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Interact with Easy Piglins barterers\", \"color\":\"blue\", \"bold\":\"true\"}"
+        ],
+        "item": "easy_piglins:barterer",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Interactables",
+      "triggers": [
+        "onRightClickBlock",
+        "onEPBlockInteract",
+        "onPickupPiglin"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [
+          "easy_piglins:piglin"
+        ],
+        "blocks": [
+          "easy_piglins:.*"
+        ],
+        "entities": [
+          "minecraft:piglin"
         ]
       }
     },
@@ -1731,6 +1805,37 @@
           "the_vault:artifact_projector_block"
         ],
         "items": [],
+        "entities": []
+      }
+    },
+    {
+      "id": "use_vault_portal",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Enter Vault Portals\", \"color\":\"yellow\", \"bold\":\"true\"}"
+        ],
+        "item": "the_vault:vault_crystal",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+          ]
+        ]
+      },
+      "category": "Vaulthunters",
+      "triggers": [
+        "onEnterVaultPortal"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [],
         "entities": []
       }
     },
