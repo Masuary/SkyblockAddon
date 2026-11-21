@@ -26,7 +26,6 @@ public final class UsernameCache {
 
     public static String getBlocking(final UUID uuid) {
         return get(uuid).exceptionally(ex -> {
-            //LOGGER.warn("Failure while contacting Mojang API (" + uuid.toString() + ").");
             return "-"; // Default value if there's an error
         }).getNow("...");
     }
