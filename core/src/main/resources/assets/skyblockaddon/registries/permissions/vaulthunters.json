@@ -74,7 +74,7 @@
       "id": "destroy_blocks",
       "item": {
         "display_name": [
-          "{\"text\": \"Destory Blocks\", \"color\":\"blue\", \"bold\":\"true\"}"
+          "{\"text\": \"Destroy Blocks\", \"color\":\"blue\", \"bold\":\"true\"}"
         ],
         "item": "minecraft:IRON_PICKAXE",
         "lore": [
