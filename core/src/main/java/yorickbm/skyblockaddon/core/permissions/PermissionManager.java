@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class PermissionManager {
-    private List<Permission> permissions;
+    private volatile List<Permission> permissions;
 
     private static final PermissionManager instance = new PermissionManager();
     public static PermissionManager getInstance() {
@@ -22,18 +22,24 @@ public class PermissionManager {
     }
 
     /**
-     * Load permission from JSON file
+     * Load permissions from a JSON file. The current permissions stay active when loading fails, because an empty
+     * permission list switches island protection off.
      * @param path Path for JSON file
      * @return Amount of permissions loaded
-     *         Returns -1 on failure
+     * @throws IllegalStateException when the file cannot be read or parsed, or defines no permissions
      */
-    public int loadPermissions(Path path) {
+    public int loadPermissions(final Path path) {
+        final List<Permission> loadedPermissions;
         try {
-            permissions = JSONEncoder.loadFromFile(path, PermissionJson.class).permissions;
-            return permissions.size();
-        } catch (final Exception ex) {
-            return -1;
+            loadedPermissions = JSONEncoder.loadFromFile(path, PermissionJson.class).permissions;
+        } catch (final Exception exception) {
+            throw new IllegalStateException("Failed to load island permissions from '" + path.toAbsolutePath() + "': " + exception, exception);
         }
+        if (loadedPermissions == null || loadedPermissions.isEmpty()) {
+            throw new IllegalStateException("'" + path.toAbsolutePath() + "' defines no permissions; refusing to run with island protection switched off");
+        }
+        this.permissions = List.copyOf(loadedPermissions);
+        return loadedPermissions.size();
     }
 
     /**

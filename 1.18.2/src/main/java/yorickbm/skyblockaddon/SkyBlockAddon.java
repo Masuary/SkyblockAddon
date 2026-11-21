@@ -108,7 +108,8 @@ public class SkyBlockAddon {
         GUILibraryRegistry.registerFolder(SkyblockAddonCore.MOD_ID, FMLPaths.CONFIGDIR.get().resolve(SkyblockAddonCore.MOD_ID + "/guis/"));
 
         //Register permissions
-        PermissionManager.getInstance().loadPermissions(FMLPaths.CONFIGDIR.get().resolve(SkyblockAddonCore.MOD_ID + "/registries/PermissionRegistry.json"));
+        final int permissionCount = PermissionManager.getInstance().loadPermissions(FMLPaths.CONFIGDIR.get().resolve(SkyblockAddonCore.MOD_ID + "/registries/PermissionRegistry.json"));
+        LOGGER.info("Loaded {} island permissions.", permissionCount);
 
         //Init Version Checker
         VersionChecker.startVersionCheck();

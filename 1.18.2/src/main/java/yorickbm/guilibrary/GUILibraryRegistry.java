@@ -38,22 +38,23 @@ public class GUILibraryRegistry {
 
     // Private method to register a GUIType with a string key
     public static void registerFolder(final String ModId, final Path filePath) {
-        REGISTRY.clear();
+        final Collection<GUIJson> decoded;
         try {
-            final Collection<GUIJson> decoded = JSONEncoder.loadFromFolder(filePath, GUIJson.class);
-            decoded.forEach(obj -> {
-                REGISTRY.put(ModId + ":" + obj.getKey(), new GUIType.Builder()
-                        .setRows(obj.getRows())
-                        .setTitle(obj.getTitle())
-                        .setItems(obj.getItems())
-                        .setFillers(obj.getFillers())
-                        .build());
-            });
-            LOGGER.info(String.format("Loaded path '%s' resulting in %s GUI(s) being loaded into registry.", filePath.toString(), REGISTRY.size()));
-        } catch (final Exception ex) {
-            LOGGER.error(String.format("Failed to load GUI '%s' into registry.", filePath.toString()));
-            LOGGER.error(ex);
+            decoded = JSONEncoder.loadFromFolder(filePath, GUIJson.class);
+        } catch (final RuntimeException loadFailure) {
+            throw new IllegalStateException("Failed to load GUI files from '" + filePath.toAbsolutePath() + "': " + loadFailure, loadFailure);
         }
+
+        final Map<String, GUIType> loadedGuis = new HashMap<>();
+        decoded.forEach(obj -> loadedGuis.put(ModId + ":" + obj.getKey(), new GUIType.Builder()
+                .setRows(obj.getRows())
+                .setTitle(obj.getTitle())
+                .setItems(obj.getItems())
+                .setFillers(obj.getFillers())
+                .build()));
+        REGISTRY.clear();
+        REGISTRY.putAll(loadedGuis);
+        LOGGER.info(String.format("Loaded path '%s' resulting in %s GUI(s) being loaded into registry.", filePath.toString(), REGISTRY.size()));
     }
 
     // Method to get a GUI from the registry by its ID

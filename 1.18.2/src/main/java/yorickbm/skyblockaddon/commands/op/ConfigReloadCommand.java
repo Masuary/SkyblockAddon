@@ -39,6 +39,19 @@ public class ConfigReloadCommand {
     }
 
     public int execute(final CommandSourceStack command) {
+        try {
+            reloadConfiguration();
+        } catch (final IllegalStateException reloadFailure) {
+            LOGGER.error("Island configuration reload failed; the previous configuration stays active", reloadFailure);
+            command.sendFailure(new TextComponent("Reload failed, previous configuration kept: " + reloadFailure.getMessage()));
+            return 0;
+        }
+
+        command.sendSuccess(new TextComponent("Configuration files have been reloaded!").withStyle(ChatFormatting.GREEN), true);
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private void reloadConfiguration() {
         ResourceManager.commonSetup(FMLPaths.CONFIGDIR.get(), new RegistrySelector(Map.of(
                 "PermissionRegistry", () -> {
                     if (ModList.get().isLoaded("the_vault")) {
@@ -52,9 +65,6 @@ public class ConfigReloadCommand {
         GUILibraryRegistry.registerFolder(SkyblockAddonCore.MOD_ID, FMLPaths.CONFIGDIR.get().resolve(SkyblockAddonCore.MOD_ID + "/guis/"));
 
         //Register permissions
-        LOGGER.info(String.format("Loaded %s permissions.", PermissionManager.getInstance().loadPermissions(FMLPaths.CONFIGDIR.get().resolve(SkyblockAddonCore.MOD_ID + "/registries/PermissionRegistry.json"))));
-
-        command.sendSuccess(new TextComponent("Configuration files have been reloaded!").withStyle(ChatFormatting.GREEN), true);
-        return Command.SINGLE_SUCCESS;
+        LOGGER.info("Loaded {} island permissions.", PermissionManager.getInstance().loadPermissions(FMLPaths.CONFIGDIR.get().resolve(SkyblockAddonCore.MOD_ID + "/registries/PermissionRegistry.json")));
     }
 }
