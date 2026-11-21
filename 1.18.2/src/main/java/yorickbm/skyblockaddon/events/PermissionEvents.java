@@ -1,30 +1,34 @@
 package yorickbm.skyblockaddon.events;
 
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.entity.EntityMountEvent;
 import net.minecraftforge.event.entity.EntityTeleportEvent;
 import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.entity.living.LivingSpawnEvent;
-import net.minecraftforge.event.entity.player.*;
+import net.minecraftforge.event.entity.player.AttackEntityEvent;
+import net.minecraftforge.event.entity.player.BonemealEvent;
+import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
+import net.minecraftforge.event.entity.player.FillBucketEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.entity.player.PlayerSleepInBedEvent;
+import net.minecraftforge.event.entity.player.PlayerXpEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.EventPriority;
+import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import yorickbm.skyblockaddon.SkyBlockAddon;
 import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldCapability;
 import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldProvider;
 import yorickbm.skyblockaddon.core.JSON.PermissionDataJson;
@@ -34,414 +38,97 @@ import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.permissions.Permission;
 import yorickbm.skyblockaddon.core.permissions.PermissionManager;
 import yorickbm.skyblockaddon.core.permissions.PermissionTriggers;
-import yorickbm.skyblockaddon.core.util.MatchResult;
 import yorickbm.skyblockaddon.islands.InteractionHandler;
-import yorickbm.skyblockaddon.util.ForgeConverter;
 import yorickbm.skyblockaddon.util.BlockInteractability;
+import yorickbm.skyblockaddon.util.ForgeConverter;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class PermissionEvents {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final String DIMENSION_RULE_PREFIX = "dimension:";
 
-    @SubscribeEvent
-    public void onTrample(final BlockEvent.FarmlandTrampleEvent event) {
-        final Optional<IslandGroup> group = verifyPermissionAndGroup(event.getEntity(), event);
-        if (group.isEmpty()) return;
+    private static final List<TriggerRule<?>> SIMPLE_TRIGGER_RULES = List.of(
+            TriggerRule.firstPermission(BlockEvent.FarmlandTrampleEvent.class, PermissionTriggers.ON_TRAMPLE, BlockEvent.FarmlandTrampleEvent::getEntity),
+            TriggerRule.firstPermission(EntityTeleportEvent.EnderPearl.class, PermissionTriggers.ON_ENDER_PEARL, EntityTeleportEvent.EnderPearl::getEntity),
+            TriggerRule.firstPermission(EntityTeleportEvent.ChorusFruit.class, PermissionTriggers.ON_CHORUS_FRUIT, EntityTeleportEvent.ChorusFruit::getEntity),
+            TriggerRule.firstPermission(PlayerSleepInBedEvent.class, PermissionTriggers.ON_SLEEP_IN_BED, PlayerSleepInBedEvent::getEntity),
+            TriggerRule.firstPermission(PlayerXpEvent.PickupXp.class, PermissionTriggers.ON_XP, PlayerXpEvent.PickupXp::getEntity),
+            TriggerRule.firstPermission(BonemealEvent.class, PermissionTriggers.ON_BONEMEAL, BonemealEvent::getEntity),
 
-        final List<Permission> perms = PermissionManager.getInstance().getPermissionsForTrigger(PermissionTriggers.ON_TRAMPLE);
-        if(perms.isEmpty()) {
-            return; //No permission to protect against it
-        }
+            TriggerRule.matchedAgainstData(EntityItemPickupEvent.class, PermissionTriggers.ON_PICKUP, EntityItemPickupEvent::getEntity,
+                    event -> itemId(event.getItem().getItem().getItem()), PermissionDataJson::getItemsData),
+            TriggerRule.matchedAgainstData(ItemTossEvent.class, PermissionTriggers.ON_DROP, ItemTossEvent::getPlayer,
+                    event -> itemId(event.getEntityItem().getItem().getItem()), PermissionDataJson::getItemsData)
+                    .withDenialEffect(PermissionEvents::returnTossedItem),
+            TriggerRule.matchedAgainstData(FillBucketEvent.class, PermissionTriggers.ON_BUCKET, FillBucketEvent::getEntity,
+                    PermissionEvents::bucketItemId, PermissionDataJson::getItemsData),
+            TriggerRule.matchedAgainstData(EntityMountEvent.class, PermissionTriggers.ON_MOUNT, EntityMountEvent::getEntity,
+                    event -> entityTypeId(event.getEntityBeingMounted()), PermissionDataJson::getEntitiesData),
+            TriggerRule.matchedAgainstData(AttackEntityEvent.class, PermissionTriggers.ON_ATTACK, AttackEntityEvent::getPlayer,
+                    event -> entityTypeId(event.getTarget()), PermissionDataJson::getEntitiesData),
+            TriggerRule.matchedAgainstData(LivingEntityUseItemEvent.class, PermissionTriggers.ON_USE, LivingEntityUseItemEvent::getEntity,
+                    event -> itemId(event.getItem().getItem()), PermissionDataJson::getItemsData),
+            TriggerRule.matchedAgainstData(EntityTravelToDimensionEvent.class, PermissionTriggers.ON_PLAYER_CHANGED_DIMENSION, EntityTravelToDimensionEvent::getEntity,
+                    event -> event.getDimension().location().toString(), PermissionEvents::dimensionRules)
+                    .withDenialEffect((event, player) -> InteractionHandler.pushPlayerBack(player)),
 
-        final boolean runFail = !group.get().canDo(perms.get(0).getId());
-        if (runFail) { //Group may not run this
-            if (event.isCancelable()) event.setCanceled(true);
-            else event.setResult(Event.Result.DENY);
-            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
-        }
-    }
-    @SubscribeEvent
-    public void onEnderPearl(final EntityTeleportEvent.EnderPearl event) {
-        final Optional<IslandGroup> group = verifyPermissionAndGroup(event.getEntity(), event);
-        if (group.isEmpty()) return;
+            TriggerRule.playerInteraction(PlayerInteractEvent.EntityInteract.class, PermissionTriggers.ON_RIGHT_CLICK_ENTITY),
+            TriggerRule.playerInteraction(PlayerInteractEvent.RightClickEmpty.class, PermissionTriggers.ON_RIGHT_CLICK_EMPTY),
+            TriggerRule.playerInteraction(PlayerInteractEvent.RightClickItem.class, PermissionTriggers.ON_RIGHT_CLICK_ITEM),
+            TriggerRule.playerInteraction(PlayerInteractEvent.LeftClickBlock.class, PermissionTriggers.ON_LEFT_CLICK_BLOCK),
+            TriggerRule.playerInteraction(PlayerInteractEvent.LeftClickEmpty.class, PermissionTriggers.ON_LEFT_CLICK_EMPTY)
+    );
 
-        final List<Permission> perms = PermissionManager.getInstance().getPermissionsForTrigger(PermissionTriggers.ON_ENDER_PEARL);
-        if(perms.isEmpty()) {
-            return; //No permission to protect against it
-        }
-
-        final boolean runFail = !group.get().canDo(perms.get(0).getId());
-        if (runFail) { //Group may not run this
-            if (event.isCancelable()) event.setCanceled(true);
-            else event.setResult(Event.Result.DENY);
-            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
-        }
-    }
-    @SubscribeEvent
-    public void onChorusFruit(final EntityTeleportEvent.ChorusFruit event) {
-        final Optional<IslandGroup> group = verifyPermissionAndGroup(event.getEntity(), event);
-        if (group.isEmpty()) return;
-
-        final List<Permission> perms = PermissionManager.getInstance().getPermissionsForTrigger(PermissionTriggers.ON_CHORUS_FRUIT);
-        if(perms.isEmpty()) {
-            return; //No permission to protect against it
-        }
-
-        final boolean runFail = !group.get().canDo(perms.get(0).getId());
-        if (runFail) { //Group may not run this
-            if (event.isCancelable()) event.setCanceled(true);
-            else event.setResult(Event.Result.DENY);
-            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
-        }
-    }
-
-    @SubscribeEvent
-    public void onSleepInBed(final PlayerSleepInBedEvent event) {
-        final Optional<IslandGroup> group = verifyPermissionAndGroup(event.getEntity(), event);
-        if (group.isEmpty()) return;
-
-        final List<Permission> perms = PermissionManager.getInstance().getPermissionsForTrigger(PermissionTriggers.ON_SLEEP_IN_BED);
-        if(perms.isEmpty()) {
-            return; //No permission to protect against it
-        }
-
-        final boolean runFail = !group.get().canDo(perms.get(0).getId());
-        if (runFail) { //Group may not run this
-            if (event.isCancelable()) event.setCanceled(true);
-            else event.setResult(Event.Result.DENY);
-            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
-        }
-    }
-    @SubscribeEvent
-    public void onXp(final PlayerXpEvent.PickupXp event) {
-        final Optional<IslandGroup> group = verifyPermissionAndGroup(event.getEntity(), event);
-        if (group.isEmpty()) return;
-
-        final List<Permission> perms = PermissionManager.getInstance().getPermissionsForTrigger(PermissionTriggers.ON_XP);
-        if(perms.isEmpty()) {
-            return; //No permission to protect against it
-        }
-
-        final boolean runFail = !group.get().canDo(perms.get(0).getId());
-        if (runFail) { //Group may not run this
-            if (event.isCancelable()) event.setCanceled(true);
-            else event.setResult(Event.Result.DENY);
-            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
-        }
-    }
-    @SubscribeEvent
-    public void onBonemeal(final BonemealEvent event) {
-        final Optional<IslandGroup> group = verifyPermissionAndGroup(event.getEntity(), event);
-        if (group.isEmpty()) return;
-
-        final List<Permission> perms = PermissionManager.getInstance().getPermissionsForTrigger(PermissionTriggers.ON_BONEMEAL);
-        if(perms.isEmpty()) {
-            return; //No permission to protect against it
-        }
-
-        final boolean runFail = !group.get().canDo(perms.get(0).getId());
-        if (runFail) { //Group may not run this
-            if (event.isCancelable()) event.setCanceled(true);
-            else event.setResult(Event.Result.DENY);
-            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
-        }
-    }
-
-    @SubscribeEvent
-    public void onPickup(final EntityItemPickupEvent event) {
-        final Optional<IslandGroup> group = verifyPermissionAndGroup(event.getEntity(), event);
-        if (group.isEmpty()) return;
-
-        final boolean runFail = processPermissions(
-                group, PermissionTriggers.ON_PICKUP,
-                Objects.requireNonNull(event.getItem().getItem().getItem().getRegistryName()).toString(),
-                PermissionDataJson::getItemsData
-        );
-
-        if (runFail) {
-            if (event.isCancelable()) event.setCanceled(true);
-            else event.setResult(Event.Result.DENY);
-            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
-        }
-    }
-
-    @SubscribeEvent
-    public void onDrop(final ItemTossEvent event) {
-        final Optional<IslandGroup> group = verifyPermissionAndGroup(event.getPlayer(), event);
-        if (group.isEmpty()) return;
-
-        final boolean runFail = processPermissions(
-                group, PermissionTriggers.ON_DROP,
-                Objects.requireNonNull(event.getEntityItem().getItem().getItem().getRegistryName()).toString(),
-                PermissionDataJson::getItemsData
-        );
-
-        if (runFail) {
-            if (event.isCancelable()) event.setCanceled(true);
-            else event.setResult(Event.Result.DENY);
-            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getPlayer());
-
-            event.getPlayer().addItem(event.getEntityItem().getItem());
-            event.getPlayer().getInventory().setChanged();
-        }
-    }
-
-    @SubscribeEvent
-    public void onBucket(final FillBucketEvent event) {
-        final Optional<IslandGroup> group = verifyPermissionAndGroup(event.getEntity(), event);
-        if (group.isEmpty()) return;
-
-        ItemStack bucket = event.getFilledBucket() == null ? event.getEmptyBucket() : event.getFilledBucket();
-
-        final boolean runFail = processPermissions(
-                group, PermissionTriggers.ON_BUCKET,
-                Objects.requireNonNull(bucket.getItem().getRegistryName()).toString(),
-                PermissionDataJson::getItemsData
-        );
-
-        if (runFail) {
-            if (event.isCancelable()) event.setCanceled(true);
-            else event.setResult(Event.Result.DENY);
-            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
-        }
-    }
-
-    @SubscribeEvent
-    public void onMount(final EntityMountEvent event) {
-        final Optional<IslandGroup> group = verifyPermissionAndGroup(event.getEntity(), event);
-        if (group.isEmpty()) return;
-
-        final boolean runFail = processPermissions(
-                group, PermissionTriggers.ON_MOUNT,
-                Objects.requireNonNull(EntityType.getKey(event.getEntityBeingMounted().getType())).toString(),
-                PermissionDataJson::getEntitiesData
-        );
-
-        if (runFail) {
-            if (event.isCancelable()) event.setCanceled(true);
-            else event.setResult(Event.Result.DENY);
-            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
-        }
-    }
-
-    @SubscribeEvent
-    public void onClickEntity(PlayerInteractEvent.EntityInteract event) {
-        final AtomicReference<Island> standingOn = new AtomicReference<>();
-        if(!InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) {
-            if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getPlayer(), (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(),  PermissionTriggers.ON_RIGHT_CLICK_ENTITY)) {
-                InteractionHandler.sendDeniedMessage(event.getPlayer());
-                if(event.isCancelable()) event.setCanceled(true);
-                else event.setResult(Event.Result.DENY);
-            }
-        }
-
+    public static void register(final IEventBus eventBus) {
+        eventBus.register(new PermissionEvents());
+        SIMPLE_TRIGGER_RULES.forEach(rule -> rule.register(eventBus));
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onRightClickBlock(final PlayerInteractEvent.RightClickBlock event) {
         final AtomicReference<Island> standingOn = new AtomicReference<>();
-        if(!InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) {
-            final BlockState state = event.getWorld().getBlockState(event.getPos());
-            final BlockEntity be = event.getWorld().getBlockEntity(event.getPos());
-            final String trigger = BlockInteractability.isRightClickInteraction(event.getWorld(), event.getPos(), event.getPlayer(), event.getHand()) ? PermissionTriggers.ON_RIGHT_CLICK_BLOCK : PermissionTriggers.ON_PLACE_BLOCK;
+        if (!InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) {
+            final String trigger = BlockInteractability.isRightClickInteraction(event.getWorld(), event.getPos(), event.getPlayer(), event.getHand())
+                    ? PermissionTriggers.ON_RIGHT_CLICK_BLOCK
+                    : PermissionTriggers.ON_PLACE_BLOCK;
 
-            if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getPlayer(), (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(),  trigger)) {
-                InteractionHandler.sendDeniedMessage(event.getPlayer());
-                if(event.isCancelable()) event.setCanceled(true);
-                else event.setResult(Event.Result.DENY);
+            if (InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getPlayer(), (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(), trigger)) {
+                InteractionHandler.deny(event, event.getPlayer());
             }
         }
 
-        //Nether portal ignition check from nether to over-world
-        if(!InteractionHandler.verifyNetherEntity(event.getEntity(), standingOn, event.getPos()).asBoolean()) {
-            final ItemStack item = event.getItemStack();
-            if(!item.isEmpty() && item.getItem() == Items.FLINT_AND_STEEL) {
-                final BlockState state = event.getWorld().getBlockState(event.getPos());
-                if(!state.isAir() && state.getBlock().asItem() == Items.OBSIDIAN) {
-                    if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getPlayer(), (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(), PermissionTriggers.ON_PORTAL_IGNITION)) {
-                        InteractionHandler.sendDeniedMessage(event.getPlayer());
-                        if(event.isCancelable()) event.setCanceled(true);
-                        else event.setResult(Event.Result.DENY);
-                    }
-                }
-            }
-        }
+        denyNetherPortalIgnition(event, event.getEntity(), event.getWorld(), event.getPos(), player -> event.getItemStack());
     }
+
     @SubscribeEvent
-    public void onRightClickEmpty(final PlayerInteractEvent.RightClickEmpty event) {
+    public void onPlaceBlock(final BlockEvent.EntityPlaceEvent event) {
         final AtomicReference<Island> standingOn = new AtomicReference<>();
-        if(InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) return;
-
-        if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getPlayer(), (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(), PermissionTriggers.ON_RIGHT_CLICK_EMPTY)) {
-            InteractionHandler.sendDeniedMessage(event.getPlayer());
-            if(event.isCancelable()) event.setCanceled(true);
-            else event.setResult(Event.Result.DENY);
-        }
-    }
-    @SubscribeEvent
-    public void onRightClickItem(final PlayerInteractEvent.RightClickItem event) {
-        final AtomicReference<Island> standingOn = new AtomicReference<>();
-        if(InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) return;
-
-        if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getPlayer(), (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(), PermissionTriggers.ON_RIGHT_CLICK_ITEM)) {
-            InteractionHandler.sendDeniedMessage(event.getPlayer());
-            if(event.isCancelable()) event.setCanceled(true);
-            else event.setResult(Event.Result.DENY);
-        }
-    }
-    @SubscribeEvent
-    public void onRightClickEmpty(final BlockEvent.EntityPlaceEvent event) {
-        final AtomicReference<Island> standingOn = new AtomicReference<>();
-        if(!InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) {
-            final BlockState state = event.getWorld().getBlockState(event.getPos());
-            final BlockEntity be = event.getWorld().getBlockEntity(event.getPos());
-            final String trigger = PermissionTriggers.ON_PLACE_BLOCK;
-
-            if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getEntity(), (ServerLevel) event.getWorld(), event.getPos(), ((ServerPlayer) event.getEntity()).getMainHandItem(),  trigger)) {
-                InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
-                if(event.isCancelable()) event.setCanceled(true);
-                else event.setResult(Event.Result.DENY);
-            }
-        }
-
-        //Nether portal ignition check from nether to over-world
-        if(!InteractionHandler.verifyNetherEntity(event.getEntity(), standingOn, event.getPos()).asBoolean()) {
-            final ItemStack item = ((ServerPlayer) Objects.requireNonNull(event.getEntity())).getMainHandItem();
-            if(!item.isEmpty() && item.getItem() == Items.FLINT_AND_STEEL) {
-                final BlockState state = event.getWorld().getBlockState(event.getPos());
-                if(!state.isAir() && state.getBlock().asItem() == Items.OBSIDIAN) {
-                    if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getEntity(), (ServerLevel) event.getWorld(), event.getPos(), ((ServerPlayer) event.getEntity()).getMainHandItem(), PermissionTriggers.ON_PORTAL_IGNITION)) {
-                        InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
-                        if(event.isCancelable()) event.setCanceled(true);
-                        else event.setResult(Event.Result.DENY);
-                    }
-                }
-            }
-        }
-    }
-
-    @SubscribeEvent
-    public void onLeftClickBlock(final PlayerInteractEvent.LeftClickBlock event) {
-        final AtomicReference<Island> standingOn = new AtomicReference<>();
-        if(InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) return;
-
-        if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getPlayer(), (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(), PermissionTriggers.ON_LEFT_CLICK_BLOCK)) {
-            InteractionHandler.sendDeniedMessage(event.getPlayer());
-            if(event.isCancelable()) event.setCanceled(true);
-            else event.setResult(Event.Result.DENY);
-        }
-    }
-    @SubscribeEvent
-    public void onLeftClickEmpty(final PlayerInteractEvent.LeftClickEmpty event) {
-        final AtomicReference<Island> standingOn = new AtomicReference<>();
-        if(InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) return;
-
-        if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getPlayer(), (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(), PermissionTriggers.ON_LEFT_CLICK_EMPTY)) {
-            InteractionHandler.sendDeniedMessage(event.getPlayer());
-            if(event.isCancelable()) event.setCanceled(true);
-            else event.setResult(Event.Result.DENY);
-        }
-    }
-
-    @SubscribeEvent
-    public void onAttack(final AttackEntityEvent event) {
-        final Optional<IslandGroup> group = verifyPermissionAndGroup(event.getPlayer(), event);
-        if (group.isEmpty()) return;
-
-        final boolean runFail = processPermissions(
-                group,
-                PermissionTriggers.ON_ATTACK,
-                Objects.requireNonNull(EntityType.getKey(event.getTarget().getType())).toString(),
-                PermissionDataJson::getEntitiesData
-        );
-
-        if (runFail) {
-            if (event.isCancelable()) event.setCanceled(true);
-            else event.setResult(Event.Result.DENY);
-            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getPlayer());
-        }
-    }
-
-    @SubscribeEvent
-    public void onUse(final LivingEntityUseItemEvent event) {
-        final Optional<IslandGroup> group = verifyPermissionAndGroup(event.getEntity(), event);
-        if (group.isEmpty()) return;
-
-        final boolean runFail = processPermissions(
-                group,
-                PermissionTriggers.ON_USE,
-                Objects.requireNonNull(event.getItem().getItem().getRegistryName()).toString(),
-                PermissionDataJson::getItemsData
-        );
-
-        if (runFail) {
-            if (event.isCancelable()) event.setCanceled(true);
-            else event.setResult(Event.Result.DENY);
-            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
-        }
-    }
-
-    @SubscribeEvent
-    public void onPlayerChangedDimension(final EntityTravelToDimensionEvent event) {
-        final Optional<IslandGroup> group = verifyPermissionAndGroup(event.getEntity(), event);
-        if (group.isEmpty()) return;
-
-        final boolean runFail = processPermissions(
-                group,
-                PermissionTriggers.ON_PLAYER_CHANGED_DIMENSION,
-                event.getDimension().location().toString(),
-                data -> data.getSkyblockaddonData().stream()
-                        .filter(s -> s.startsWith("dimension:"))
-                        .map(s -> s.replace("dimension:", ""))
-                        .collect(Collectors.toList())
-        );
-
-        if (runFail) {
-            if (event.isCancelable()) event.setCanceled(true);
-            else event.setResult(Event.Result.DENY);
-            InteractionHandler.sendDeniedMessage((ServerPlayer) event.getEntity());
-
+        if (!InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) {
             final ServerPlayer player = (ServerPlayer) event.getEntity();
-            final double radianYaw = Math.toRadians(player.getYRot());
-            final Vec3 direction = new Vec3(Math.sin(radianYaw), 0, -Math.cos(radianYaw));
-            player.setDeltaMovement(new Vec3(direction.x * 0.4, 0.28, direction.z * 0.4));
-            player.connection.send(new ClientboundSetEntityMotionPacket(player));
-        }
-    }
-
-    private Optional<IslandGroup> verifyPermissionAndGroup(final Entity entity, final Event event) {
-        final AtomicReference<Island> standingOn = new AtomicReference<>();
-        if (InteractionHandler.verifyEntity(entity, standingOn).asBoolean()) {
-            return Optional.empty();
+            if (InteractionHandler.checkPlayerInteraction(standingOn, player, (ServerLevel) event.getWorld(), event.getPos(), player.getMainHandItem(), PermissionTriggers.ON_PLACE_BLOCK)) {
+                InteractionHandler.deny(event, player);
+            }
         }
 
-        final Optional<IslandGroup> group = standingOn.get().getGroupForEntityUUID(entity.getUUID());
-        if (group.isEmpty()) {
-            if (event.isCancelable()) event.setCanceled(true);
-            else event.setResult(Event.Result.DENY);
-            InteractionHandler.sendDeniedMessage((ServerPlayer) entity);
-            return Optional.empty();
-        }
-
-        return group;
+        denyNetherPortalIgnition(event, event.getEntity(), event.getWorld(), event.getPos(), ServerPlayer::getMainHandItem);
     }
 
     @SubscribeEvent
-    public void onMobSpawn(LivingSpawnEvent.CheckSpawn event) {
-        EntityType<?> entityType = event.getEntity().getType();
+    public void onMobSpawn(final LivingSpawnEvent.CheckSpawn event) {
+        final EntityType<?> entityType = event.getEntity().getType();
         final Optional<SkyblockAddonWorldCapability> cap = event.getEntity().getLevel().getCapability(SkyblockAddonWorldProvider.SKYBLOCKADDON_WORLD_CAPABILITY).resolve();
-        if(cap.isEmpty()) return;
+        if (cap.isEmpty()) return;
 
         final Island island = IslandManager.getInstance().getIslandByPos(ForgeConverter.ForgeToInternalVec3i(event.getEntity().blockPosition()));
-        if(island == null) return;
+        if (island == null) return;
 
-        final boolean runFail = processPermissions(
+        final boolean runFail = InteractionHandler.isDeniedByMatchData(
                 island.getGroupForEntityUUID(event.getEntity().getUUID()),
                 (entityType.getCategory() == MobCategory.MONSTER ? PermissionTriggers.ON_HOSTILE_MOB_SPAWN : PermissionTriggers.ON_PASSIVE_MOB_SPAWN),
                 EntityType.getKey(event.getEntity().getType()).toString(),
@@ -449,47 +136,111 @@ public class PermissionEvents {
                 false
         );
 
-        if(runFail) {
+        if (runFail) {
             event.setResult(Event.Result.DENY);
-            if(event.isCancelable()) event.setCanceled(true);
+            if (event.isCancelable()) event.setCanceled(true);
         }
     }
 
-    private boolean processPermissions(final Optional<IslandGroup> group, final String trigger, final String matchValue, final Function<PermissionDataJson, List<String>> dataExtractor) {
-        return this.processPermissions(group, trigger, matchValue, dataExtractor, true);
-    }
-        private boolean processPermissions(final Optional<IslandGroup> group, final String trigger, final String matchValue, final Function<PermissionDataJson, List<String>> dataExtractor, boolean log) {
-        if(log) SkyBlockAddon.CustomDebugMessages(LOGGER, trigger);
+    private static void denyNetherPortalIgnition(final Event event, final Entity entity, final LevelAccessor world, final BlockPos position, final Function<ServerPlayer, ItemStack> heldItem) {
+        final AtomicReference<Island> overworldIsland = new AtomicReference<>();
+        if (InteractionHandler.verifyNetherEntity(entity, overworldIsland, position).asBoolean()) return;
 
-        final List<Permission> perms = PermissionManager.getInstance().getPermissionsForTrigger(trigger);
-        if (perms.isEmpty()) {
-            if(log) SkyBlockAddon.CustomDebugMessages(LOGGER, "No permissions found for trigger (ALLOWED)");
-            return false; // No permission to protect against
+        final ServerPlayer player = (ServerPlayer) entity;
+        final ItemStack item = heldItem.apply(player);
+        if (item.isEmpty() || item.getItem() != Items.FLINT_AND_STEEL) return;
+
+        final BlockState state = world.getBlockState(position);
+        if (state.isAir() || state.getBlock().asItem() != Items.OBSIDIAN) return;
+
+        if (InteractionHandler.checkPlayerInteraction(overworldIsland, player, (ServerLevel) world, position, item, PermissionTriggers.ON_PORTAL_IGNITION)) {
+            InteractionHandler.deny(event, player);
         }
-        if(group.isEmpty()) return false; //No group present should have failed before
+    }
 
-        boolean runFail = false;
-        for (final Permission perm : perms) {
-            if (group.get().canDo(perm.getId())) {
-                if(log) SkyBlockAddon.CustomDebugMessages(LOGGER, "action is ALLOWED on " + perm.getId() + " in group " + group.get().getName() + "");
-                continue;
+    private static boolean isDeniedByFirstPermission(final Optional<IslandGroup> group, final String trigger) {
+        if (group.isEmpty()) return true;
+
+        final List<Permission> permissions = PermissionManager.getInstance().getPermissionsForTrigger(trigger);
+        if (permissions.isEmpty()) return false;
+        return !group.get().canDo(permissions.get(0).getId());
+    }
+
+    private static void returnTossedItem(final ItemTossEvent event, final ServerPlayer player) {
+        player.addItem(event.getEntityItem().getItem());
+        player.getInventory().setChanged();
+    }
+
+    private static String bucketItemId(final FillBucketEvent event) {
+        final ItemStack bucket = event.getFilledBucket() == null ? event.getEmptyBucket() : event.getFilledBucket();
+        return itemId(bucket.getItem());
+    }
+
+    private static List<String> dimensionRules(final PermissionDataJson data) {
+        return data.getSkyblockaddonData().stream()
+                .filter(rule -> rule.startsWith(DIMENSION_RULE_PREFIX))
+                .map(rule -> rule.replace(DIMENSION_RULE_PREFIX, ""))
+                .collect(Collectors.toList());
+    }
+
+    private static String itemId(final Item item) {
+        return Objects.requireNonNull(item.getRegistryName()).toString();
+    }
+
+    private static String entityTypeId(final Entity entity) {
+        return Objects.requireNonNull(EntityType.getKey(entity.getType())).toString();
+    }
+
+    @FunctionalInterface
+    private interface TriggerDecision<E extends Event> {
+        boolean isDenied(E event, ServerPlayer player, AtomicReference<Island> standingOn);
+    }
+
+    /**
+     * A permission check for an event whose only special handling is how its trigger is judged, plus an optional effect
+     * after the denial. Registered at normal priority, like the per-event handlers it replaces.
+     */
+    private record TriggerRule<E extends Event>(Class<E> eventType, Function<E, Entity> actor, TriggerDecision<E> decision, BiConsumer<E, ServerPlayer> denialEffect) {
+
+        static <E extends Event> TriggerRule<E> firstPermission(final Class<E> eventType, final String trigger, final Function<E, Entity> actor) {
+            return new TriggerRule<>(eventType, actor,
+                    (event, player, standingOn) -> isDeniedByFirstPermission(standingOn.get().getGroupForEntityUUID(player.getUUID()), trigger),
+                    (event, player) -> { });
+        }
+
+        static <E extends Event> TriggerRule<E> matchedAgainstData(final Class<E> eventType, final String trigger, final Function<E, Entity> actor,
+                                                                   final Function<E, String> matchValue, final Function<PermissionDataJson, List<String>> dataExtractor) {
+            return new TriggerRule<>(eventType, actor, (event, player, standingOn) -> {
+                final Optional<IslandGroup> group = standingOn.get().getGroupForEntityUUID(player.getUUID());
+                if (group.isEmpty()) return true;
+                return InteractionHandler.isDeniedByMatchData(group, trigger, matchValue.apply(event), dataExtractor, true);
+            }, (event, player) -> { });
+        }
+
+        static <E extends PlayerInteractEvent> TriggerRule<E> playerInteraction(final Class<E> eventType, final String trigger) {
+            return new TriggerRule<>(eventType, PlayerInteractEvent::getPlayer,
+                    (event, player, standingOn) -> InteractionHandler.checkPlayerInteraction(standingOn, player, (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(), trigger),
+                    (event, player) -> { });
+        }
+
+        TriggerRule<E> withDenialEffect(final BiConsumer<E, ServerPlayer> effect) {
+            return new TriggerRule<>(this.eventType, this.actor, this.decision, effect);
+        }
+
+        void register(final IEventBus eventBus) {
+            eventBus.addListener(EventPriority.NORMAL, false, this.eventType, this::handle);
+        }
+
+        private void handle(final E event) {
+            final Entity entity = this.actor.apply(event);
+            final AtomicReference<Island> standingOn = new AtomicReference<>();
+            if (InteractionHandler.verifyEntity(entity, standingOn).asBoolean()) return;
+
+            final ServerPlayer player = (ServerPlayer) entity;
+            if (this.decision.isDenied(event, player, standingOn)) {
+                InteractionHandler.deny(event, player);
+                this.denialEffect.accept(event, player);
             }
-            if (runFail) break;
-
-            final List<String> data = dataExtractor.apply(perm.getData());
-            if (data.isEmpty()) {
-                if(log) SkyBlockAddon.CustomDebugMessages(LOGGER, "action is BLOCKED on " + perm.getId() + " in group " + group.get().getName() + "");
-                runFail = true;
-            } else {
-                final MatchResult rslt = PermissionManager.checkMatch(data, matchValue);
-                if(log) SkyBlockAddon.CustomDebugMessages(LOGGER, matchValue + " is " + rslt + " on " + perm.getId() + " in group " + group.get().getName());
-                switch (rslt) {
-                    case SKIP, ALLOW -> { continue; }
-                    case BLOCK -> runFail = true;
-                }
-            }
         }
-        return runFail;
     }
-
 }

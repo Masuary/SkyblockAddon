@@ -61,7 +61,7 @@ public class SkyBlockAddon {
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(new ModEvents());
         MinecraftForge.EVENT_BUS.register(new PlayerEvents());
-        MinecraftForge.EVENT_BUS.register(new PermissionEvents());
+        PermissionEvents.register(MinecraftForge.EVENT_BUS);
 
         MinecraftForge.EVENT_BUS.register(new DefaultEventHandler());
         MinecraftForge.EVENT_BUS.register(new GuiEvents());

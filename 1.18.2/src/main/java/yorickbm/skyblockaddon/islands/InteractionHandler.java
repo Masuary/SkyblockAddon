@@ -5,6 +5,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
+import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -16,6 +17,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.eventbus.api.Event;
 import org.apache.logging.log4j.LogManager;
@@ -23,6 +25,7 @@ import org.apache.logging.log4j.Logger;
 import yorickbm.skyblockaddon.SkyBlockAddon;
 import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldCapability;
 import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldProvider;
+import yorickbm.skyblockaddon.core.JSON.PermissionDataJson;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
@@ -39,6 +42,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 public class InteractionHandler {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -51,6 +55,48 @@ public class InteractionHandler {
 
     public static void sendDeniedMessage(final Player player) {
         player.displayClientMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("toolbar.overlay.nothere")).withStyle(ChatFormatting.DARK_RED), true);
+    }
+
+    public static void pushPlayerBack(final ServerPlayer player) {
+        final double radianYaw = Math.toRadians(player.getYRot());
+        final Vec3 direction = new Vec3(Math.sin(radianYaw), 0, -Math.cos(radianYaw));
+        player.setDeltaMovement(new Vec3(direction.x * 0.4, 0.28, direction.z * 0.4));
+        player.connection.send(new ClientboundSetEntityMotionPacket(player));
+    }
+
+    /**
+     * Match a value (item, entity or dimension id) against the data of every permission on the trigger that the group
+     * lacks. A lacked permission without data denies outright.
+     */
+    public static boolean isDeniedByMatchData(final Optional<IslandGroup> group, final String trigger, final String matchValue, final Function<PermissionDataJson, List<String>> dataExtractor, final boolean logDecision) {
+        if(logDecision) SkyBlockAddon.CustomDebugMessages(LOGGER, trigger);
+
+        final List<Permission> perms = PermissionManager.getInstance().getPermissionsForTrigger(trigger);
+        if (perms.isEmpty()) {
+            if(logDecision) SkyBlockAddon.CustomDebugMessages(LOGGER, "No permissions found for trigger (ALLOWED)");
+            return false;
+        }
+        if(group.isEmpty()) return false;
+
+        boolean runFail = false;
+        for (final Permission perm : perms) {
+            if (group.get().canDo(perm.getId())) {
+                if(logDecision) SkyBlockAddon.CustomDebugMessages(LOGGER, "action is ALLOWED on " + perm.getId() + " in group " + group.get().getName());
+                continue;
+            }
+            if (runFail) break;
+
+            final List<String> data = dataExtractor.apply(perm.getData());
+            if (data.isEmpty()) {
+                if(logDecision) SkyBlockAddon.CustomDebugMessages(LOGGER, "action is BLOCKED on " + perm.getId() + " in group " + group.get().getName());
+                runFail = true;
+            } else {
+                final MatchResult rslt = PermissionManager.checkMatch(data, matchValue);
+                if(logDecision) SkyBlockAddon.CustomDebugMessages(LOGGER, matchValue + " is " + rslt + " on " + perm.getId() + " in group " + group.get().getName());
+                if (rslt == MatchResult.BLOCK) runFail = true;
+            }
+        }
+        return runFail;
     }
 
     /**
