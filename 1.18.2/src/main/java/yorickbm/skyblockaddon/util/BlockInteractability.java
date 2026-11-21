@@ -14,15 +14,12 @@ import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.items.CapabilityItemHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import yorickbm.skyblockaddon.configs.SkyblockAddonConfig;
+import yorickbm.skyblockaddon.configs.ConfiguredIdListValue;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 /**
  * Decides whether a right-click on a block is an interaction with the block (checked as onRightClickBlock) or a
@@ -45,8 +42,8 @@ public final class BlockInteractability {
         }
     };
 
-    private static final AtomicReference<ConfiguredBlockIds> INTERACTABLE_BLOCKS = new AtomicReference<>(ConfiguredBlockIds.EMPTY);
-    private static final AtomicReference<ConfiguredBlockIds> NON_INTERACTABLE_BLOCKS = new AtomicReference<>(ConfiguredBlockIds.EMPTY);
+    private static final ConfiguredIdListValue INTERACTABLE_BLOCKS = new ConfiguredIdListValue(INTERACTABLE_BLOCKS_CONFIG_KEY);
+    private static final ConfiguredIdListValue NON_INTERACTABLE_BLOCKS = new ConfiguredIdListValue(NON_INTERACTABLE_BLOCKS_CONFIG_KEY);
 
     private BlockInteractability() {
     }
@@ -59,8 +56,8 @@ public final class BlockInteractability {
     public static boolean isRightClickInteraction(final Level level, final BlockPos position, final Player player, final InteractionHand hand) {
         final BlockState state = level.getBlockState(position);
         final String blockId = blockId(state.getBlock());
-        if (configuredBlockIds(INTERACTABLE_BLOCKS_CONFIG_KEY, INTERACTABLE_BLOCKS).contains(blockId)) return true;
-        if (configuredBlockIds(NON_INTERACTABLE_BLOCKS_CONFIG_KEY, NON_INTERACTABLE_BLOCKS).contains(blockId)) return false;
+        if (INTERACTABLE_BLOCKS.ids().contains(blockId)) return true;
+        if (NON_INTERACTABLE_BLOCKS.ids().contains(blockId)) return false;
 
         final BlockEntity blockEntity = level.getBlockEntity(position);
         if (blockEntity == null && player.isShiftKeyDown() && !player.getItemInHand(hand).isEmpty()) return false;
@@ -71,8 +68,8 @@ public final class BlockInteractability {
     public static boolean isInteractable(final Level level, final BlockPos position) {
         final BlockState state = level.getBlockState(position);
         final String blockId = blockId(state.getBlock());
-        if (configuredBlockIds(INTERACTABLE_BLOCKS_CONFIG_KEY, INTERACTABLE_BLOCKS).contains(blockId)) return true;
-        if (configuredBlockIds(NON_INTERACTABLE_BLOCKS_CONFIG_KEY, NON_INTERACTABLE_BLOCKS).contains(blockId)) return false;
+        if (INTERACTABLE_BLOCKS.ids().contains(blockId)) return true;
+        if (NON_INTERACTABLE_BLOCKS.ids().contains(blockId)) return false;
 
         return hasInteractableTraits(level, position, state, level.getBlockEntity(position));
     }
@@ -116,26 +113,4 @@ public final class BlockInteractability {
         return Objects.requireNonNull(block.getRegistryName(), "Unregistered block " + block).toString();
     }
 
-    private static Set<String> configuredBlockIds(final String configKey, final AtomicReference<ConfiguredBlockIds> cache) {
-        final String rawValue = SkyblockAddonConfig.getForKey(configKey);
-        final ConfiguredBlockIds cached = cache.get();
-        if (cached.rawValue().equals(rawValue)) return cached.blockIds();
-
-        final ConfiguredBlockIds parsed = ConfiguredBlockIds.parse(rawValue);
-        cache.set(parsed);
-        return parsed.blockIds();
-    }
-
-    private record ConfiguredBlockIds(String rawValue, Set<String> blockIds) {
-        private static final ConfiguredBlockIds EMPTY = new ConfiguredBlockIds("", Set.of());
-
-        private static ConfiguredBlockIds parse(final String rawValue) {
-            final Set<String> blockIds = Arrays.stream(rawValue.split(","))
-                    .map(String::trim)
-                    .filter(entry -> !entry.isEmpty())
-                    .map(entry -> entry.toLowerCase(Locale.ROOT))
-                    .collect(Collectors.toUnmodifiableSet());
-            return new ConfiguredBlockIds(rawValue, blockIds);
-        }
-    }
 }

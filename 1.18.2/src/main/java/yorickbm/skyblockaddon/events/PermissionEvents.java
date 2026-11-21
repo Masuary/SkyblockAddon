@@ -104,10 +104,28 @@ public class PermissionEvents {
             final ServerPlayer player = (ServerPlayer) event.getPlayer();
             if (InteractionHandler.checkPlayerInteraction(standingOn, player, (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(), trigger)) {
                 InteractionHandler.denyBlockClick(event, player);
+            } else if (InteractionHandler.isEntityPlacementDenied(standingOn, player, event.getItemStack())) {
+                final boolean blockUseComesFirst = PermissionTriggers.ON_RIGHT_CLICK_BLOCK.equals(trigger) && !player.isSecondaryUseActive();
+                InteractionHandler.denyItemUseOnBlock(event, player, !blockUseComesFirst);
             }
         }
 
         denyNetherPortalIgnition(event, event.getEntity(), event.getWorld(), event.getPos(), player -> event.getItemStack());
+    }
+
+    /**
+     * Boats, and spawn eggs aimed at water, are used through RightClickItem, which no block check sees.
+     */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onRightClickItemPlacingEntity(final PlayerInteractEvent.RightClickItem event) {
+        final AtomicReference<Island> standingOn = new AtomicReference<>();
+        if (InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) return;
+
+        final ServerPlayer player = (ServerPlayer) event.getPlayer();
+        if (InteractionHandler.isEntityPlacementDenied(standingOn, player, event.getItemStack())) {
+            InteractionHandler.deny(event, player);
+            player.inventoryMenu.sendAllDataToRemote();
+        }
     }
 
     @SubscribeEvent

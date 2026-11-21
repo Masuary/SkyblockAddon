@@ -45,4 +45,15 @@ public final class InteractionPermissionDecision {
         }
         return Optional.empty();
     }
+
+    /**
+     * An item that puts an entity into the world (spawn egg, armor stand, frame, painting, boat, minecart, end crystal)
+     * is judged as a placement of that item with no target block, wherever it is used: block carve-outs and the clicked
+     * block never let it through, and without a block subject any lacked placement permission with block rules denies it.
+     */
+    public static Optional<Permission> findDenyingEntityPlacement(final List<Permission> placePermissions,
+                                                                  final Predicate<String> groupHasPermission, final String placerItemId) {
+        return findDenyingPermission(PermissionTriggers.ON_PLACE_BLOCK, placePermissions, groupHasPermission,
+                new InteractionSubject(Optional.of(placerItemId), Optional.empty(), Optional.empty()));
+    }
 }
