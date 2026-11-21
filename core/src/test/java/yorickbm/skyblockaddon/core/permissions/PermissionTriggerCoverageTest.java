@@ -8,6 +8,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -27,13 +28,30 @@ class PermissionTriggerCoverageTest {
     }
 
     @Test
-    void bundledVaultHuntersRegistryLeavesTheEmptyClicksAndBlockBreakingUnreferenced() throws URISyntaxException {
+    void clientOnlyEmptyClicksAreNotKnownTriggers() {
+        assertFalse(PermissionTriggers.knownTriggers().contains("onRightClickEmpty"));
+        assertFalse(PermissionTriggers.knownTriggers().contains("onLeftClickEmpty"));
+    }
+
+    @Test
+    void bundledVaultHuntersRegistryReferencesEveryKnownTrigger() throws URISyntaxException {
         final Path registry = Path.of(Objects.requireNonNull(getClass().getResource("/assets/skyblockaddon/registries/permissions/vaulthunters.json")).toURI());
         final PermissionManager manager = new PermissionManager();
         manager.loadPermissions(registry);
 
-        assertEquals(Set.of(PermissionTriggers.ON_BREAK_BLOCK, PermissionTriggers.ON_RIGHT_CLICK_EMPTY, PermissionTriggers.ON_LEFT_CLICK_EMPTY),
-                new HashSet<>(manager.findUnreferencedTriggers()));
+        assertEquals(Set.of(), new HashSet<>(manager.findUnreferencedTriggers()));
+    }
+
+    @Test
+    void bundledRegistriesLetDestroyBlocksGuardGadgetBreaking() throws URISyntaxException {
+        for (final String registryName : List.of("default.json", "vaulthunters.json")) {
+            final Path registry = Path.of(Objects.requireNonNull(getClass().getResource("/assets/skyblockaddon/registries/permissions/" + registryName)).toURI());
+            final PermissionManager manager = new PermissionManager();
+            manager.loadPermissions(registry);
+
+            assertEquals(List.of("destroy_blocks"), manager.getPermissionsForTrigger(PermissionTriggers.ON_BREAK_BLOCK).stream().map(Permission::getId).toList(),
+                    registryName);
+        }
     }
 
     @Test

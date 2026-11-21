@@ -13,9 +13,11 @@ import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldProvider;
 import yorickbm.skyblockaddon.commands.interfaces.Cmds;
 import yorickbm.skyblockaddon.commands.interfaces.OverWorldCommandStack;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
+import yorickbm.skyblockaddon.core.islands.IslandActionResult;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.util.UsernameCache;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
+import yorickbm.skyblockaddon.islands.IslandActionService;
 import yorickbm.skyblockaddon.util.FunctionRegistry;
 
 import java.util.UUID;
@@ -57,6 +59,11 @@ public class IslandInviteCommand extends OverWorldCommandStack {
                 return;
             }
 
+            if (!IslandActionService.canManage(sourceIsland, executor)) {
+                command.sendFailure(IslandActionService.failureMessage(IslandActionResult.NOT_ALLOWED, ""));
+                return;
+            }
+
             if (IslandManager.getInstance().getIslandByEntityUUID(target.getUUID()) != null) {
                 command.sendFailure(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.invite.has.island").formatted(UsernameCache.getBlocking(target.getUUID()))));
                 return;
@@ -71,7 +78,7 @@ public class IslandInviteCommand extends OverWorldCommandStack {
             FunctionRegistry.registerFunction(functionKey, (e) -> {
                 if(super.execute(command, e) == 0) return true;
 
-                if (sourceIsland.isBanned(e.getUUID())) {
+                if (sourceIsland.isBanned(e.getUUID()) || !IslandActionService.canManage(sourceIsland, executor)) {
                     e.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.invite.cancelled")).withStyle(ChatFormatting.RED), e.getUUID());
                     return true;
                 }

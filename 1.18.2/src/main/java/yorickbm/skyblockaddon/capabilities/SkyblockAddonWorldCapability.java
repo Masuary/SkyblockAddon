@@ -17,6 +17,7 @@ import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.islands.IslandSlot;
 import yorickbm.skyblockaddon.core.islands.IslandSlotAllocator;
+import yorickbm.skyblockaddon.core.util.IslandFileWriteTracker;
 import yorickbm.skyblockaddon.core.util.exceptions.NBTNotFoundException;
 import yorickbm.skyblockaddon.core.util.geometry.Vec3i;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
@@ -38,6 +39,7 @@ public class SkyblockAddonWorldCapability {
     private List<Vec3i> persistedReusableSlots = List.of();
     private List<IslandSlot> persistedAdminReservedSlots = List.of();
     private boolean islandsLoaded = false;
+    private final IslandFileWriteTracker islandFileWriteTracker = new IslandFileWriteTracker();
 
     public SkyblockAddonWorldCapability(final MinecraftServer server) {
         serverInstance = server;
@@ -47,14 +49,27 @@ public class SkyblockAddonWorldCapability {
     }
 
     /**
-     * Save data into NBT.
+     * Save the island grid state into capabilities.dat. Until the islands are loaded the allocator holds nothing real
+     * (a failed load stops the server, which still saves on the way down), so the state read at start is written back
+     * unchanged instead.
      */
     public void saveNBTData(final CompoundTag nbt) {
-        nbt.put("lastIsland", NBTUtil.Vec3iToNBT(IslandManager.getInstance().getNextFreshSlot()));
+        if (!this.islandsLoaded) {
+            LOGGER.warn("Islands are not loaded; writing back the island grid state read at start unchanged.");
+            writeGridState(nbt, this.persistedNextFreshSlot, this.persistedReusableSlots, this.persistedAdminReservedSlots);
+            return;
+        }
+        writeGridState(nbt, IslandManager.getInstance().getNextFreshSlot(), IslandManager.getInstance().getReusableLocations(),
+                IslandManager.getInstance().getAdminReservedSlots());
+    }
+
+    private static void writeGridState(final CompoundTag nbt, final Vec3i nextFreshSlot, final Collection<Vec3i> reusableSlots,
+                                       final Collection<IslandSlot> adminReservedSlots) {
+        nbt.put("lastIsland", NBTUtil.Vec3iToNBT(nextFreshSlot));
         nbt.putInt("nbt-v", 6);
 
         ListTag listTag = new ListTag();
-        for (Vec3i vec : IslandManager.getInstance().getReusableLocations()) {
+        for (Vec3i vec : reusableSlots) {
             CompoundTag vecTag = new CompoundTag();
             vecTag.putInt("x", vec.getX());
             vecTag.putInt("y", vec.getY());
@@ -64,30 +79,39 @@ public class SkyblockAddonWorldCapability {
         nbt.put("reusableLocations", listTag);
 
         final ListTag reservedSlotsTag = new ListTag();
-        for (final IslandSlot reservedSlot : IslandManager.getInstance().getAdminReservedSlots()) {
+        for (final IslandSlot reservedSlot : adminReservedSlots) {
             final CompoundTag slotTag = new CompoundTag();
             slotTag.putInt("x", reservedSlot.x());
             slotTag.putInt("z", reservedSlot.z());
             reservedSlotsTag.add(slotTag);
         }
         nbt.put(RESERVED_SLOTS_TAG, reservedSlotsTag);
-
-        saveIslandsToDisk();
     }
 
     /**
-     * Persist every in-memory island to its NBT file. Single source of truth for island-file
-     * writes - both the capability serialize hook and {@code WorldEvent.Save} call this so the
-     * two save paths can't diverge on which islands get written or how they're serialised.
-     * Serializes the live island objects, so it must run on the server thread, where islands are changed.
+     * Persist the in-memory islands that changed since their last write. Island files are written only here: the
+     * overworld's {@code WorldEvent.Save} (autosave, save-all, stop) and the admin commands that must persist at once
+     * call it; the capabilities.dat hook stores the grid state only. Serializes the live island objects, so it must run
+     * on the server thread, where islands are changed.
      */
     public void saveIslandsToDisk() {
         if (!serverInstance.isSameThread()) {
             throw new IllegalStateException("Islands are saved from the live objects and must be saved on the server thread, not on " + Thread.currentThread().getName());
         }
-        NBTEncoder.saveToFile(IslandManager.getInstance().getIslands().stream()
+        if (!this.islandsLoaded) {
+            LOGGER.warn("Islands are not loaded; skipping the island file save so no island file is touched.");
+            return;
+        }
+        final long saveStartNanos = System.nanoTime();
+        final NBTEncoder.IslandSaveReport report = NBTEncoder.saveChangedToFile(IslandManager.getInstance().getIslands().stream()
                 .map(SkyblockAddonWorldCapability::asForgeIsland)
-                .toList(), islandDataFolder());
+                .toList(), islandDataFolder(), this.islandFileWriteTracker);
+        final long saveMillis = (System.nanoTime() - saveStartNanos) / 1_000_000L;
+        if (report.written() > 0 || !report.failed().isEmpty()) {
+            LOGGER.info("Saved islands in {} ms: {} written, {} unchanged, {} failed.", saveMillis, report.written(), report.skipped(), report.failed().size());
+        } else {
+            LOGGER.debug("Saved islands in {} ms: {} written, {} unchanged, {} failed.", saveMillis, report.written(), report.skipped(), report.failed().size());
+        }
     }
 
     private static ForgeIsland asForgeIsland(final Island island) {
@@ -269,6 +293,7 @@ public class SkyblockAddonWorldCapability {
         final Path filePath = worldPath.resolve("islanddata");
 
         NBTEncoder.removeFileFromFolder(filePath, data);
+        this.islandFileWriteTracker.forget(data.getId());
     }
 
     public List<UUID> getPurgableIslands() {

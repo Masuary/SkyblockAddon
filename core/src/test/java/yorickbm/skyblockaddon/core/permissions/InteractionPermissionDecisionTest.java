@@ -143,6 +143,61 @@ class InteractionPermissionDecisionTest {
                 clickWith("minecraft:flint_and_steel", null, "minecraft:obsidian")).isPresent());
     }
 
+    private static final String LIVE_DESTROY_BLOCKS = """
+            {"id": "destroy_blocks", "category": "General", "triggers": ["onLeftClickBlock", "onAttack", "onQuarkPickarangMixin", "onBreakBlock"],
+             "data": {"skyblockaddon": [], "items": ["quark:flamerang", "quark:pickarang"], "blocks": ["!the_vault:animal_pen"],
+                      "entities": ["minecraft:minecart"]}}
+            """;
+
+    @Test
+    void untargetedBreakIsDeniedByALackedPermissionWithBlockRules() {
+        assertTrue(InteractionPermissionDecision.findDenyingPermission(PermissionTriggers.ON_BREAK_BLOCK, List.of(permission(LIVE_DESTROY_BLOCKS)), VISITOR,
+                clickWith("buildinggadgets:gadget_destruction", null, null)).isPresent());
+    }
+
+    @Test
+    void untargetedBreakIsAllowedForGroupsThatMayDestroy() {
+        assertTrue(InteractionPermissionDecision.findDenyingPermission(PermissionTriggers.ON_BREAK_BLOCK, List.of(permission(LIVE_DESTROY_BLOCKS)), MEMBER,
+                clickWith("buildinggadgets:gadget_destruction", null, null)).isEmpty());
+    }
+
+    private static boolean entityPlacementDenied(final List<Permission> placePermissions, final Predicate<String> group, final String placerItemId) {
+        return InteractionPermissionDecision.findDenyingEntityPlacement(placePermissions, group, placerItemId).isPresent();
+    }
+
+    @Test
+    void entityPlacersAreDeniedWhereverTheyAreUsed() {
+        final List<Permission> placePermissions = List.of(permission(LIVE_PLACE_BLOCKS));
+
+        assertTrue(entityPlacementDenied(placePermissions, VISITOR, "minecraft:armor_stand"));
+        assertTrue(entityPlacementDenied(placePermissions, VISITOR, "minecraft:item_frame"));
+        assertTrue(entityPlacementDenied(placePermissions, VISITOR, "minecraft:oak_boat"));
+        assertTrue(entityPlacementDenied(placePermissions, VISITOR, "minecraft:end_crystal"));
+        assertTrue(entityPlacementDenied(placePermissions, VISITOR, "minecraft:zombie_spawn_egg"));
+    }
+
+    @Test
+    void blockCarveOutsNeverLetAnEntityPlacerThrough() {
+        assertFalse(visitorPlacementDenied(clickWith("minecraft:armor_stand", null, "minecraft:player_head")));
+        assertTrue(entityPlacementDenied(List.of(permission(LIVE_PLACE_BLOCKS)), VISITOR, "minecraft:armor_stand"));
+    }
+
+    @Test
+    void groupsWithThePlacePermissionMayPlaceEntities() {
+        assertFalse(entityPlacementDenied(List.of(permission(LIVE_PLACE_BLOCKS)), MEMBER, "minecraft:armor_stand"));
+    }
+
+    @Test
+    void placePermissionWithOnlyItemRulesJudgesThePlacerItem() {
+        final List<Permission> itemOnlyPermissions = List.of(permission("""
+                {"id": "place_minecarts", "category": "General", "triggers": ["onPlaceBlock"],
+                 "data": {"skyblockaddon": [], "items": [".*:.*minecart"], "blocks": [], "entities": []}}
+                """));
+
+        assertTrue(entityPlacementDenied(itemOnlyPermissions, VISITOR, "minecraft:chest_minecart"));
+        assertFalse(entityPlacementDenied(itemOnlyPermissions, VISITOR, "minecraft:armor_stand"));
+    }
+
     @Test
     void noPermissionsOnTheTriggerAllow() {
         assertTrue(InteractionPermissionDecision.findDenyingPermission(PermissionTriggers.ON_PLACE_BLOCK, List.of(), VISITOR,

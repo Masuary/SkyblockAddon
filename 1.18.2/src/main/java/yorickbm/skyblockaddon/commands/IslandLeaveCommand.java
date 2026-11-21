@@ -61,6 +61,11 @@ public class IslandLeaveCommand extends OverWorldCommandStack {
                     return true;
                 }
 
+                if(island.isBanned(e.getUUID())) {
+                    e.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.leave.undo.banned")).withStyle(ChatFormatting.RED), e.getUUID());
+                    return true;
+                }
+
                 if(island.addMember(e, e.getUUID())) {
                     e.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.leave.undo")).withStyle(ChatFormatting.GREEN), e.getUUID());
                 } else {

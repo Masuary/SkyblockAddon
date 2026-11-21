@@ -126,17 +126,29 @@ public class IslandTeleportCommand extends OverWorldCommandStack {
             final UUID functionKey = UUID.randomUUID();
             FunctionRegistry.registerFunction(functionKey, (e) -> {
                 if(!super.isInOverworld(e)) return true;
-                if (IslandActionService.isBannedFrom(island, executor)) {
-                    e.sendMessage(IslandActionService.failureMessage(IslandActionResult.TARGET_IS_BANNED, executor.getDisplayName().getString()), e.getUUID());
+                final ServerPlayer requester = e.server.getPlayerList().getPlayer(executor.getUUID());
+                if (requester == null) {
+                    e.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.other.offline")
+                            .formatted(executor.getDisplayName().getString())).withStyle(ChatFormatting.RED), e.getUUID());
+                    return true;
+                }
+                if (requester.getLevel().dimension() != Level.OVERWORLD) {
+                    e.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.other.not.in.overworld")).withStyle(ChatFormatting.RED), e.getUUID());
+                    requester.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.teleporting.accepted.not.in.overworld")
+                            .formatted(e.getDisplayName().getString())).withStyle(ChatFormatting.RED), requester.getUUID());
+                    return true;
+                }
+                if (IslandActionService.isBannedFrom(island, requester)) {
+                    e.sendMessage(IslandActionService.failureMessage(IslandActionResult.TARGET_IS_BANNED, requester.getDisplayName().getString()), e.getUUID());
                     return true;
                 }
 
-                executor.sendMessage(new TextComponent(
+                requester.sendMessage(new TextComponent(
                     SkyBlockAddonLanguage.getLocalizedString("commands.teleporting.other")
                         .formatted(e.getDisplayName().getString()))
-                    .withStyle(ChatFormatting.GREEN), e.getUUID());
-                e.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.teleporting.accepted").formatted(executor.getDisplayName().getString())).withStyle(ChatFormatting.GREEN), requested.getUUID());
-                island.teleportTo(executor);
+                    .withStyle(ChatFormatting.GREEN), requester.getUUID());
+                e.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.teleporting.accepted").formatted(requester.getDisplayName().getString())).withStyle(ChatFormatting.GREEN), e.getUUID());
+                island.teleportTo(requester);
                 return true;
             }, 5); //Register function to teleport under hash 'functionKey' for 5 minutes.
 

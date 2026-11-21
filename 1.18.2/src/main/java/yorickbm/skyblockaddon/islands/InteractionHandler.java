@@ -39,7 +39,9 @@ import yorickbm.skyblockaddon.core.permissions.InteractionPermissionDecision;
 import yorickbm.skyblockaddon.core.permissions.InteractionSubject;
 import yorickbm.skyblockaddon.core.permissions.Permission;
 import yorickbm.skyblockaddon.core.permissions.PermissionManager;
+import yorickbm.skyblockaddon.core.permissions.PermissionTriggers;
 import yorickbm.skyblockaddon.core.util.MatchResult;
+import yorickbm.skyblockaddon.util.EntityPlacerItems;
 import yorickbm.skyblockaddon.util.ForgeConverter;
 import yorickbm.skyblockaddon.util.ServerHelper;
 
@@ -226,6 +228,33 @@ public class InteractionHandler {
     }
 
     /**
+     * Whether using the hand item would put an entity into the world that the player may not place here. Judged on the
+     * item alone, so the clicked block and its carve-outs never let it through.
+     */
+    public static boolean isEntityPlacementDenied(final AtomicReference<Island> standingOn, final ServerPlayer player, final ItemStack handItem) {
+        if (!EntityPlacerItems.isEntityPlacer(handItem)) return false;
+
+        final Optional<IslandGroup> group = standingOn.get().getGroupForEntityUUID(player.getUUID());
+        if (group.isEmpty()) return true;
+
+        final Optional<Permission> denyingPermission = InteractionPermissionDecision.findDenyingEntityPlacement(
+                PermissionManager.getInstance().getPermissionsForTrigger(PermissionTriggers.ON_PLACE_BLOCK), group.get()::canDo, itemId(handItem).orElseThrow());
+        denyingPermission.ifPresent(permission -> SkyBlockAddon.CustomDebugMessages(LOGGER, handItem.getItem().getRegistryName() + " (entity placer) is BLOCKED on " + permission.getId() + " in group " + group.get().getName()));
+        return denyingPermission.isPresent();
+    }
+
+    /**
+     * Let the clicked block react but never run the hand item, and undo the client's predicted use of the stack. The
+     * denial is announced only when the item is what the click would use; opening an allowed chest with a boat in hand
+     * stays silent.
+     */
+    public static void denyItemUseOnBlock(final PlayerInteractEvent.RightClickBlock event, final ServerPlayer player, final boolean announceDenial) {
+        event.setUseItem(Event.Result.DENY);
+        if (announceDenial) sendDeniedMessage(player);
+        player.inventoryMenu.sendAllDataToRemote();
+    }
+
+    /**
      * A click on a block: the hand item, the block it would place and the clicked block (none when air).
      */
     public static InteractionSubject subjectOfClick(final ServerLevel world, final BlockPos position, final ItemStack handItem) {
@@ -250,6 +279,14 @@ public class InteractionHandler {
      */
     public static InteractionSubject subjectOfUntargetedPlacement(final ItemStack placingStack) {
         return new InteractionSubject(itemId(placingStack), heldBlockId(placingStack), Optional.empty());
+    }
+
+    /**
+     * A break by an area tool (gadgets): judged on the tool alone, so without a target block any lacked permission with
+     * block rules denies it, wherever the player stands.
+     */
+    public static InteractionSubject subjectOfUntargetedBreak(final ItemStack breakingTool) {
+        return new InteractionSubject(itemId(breakingTool), Optional.empty(), Optional.empty());
     }
 
     /**

@@ -17,6 +17,7 @@ import com.masuary.masugui.element.data.ListRow;
 import com.masuary.masugui.element.data.SidebarEntry;
 import com.masuary.masugui.fallback.FallbackType;
 import net.minecraft.ChatFormatting;
+import net.minecraft.commands.Commands;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
@@ -29,10 +30,12 @@ import yorickbm.skyblockaddon.core.GuiDataKeys;
 import yorickbm.skyblockaddon.core.JSON.ItemStackJson;
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.islands.Island;
+import yorickbm.skyblockaddon.core.islands.IslandActionResult;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.permissions.Permission;
 import yorickbm.skyblockaddon.core.permissions.PermissionManager;
+import yorickbm.skyblockaddon.islands.IslandActionService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -76,7 +79,7 @@ public final class PermissionTogglesGui {
 
     static List<String[]> categoriesFor(ServerPlayer player) {
         List<String[]> categories = new ArrayList<>(List.of(CATEGORIES));
-        if (player.hasPermissions(2)) categories.add(ADMIN_CATEGORY);
+        if (player.hasPermissions(Commands.LEVEL_GAMEMASTERS)) categories.add(ADMIN_CATEGORY);
         return categories;
     }
 
@@ -123,6 +126,7 @@ public final class PermissionTogglesGui {
                 .fallbackHints(List.of(new KeyHint("Click", "to allow or deny")))
                 .onClick((p, index, click) -> {
                     if (index < 0 || index >= permissions.size()) return;
+                    if (EnhancedGuiHelper.closeWhenDenied(p, mayChangePermissions(p, data, categoryId), IslandActionResult.NOT_ALLOWED)) return;
                     Permission permission = permissions.get(index);
                     group.setPermission(permission.getId(), !group.canDo(permission.getId()));
                     open(p, data, categoryId, group);
@@ -148,8 +152,15 @@ public final class PermissionTogglesGui {
 
     private static void setAll(ServerPlayer player, CompoundTag data, String categoryId, IslandGroup group,
                                List<Permission> permissions, boolean allowed) {
+        if (EnhancedGuiHelper.closeWhenDenied(player, mayChangePermissions(player, data, categoryId), IslandActionResult.NOT_ALLOWED)) return;
         for (Permission permission : permissions) group.setPermission(permission.getId(), allowed);
         open(player, data, categoryId, group);
+    }
+
+    private static boolean mayChangePermissions(ServerPlayer player, CompoundTag data, String categoryId) {
+        if (ADMIN_CATEGORY[0].equals(categoryId) && !player.hasPermissions(Commands.LEVEL_GAMEMASTERS)) return false;
+        Island island = data.hasUUID(GuiDataKeys.ISLAND_ID) ? IslandManager.getInstance().getIslandByUUID(data.getUUID(GuiDataKeys.ISLAND_ID)) : null;
+        return island != null && IslandActionService.canManage(island, player);
     }
 
     private static String extractDisplayName(Permission perm) {

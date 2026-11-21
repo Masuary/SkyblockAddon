@@ -161,14 +161,15 @@ public class ForgeIsland extends Island implements NBTSerializable {
                 && getIslandBoundingBox().isInside(ForgeConverter.ForgeToInternalVec3i(player.getOnPos()));
     }
 
+    /**
+     * Teleport a player to the overworld spawn. The level-aware teleport dismounts the player first (a mounted player
+     * would otherwise snap back to the vehicle) and handles both a same-level and a cross-level move.
+     */
     public static void sendToWorldSpawn(final ServerPlayer player) {
         final ServerLevel overworld = Objects.requireNonNull(player.getServer()).overworld();
         final BlockPos worldSpawn = overworld.getSharedSpawnPos();
-        if (player.getLevel() != overworld) {
-            player.teleportTo(overworld, worldSpawn.getX(), worldSpawn.getY(), worldSpawn.getZ(), player.getYRot(), player.getXRot());
-            return;
-        }
-        player.teleportTo(worldSpawn.getX(), worldSpawn.getY(), worldSpawn.getZ());
+        player.stopRiding();
+        player.teleportTo(overworld, worldSpawn.getX() + 0.5, worldSpawn.getY(), worldSpawn.getZ() + 0.5, player.getYRot(), player.getXRot());
     }
 
     /**

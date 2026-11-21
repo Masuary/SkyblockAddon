@@ -1,6 +1,7 @@
 {
   "commands.not.in.overworld": "You can only execute this command in the overworld.",
   "commands.other.not.in.overworld": "Who you are allowing to teleport is currently not in the overworld.",
+  "commands.other.offline": "%s is no longer online.",
   "commands.has.no.island": "You can not execute this command without having an island. Use '/island create' to make one.",
 
   "commands.admin.no.island": "This command requires you to be standing on an island.",
@@ -30,12 +31,14 @@
   "commands.teleporting.requested": "Requested teleport to %s's island...",
   "commands.teleporting.request": "Click me to accept teleport request from %s to your island.",
   "commands.teleporting.accepted": "Teleporting %s to your island...",
+  "commands.teleporting.accepted.not.in.overworld": "%s accepted your teleport request, but you are not in the overworld. Ask again from the overworld.",
 
   "commands.leave": "You have left your island, click me to undo this action.",
   "commands.leave.failure": "We could not remove you from the island, try again at a later moment.",
   "commands.leave.undo": "We have added you back to the island as a member.",
   "commands.leave.undo.failure": "We could not add you to island '%s', please contact a server admin and share this id.",
   "commands.leave.undo.island.gone": "That island no longer exists, so leaving it cannot be undone.",
+  "commands.leave.undo.banned": "You have been banned from that island since you left, so leaving it cannot be undone.",
 
   "commands.invite.self": "You cannot invite yourself, sorry.",
   "commands.invite.success": "You have invited %s to join your island.",
@@ -119,7 +122,6 @@
   "island.action.group.default": "The default groups cannot be removed.",
   "island.action.no.change": "Nothing changed.",
 
-  "commands.target.single": "Name exactly one player.",
   "commands.transfer.confirm": "Click here to confirm making %s the owner of this island. You stay on the island as a member.",
   "commands.transfer.success": "%s is now the owner of this island; you are a member in the Members group.",
   "commands.transfer.received": "%s made you the owner of their island.",
@@ -128,6 +130,9 @@
   "commands.expel.notify": "You have been sent off %s's island.",
   "commands.ban.success": "%s is banned from your island.",
   "commands.ban.notify": "You have been banned from %s's island.",
+  "commands.ban.lookup": "Looking up %s...",
+  "commands.ban.lookup.failed": "Could not look up %s right now; try again in a moment.",
+  "commands.ban.unknown.player": "No Minecraft player named %s was found.",
   "commands.unban.success": "%s is no longer banned from your island.",
   "commands.bans.none": "Nobody is banned from this island.",
   "commands.bans.header": "Banned from this island (%s):",
