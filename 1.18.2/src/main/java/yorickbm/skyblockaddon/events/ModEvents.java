@@ -65,6 +65,23 @@ public class ModEvents {
         LOGGER.info("Registered commands for " + SkyblockAddonCore.MOD_ID);
     }
 
+    /**
+     * The overworld fires this right after it is constructed (its capabilities.dat already read) and before spawn
+     * chunks load or players join. A failure stops the server: running without the islands switches protection off.
+     */
+    @SubscribeEvent
+    public void onWorldLoad(final WorldEvent.Load event) {
+        if (!(event.getWorld() instanceof final ServerLevel level) || level.dimension() != Level.OVERWORLD) return;
+
+        final SkyblockAddonWorldCapability capability = level.getCapability(SkyblockAddonWorldProvider.SKYBLOCKADDON_WORLD_CAPABILITY).resolve()
+                .orElseThrow(() -> new IllegalStateException("SkyblockAddon world capability is missing on the overworld; cannot load islands"));
+        try {
+            capability.loadIslandsFromDisk();
+        } catch (final RuntimeException loadFailure) {
+            throw new IllegalStateException("SkyblockAddon could not load the islands; stopping the server so island protection is never off: " + loadFailure.getMessage(), loadFailure);
+        }
+    }
+
     @SubscribeEvent
     public void onWorldSave(final WorldEvent.Save event) {
         if (event.getWorld().isClientSide()) return;

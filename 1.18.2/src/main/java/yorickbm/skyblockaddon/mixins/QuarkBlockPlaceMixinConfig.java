@@ -26,7 +26,7 @@ public abstract class QuarkBlockPlaceMixinConfig {
         final AtomicReference<Island> standingOn = new AtomicReference<>();
         if(InteractionHandler.verifyEntity(player, standingOn).asBoolean()) return;
 
-        if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) player, (ServerLevel) player.getLevel(), player.getOnPos(), player.getMainHandItem(),  PermissionTriggers.ON_PLACE_BLOCK)) {
+        if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) player, (ServerLevel) player.getLevel(), player.getOnPos(), PermissionTriggers.ON_PLACE_BLOCK, InteractionHandler.subjectOfUntargetedPlacement(InteractionHandler.placingStack(player)))) {
             InteractionHandler.sendDeniedMessage(player);
             cir.setReturnValue(null); //Force success
         }

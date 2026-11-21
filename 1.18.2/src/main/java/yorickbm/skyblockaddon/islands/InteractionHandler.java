@@ -35,9 +35,10 @@ import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.permissions.EntityVerification;
+import yorickbm.skyblockaddon.core.permissions.InteractionPermissionDecision;
+import yorickbm.skyblockaddon.core.permissions.InteractionSubject;
 import yorickbm.skyblockaddon.core.permissions.Permission;
 import yorickbm.skyblockaddon.core.permissions.PermissionManager;
-import yorickbm.skyblockaddon.core.permissions.PermissionTriggers;
 import yorickbm.skyblockaddon.core.util.MatchResult;
 import yorickbm.skyblockaddon.util.ForgeConverter;
 import yorickbm.skyblockaddon.util.ServerHelper;
@@ -171,7 +172,11 @@ public class InteractionHandler {
      * @param trigger - Trigger type to use
      */
     public static boolean checkPlayerInteraction(final AtomicReference<Island> standingOn, final ServerPlayer player, final ServerLevel world, final BlockPos position, final ItemStack handItem, final String trigger) {
-        final boolean denied = isInteractionDenied(standingOn, player, world, position, handItem, trigger);
+        return checkPlayerInteraction(standingOn, player, world, position, trigger, subjectOfClick(world, position, handItem));
+    }
+
+    public static boolean checkPlayerInteraction(final AtomicReference<Island> standingOn, final ServerPlayer player, final ServerLevel world, final BlockPos position, final String trigger, final InteractionSubject subject) {
+        final boolean denied = isInteractionDenied(standingOn, player, trigger, subject);
         if (denied) {
             resendBlockToPlayer(player, world, position);
         }
@@ -203,6 +208,10 @@ public class InteractionHandler {
     }
 
     public static boolean isInteractionDenied(final AtomicReference<Island> standingOn, final ServerPlayer player, final ServerLevel world, final BlockPos position, final ItemStack handItem, final String trigger) {
+        return isInteractionDenied(standingOn, player, trigger, subjectOfClick(world, position, handItem));
+    }
+
+    public static boolean isInteractionDenied(final AtomicReference<Island> standingOn, final ServerPlayer player, final String trigger, final InteractionSubject subject) {
         SkyBlockAddon.CustomDebugMessages(LOGGER, trigger);
 
         final Optional<IslandGroup> group = standingOn.get().getGroupForEntityUUID(player.getUUID());
@@ -210,66 +219,60 @@ public class InteractionHandler {
             return true;
         }
 
-        final List<Permission> perms = PermissionManager.getInstance().getPermissionsForTrigger(trigger);
-        if(perms.isEmpty()) return false; //No permission to protect against it
+        final Optional<Permission> denyingPermission = InteractionPermissionDecision.findDenyingPermission(
+                trigger, PermissionManager.getInstance().getPermissionsForTrigger(trigger), group.get()::canDo, subject);
+        denyingPermission.ifPresent(permission -> SkyBlockAddon.CustomDebugMessages(LOGGER, subject + " is BLOCKED on " + permission.getId() + " in group " + group.get().getName()));
+        return denyingPermission.isPresent();
+    }
 
-        boolean runFail = false;
-        for(final Permission perm : perms) {
-            if(group.get().canDo(perm.getId())) {
-                //SkyblockAddon.CustomDebugMessages(LOGGER, "action is allowed for " + perm.getId() + " in group " + group.get().getItem().getDisplayName().getString().trim() + " on " + trigger);
-                continue;
-            }
-            if(runFail) break; //Break loop if we determine failure
+    /**
+     * A click on a block: the hand item, the block it would place and the clicked block (none when air).
+     */
+    public static InteractionSubject subjectOfClick(final ServerLevel world, final BlockPos position, final ItemStack handItem) {
+        final BlockState clickedState = world.getBlockState(position);
+        final Optional<String> clickedBlockId = clickedState.isAir() ? Optional.empty() : Optional.of(blockId(clickedState.getBlock()));
+        return new InteractionSubject(itemId(handItem), heldBlockId(handItem), clickedBlockId);
+    }
 
-            // Get permission item data and check for empty
-            final List<String> itemsData = perm.getData().getItemsData();
-            final List<String> blocksData = perm.getData().getBlocksData();
-            final BlockState clickedState = world.getBlockState(position);
+    /**
+     * A block that was placed, whatever placed it. Wall variants are judged as the block their item places (a wall
+     * player head as {@code minecraft:player_head}) so carve-outs written for the held block still apply.
+     */
+    public static InteractionSubject subjectOfPlacedBlock(final ItemStack handItem, final BlockState placedState) {
+        final Block placedBlock = placedState.getBlock();
+        final Block judgedBlock = placedBlock.asItem() instanceof final BlockItem placingItem ? placingItem.getBlock() : placedBlock;
+        return new InteractionSubject(itemId(handItem), Optional.empty(), Optional.of(blockId(judgedBlock)));
+    }
 
-            // Determine default
-            if(itemsData.isEmpty() && blocksData.isEmpty()) {
-                runFail = true;
-                break;
-            }
+    /**
+     * A placement whose target is unknown (gadgets, reacharound): judged on the placing stack alone, so without a
+     * held block any lacked permission with block rules denies it.
+     */
+    public static InteractionSubject subjectOfUntargetedPlacement(final ItemStack placingStack) {
+        return new InteractionSubject(itemId(placingStack), heldBlockId(placingStack), Optional.empty());
+    }
 
-            boolean itemAllowed = true;
-            boolean blockAllowed = true;
+    /**
+     * The stack a hand-agnostic placement uses: the main hand when it holds a block or the off hand does not, else the
+     * off hand.
+     */
+    public static ItemStack placingStack(final Player player) {
+        final ItemStack mainHandItem = player.getMainHandItem();
+        final ItemStack offhandItem = player.getOffhandItem();
+        return mainHandItem.getItem() instanceof BlockItem || !(offhandItem.getItem() instanceof BlockItem) ? mainHandItem : offhandItem;
+    }
 
-            if(!handItem.isEmpty() && !itemsData.isEmpty()) {
-                final String item = Objects.requireNonNull(handItem.getItem().getRegistryName()).toString();
+    private static Optional<String> itemId(final ItemStack stack) {
+        if (stack.isEmpty()) return Optional.empty();
+        return Optional.of(Objects.requireNonNull(stack.getItem().getRegistryName()).toString());
+    }
 
-                final MatchResult rslt = PermissionManager.checkMatch(itemsData, item);
-                SkyBlockAddon.CustomDebugMessages(LOGGER, "i) " + item + " is " + rslt + " on " + perm.getId() + " in group " + group.get().getName());
-                switch(rslt) {
-                    case SKIP, ALLOW -> { }
-                    case BLOCK ->  itemAllowed = false;
-                }
-            }
+    private static Optional<String> heldBlockId(final ItemStack stack) {
+        if (stack.isEmpty() || !(stack.getItem() instanceof final BlockItem blockItem)) return Optional.empty();
+        return Optional.of(blockId(blockItem.getBlock()));
+    }
 
-            if(!blocksData.isEmpty()) {
-                final Block subjectBlock;
-                if(PermissionTriggers.ON_PLACE_BLOCK.equals(trigger)) {
-                    subjectBlock = (handItem.getItem() instanceof BlockItem heldBlockItem) ? heldBlockItem.getBlock() : null;
-                } else if(!clickedState.isAir()) {
-                    subjectBlock = clickedState.getBlock();
-                } else {
-                    subjectBlock = null;
-                }
-
-                if(subjectBlock != null) {
-                    final String block = Objects.requireNonNull(subjectBlock.getRegistryName()).toString();
-                    final MatchResult rslt = PermissionManager.checkMatch(blocksData, block);
-                    SkyBlockAddon.CustomDebugMessages(LOGGER, "b) " + block + " is " + rslt + " on " + perm.getId() + " in group " + group.get().getName());
-                    switch(rslt) {
-                        case SKIP, ALLOW -> { }
-                        case BLOCK -> blockAllowed = false;
-                    }
-                }
-            }
-
-            runFail = (!blockAllowed || !itemAllowed);
-        }
-
-        return runFail;
+    private static String blockId(final Block block) {
+        return Objects.requireNonNull(block.getRegistryName()).toString();
     }
 }

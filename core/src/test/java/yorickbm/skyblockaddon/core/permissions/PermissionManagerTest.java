@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PermissionManagerTest {
     private static final String ONE_PERMISSION = """
-            {"permissions": [{"id": "destroy_blocks", "category": "Blocks", "triggers": []}]}
+            {"permissions": [{"id": "destroy_blocks", "category": "Blocks", "triggers": [], "item": {"item": "minecraft:STONE"}, "data": {}}]}
             """;
 
     @TempDir
@@ -70,7 +70,7 @@ class PermissionManagerTest {
 
         Files.writeString(registry, """
                 {"permissions": [
-                  {"id": "open_chests", "category": "Storage", "triggers": ["onRightClickBlock"],
+                  {"id": "open_chests", "category": "Storage", "triggers": ["onRightClickBlock"], "item": {"item": "minecraft:CHEST"},
                    "data": {"items": [], "blocks": ["minecraft:[chest"], "entities": []}},
                   {"id": "place_blocks", "category": "General", "triggers": ["onPlaceBlock"]}
                 ]}

@@ -25,7 +25,6 @@ import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -53,6 +52,9 @@ public class AdminCleanChunksCommand {
 
     /** Timeout for an individual chunk's load attempt during cleanup. */
     private static final int CHUNK_LOAD_TIMEOUT_SECONDS = 30;
+
+    private record IslandChunks(ForgeIsland island, List<ChunkPos> trackedChunks) {
+    }
 
     public AdminCleanChunksCommand(final CommandDispatcher<CommandSourceStack> dispatcher) {
         register(dispatcher, "island");
@@ -104,22 +106,26 @@ public class AdminCleanChunksCommand {
                         + "Runs in background; check console for progress.")
                 .withStyle(ChatFormatting.YELLOW), false);
 
-        final Thread worker = new Thread(() -> runCleanup(server, overworld, src, islands),
+        final List<IslandChunks> islandChunks = islands.stream()
+                .map(island -> new IslandChunks(island, List.copyOf(island.getModifiedChunks())))
+                .toList();
+        final Thread worker = new Thread(() -> runCleanup(server, overworld, src, islandChunks),
                 "SkyblockAddon-CleanChunks-" + UUID.randomUUID());
         worker.setDaemon(true);
         worker.start();
     }
 
     private static void runCleanup(final MinecraftServer server, final ServerLevel overworld, final CommandSourceStack src,
-                                   final List<ForgeIsland> islands) {
+                                   final List<IslandChunks> islands) {
         final long startNanos = System.nanoTime();
         int totalChecked = 0;
         int totalPruned = 0;
         int totalKept = 0;
         int totalFailed = 0;
 
-        for (final ForgeIsland island : islands) {
-            final List<ChunkPos> snapshot = new ArrayList<>(island.getModifiedChunks());
+        for (final IslandChunks islandChunks : islands) {
+            final ForgeIsland island = islandChunks.island();
+            final List<ChunkPos> snapshot = islandChunks.trackedChunks();
             final int beforeCount = snapshot.size();
             int prunedThisIsland = 0;
             int failedThisIsland = 0;

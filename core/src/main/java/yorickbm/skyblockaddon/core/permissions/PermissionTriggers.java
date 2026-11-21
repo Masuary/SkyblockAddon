@@ -1,5 +1,10 @@
 package yorickbm.skyblockaddon.core.permissions;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.Arrays;
+import java.util.List;
+
 public final class PermissionTriggers {
     public static final String ON_TRAMPLE = "onTrample";
     public static final String ON_ENDER_PEARL = "onEnderPearl";
@@ -34,6 +39,26 @@ public final class PermissionTriggers {
     public static final String ON_ENTER_VAULT_PORTAL = "onEnterVaultPortal";
     public static final String ON_ELEVATOR_USE = "onElevatorUse";
 
+    private static final List<String> KNOWN_TRIGGERS = Arrays.stream(PermissionTriggers.class.getDeclaredFields())
+            .filter(field -> Modifier.isPublic(field.getModifiers()) && Modifier.isStatic(field.getModifiers()) && field.getType() == String.class)
+            .map(PermissionTriggers::triggerValue)
+            .toList();
+
     private PermissionTriggers() {
+    }
+
+    /**
+     * Every trigger the mod fires a permission check for (the String constants of this class).
+     */
+    public static List<String> knownTriggers() {
+        return KNOWN_TRIGGERS;
+    }
+
+    private static String triggerValue(final Field triggerConstant) {
+        try {
+            return (String) triggerConstant.get(null);
+        } catch (final IllegalAccessException inaccessibleConstant) {
+            throw new IllegalStateException("Cannot read trigger constant " + triggerConstant.getName(), inaccessibleConstant);
+        }
     }
 }

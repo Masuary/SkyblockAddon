@@ -13,6 +13,7 @@ import net.minecraft.world.level.storage.LevelResource;
 import org.slf4j.Logger;
 import yorickbm.skyblockaddon.SkyBlockAddon;
 import yorickbm.skyblockaddon.configs.SkyblockAddonConfig;
+import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.islands.IslandSlot;
 import yorickbm.skyblockaddon.core.islands.IslandSlotAllocator;
@@ -33,6 +34,10 @@ public class SkyblockAddonWorldCapability {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final String RESERVED_SLOTS_TAG = "reservedSlots";
     MinecraftServer serverInstance;
+    private Vec3i persistedNextFreshSlot = new Vec3i(0, 0, 0);
+    private List<Vec3i> persistedReusableSlots = List.of();
+    private List<IslandSlot> persistedAdminReservedSlots = List.of();
+    private boolean islandsLoaded = false;
 
     public SkyblockAddonWorldCapability(final MinecraftServer server) {
         serverInstance = server;
@@ -74,26 +79,32 @@ public class SkyblockAddonWorldCapability {
      * Persist every in-memory island to its NBT file. Single source of truth for island-file
      * writes - both the capability serialize hook and {@code WorldEvent.Save} call this so the
      * two save paths can't diverge on which islands get written or how they're serialised.
-     * Must run on the server thread (reads {@link IslandManager} singleton state).
+     * Serializes the live island objects, so it must run on the server thread, where islands are changed.
      */
     public void saveIslandsToDisk() {
-        final Path worldPath = serverInstance.getWorldPath(LevelResource.ROOT).normalize();
-        final Path filePath = worldPath.resolve("islanddata");
-
+        if (!serverInstance.isSameThread()) {
+            throw new IllegalStateException("Islands are saved from the live objects and must be saved on the server thread, not on " + Thread.currentThread().getName());
+        }
         NBTEncoder.saveToFile(IslandManager.getInstance().getIslands().stream()
-                .map(ForgeIsland::new) // constructor copies data from Island
-                .collect(Collectors.toList()), filePath);
+                .map(SkyblockAddonWorldCapability::asForgeIsland)
+                .toList(), islandDataFolder());
+    }
+
+    private static ForgeIsland asForgeIsland(final Island island) {
+        if (island instanceof final ForgeIsland forgeIsland) return forgeIsland;
+        throw new IllegalStateException("Island " + island.getId() + " is a " + island.getClass().getName() + ", not a ForgeIsland, and cannot be saved");
     }
 
     /**
-     * Load data from NBT.
+     * Read the island grid state kept in {@code capabilities.dat} (next fresh slot, reusable and reserved slots) and
+     * convert legacy island data. The islands themselves are loaded by {@link #loadIslandsFromDisk()}, which also runs
+     * when this file is missing or unreadable.
      */
     public void loadNBTData(final CompoundTag nbt) {
         Vec3i lastLocation = NBTUtil.NBTToVec3i(nbt.getCompound("lastIsland"));
         List<Vec3i> reusableLocations = new ArrayList<>();
 
-        final Path worldPath = serverInstance.getWorldPath(LevelResource.ROOT).normalize();
-        final Path filePath = worldPath.resolve("islanddata");
+        final Path filePath = islandDataFolder();
 
         if (nbt.contains("reusableLocations", 9)) { // 9 = ListTag type
             ListTag listTag = nbt.getList("reusableLocations", 10); // 10 = CompoundTag type
@@ -121,9 +132,31 @@ public class SkyblockAddonWorldCapability {
             LOGGER.info("Converted {} island(s).", LegacyFormatter.formatBeta(filePath));
         }
 
-        final Collection<ForgeIsland> islands = NBTEncoder.loadFromFolder(filePath, ForgeIsland.class);
-        IslandManager.getInstance().initializeData(islands.stream().toList(), reusableLocations, lastLocation, adminReservedSlots);
-        LOGGER.info("Loaded {} island(s), {} admin reserved slot(s).", islands.size(), adminReservedSlots.size());
+        this.persistedNextFreshSlot = lastLocation;
+        this.persistedReusableSlots = List.copyOf(reusableLocations);
+        this.persistedAdminReservedSlots = List.copyOf(adminReservedSlots);
+        LOGGER.info("Read the island grid state: next fresh slot {}, {} reusable slot(s), {} admin reserved slot(s).",
+                lastLocation, reusableLocations.size(), adminReservedSlots.size());
+    }
+
+    /**
+     * Load every island file in {@code islanddata} into {@link IslandManager} together with the grid state read from
+     * {@code capabilities.dat} (defaults when that file was missing). Runs once per server start, when the overworld
+     * loads and before any chunk or player.
+     */
+    public void loadIslandsFromDisk() {
+        if (this.islandsLoaded) {
+            throw new IllegalStateException("Islands were already loaded for this world; refusing to load them twice");
+        }
+        final Path islandDataFolder = islandDataFolder();
+        final Collection<ForgeIsland> islands = NBTEncoder.loadFromFolder(islandDataFolder, ForgeIsland.class);
+        IslandManager.getInstance().initializeData(List.copyOf(islands), this.persistedReusableSlots, this.persistedNextFreshSlot, this.persistedAdminReservedSlots);
+        this.islandsLoaded = true;
+        LOGGER.info("Loaded {} island(s) from '{}', {} admin reserved slot(s).", islands.size(), islandDataFolder, this.persistedAdminReservedSlots.size());
+    }
+
+    private Path islandDataFolder() {
+        return serverInstance.getWorldPath(LevelResource.ROOT).normalize().resolve("islanddata");
     }
 
     /**

@@ -31,8 +31,8 @@ public class PermissionManager {
      * permission list switches island protection off.
      * @param path Path for JSON file
      * @return Amount of permissions loaded
-     * @throws IllegalStateException when the file cannot be read or parsed, defines no permissions or holds an invalid
-     * item, block or entity pattern
+     * @throws IllegalStateException when the file cannot be read or parsed, defines no permissions, holds a permission
+     * without id, category, item, triggers or data, or holds an invalid item, block or entity pattern
      */
     public int loadPermissions(final Path path) {
         final List<Permission> loadedPermissions;
@@ -44,7 +44,11 @@ public class PermissionManager {
         if (loadedPermissions == null || loadedPermissions.isEmpty()) {
             throw new IllegalStateException("'" + path.toAbsolutePath() + "' defines no permissions; refusing to run with island protection switched off");
         }
-        compileMatchRules(path, loadedPermissions);
+        for (int index = 0; index < loadedPermissions.size(); index++) {
+            final Permission permission = loadedPermissions.get(index);
+            validatePermission(path, index + 1, permission);
+            compileMatchRules(path, permission);
+        }
         this.permissions = List.copyOf(loadedPermissions);
         return loadedPermissions.size();
     }
@@ -73,6 +77,17 @@ public class PermissionManager {
      */
     public List<Permission> getPermissionsForTrigger(final String trigger) {
         return this.permissions.stream().filter(pm -> pm.hasTrigger(trigger)).collect(Collectors.toList());
+    }
+
+    /**
+     * Known triggers that no loaded permission lists. The mod allows every action on such a trigger, so a missing
+     * entry in the registry silently switches that protection off.
+     */
+    public List<String> findUnreferencedTriggers() {
+        final List<Permission> loadedPermissions = this.permissions;
+        return PermissionTriggers.knownTriggers().stream()
+                .filter(trigger -> loadedPermissions.stream().noneMatch(permission -> permission.hasTrigger(trigger)))
+                .toList();
     }
 
     /**
@@ -105,17 +120,30 @@ public class PermissionManager {
         return foundNonNegatedMatch ? MatchResult.BLOCK : (onlyNegations ? MatchResult.BLOCK : MatchResult.SKIP);
     }
 
-    private static void compileMatchRules(final Path path, final List<Permission> loadedPermissions) {
-        for (final Permission permission : loadedPermissions) {
-            if (permission.getData() == null) continue;
-            permission.getData().getItemBlockAndEntityRules().forEach(rule -> {
-                try {
-                    COMPILED_MATCH_RULES.computeIfAbsent(rule, MatchRule::compile);
-                } catch (final PatternSyntaxException invalidPattern) {
-                    throw new IllegalStateException("'" + path.toAbsolutePath() + "' permission '" + permission.getId() + "' has an invalid pattern '" + rule + "': " + invalidPattern.getDescription(), invalidPattern);
-                }
-            });
+    private static void validatePermission(final Path path, final int position, final Permission permission) {
+        if (permission == null) {
+            throw new IllegalStateException("'" + path.toAbsolutePath() + "' permission #" + position + " is empty");
         }
+        if (permission.getId() == null || permission.getId().isBlank()) {
+            throw new IllegalStateException("'" + path.toAbsolutePath() + "' permission #" + position + " has no id");
+        }
+        final String missingField;
+        if (permission.getCategory() == null || permission.getCategory().isBlank()) missingField = "category";
+        else if (permission.getItem() == null) missingField = "item";
+        else if (permission.getTriggers() == null) missingField = "triggers";
+        else if (permission.getData() == null) missingField = "data";
+        else return;
+        throw new IllegalStateException("'" + path.toAbsolutePath() + "' permission '" + permission.getId() + "' (#" + position + ") has no " + missingField);
+    }
+
+    private static void compileMatchRules(final Path path, final Permission permission) {
+        permission.getData().getItemBlockAndEntityRules().forEach(rule -> {
+            try {
+                COMPILED_MATCH_RULES.computeIfAbsent(rule, MatchRule::compile);
+            } catch (final PatternSyntaxException invalidPattern) {
+                throw new IllegalStateException("'" + path.toAbsolutePath() + "' permission '" + permission.getId() + "' has an invalid pattern '" + rule + "': " + invalidPattern.getDescription(), invalidPattern);
+            }
+        });
     }
 
     private record MatchRule(boolean negation, Pattern pattern) {
