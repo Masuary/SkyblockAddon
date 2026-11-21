@@ -85,7 +85,7 @@ public class ChunkEvents {
         if (!(event.getWorld() instanceof final ServerLevel serverLevel)) return;
         if (serverLevel.dimension() != Level.OVERWORLD) return; //Islands live in the overworld only.
 
-        final ChunkAccess chunk = (ChunkAccess) event.getChunk();
+        final ChunkAccess chunk = event.getChunk();
         final ChunkPos pos = chunk.getPos();
 
         final ForgeIsland island = (ForgeIsland) IslandManager.getInstance().getIslandByPos(ForgeConverter.forgeToInternalVec3i(chunk.getPos().getMiddleBlockPosition(155)));

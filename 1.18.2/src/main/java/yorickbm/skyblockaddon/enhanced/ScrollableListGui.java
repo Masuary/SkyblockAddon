@@ -401,8 +401,8 @@ public final class ScrollableListGui {
             ItemStackComponent component = new ItemStackComponent();
             biomeRegistry.getNextData(component);
 
-            String biomeName = (String) component.getObject("biome", String.class);
-            String displayName = (String) component.getObject("name", String.class);
+            String biomeName = component.getObject("biome", String.class);
+            String displayName = component.getObject("name", String.class);
 
             Optional<String> iconItem = biomeRegistry.getDataForComponent(component);
             net.minecraft.world.item.Item itemType = Items.PAPER;

@@ -10,7 +10,7 @@ import com.google.gson.stream.JsonReader;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -74,7 +74,7 @@ public final class UsernameCache {
         @Override
         public String load(final UUID uuid) throws IOException {
             final String uuidString = DASH_MATCHER.removeFrom(uuid.toString());
-            try (final BufferedReader reader = Resources.asCharSource(new URL(String.format(USERNAME_API_URL, uuidString)), StandardCharsets.UTF_8).openBufferedStream()) {
+            try (final BufferedReader reader = Resources.asCharSource(URI.create(String.format(USERNAME_API_URL, uuidString)).toURL(), StandardCharsets.UTF_8).openBufferedStream()) {
                 final JsonReader json = new JsonReader(reader);
                 String name = "";
 

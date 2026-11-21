@@ -46,7 +46,7 @@ public class GUIFillerJson implements JSONSerializable {
             // Dynamically load the class by its fully qualified name
             final Class<?> clazz = Class.forName(this.event);
             if (GuiDrawFillerEvent.class.isAssignableFrom(clazz)) {
-                return (Class<? extends GuiDrawFillerEvent>) clazz;
+                return clazz.asSubclass(GuiDrawFillerEvent.class);
             }
             else {
                 LOGGER.error(String.format("Class '%s' does not implement GuiDrawFillerEvent, event removed.", this.event));
