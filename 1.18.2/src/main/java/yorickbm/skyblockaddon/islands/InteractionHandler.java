@@ -98,25 +98,32 @@ public class InteractionHandler {
     }
 
     /**
-     * Run player interaction handler to determine if event is to be canceld or not.
+     * Decide whether the interaction is denied; on denial the block at the position is resent to the player so the
+     * client drops any predicted change.
      *
      * @param standingOn - Island player is standing on
      * @param trigger - Trigger type to use
      */
     public static boolean checkPlayerInteraction(final AtomicReference<Island> standingOn, final ServerPlayer player, final ServerLevel world, final BlockPos position, final ItemStack handItem, final String trigger) {
-        SkyBlockAddon.CustomDebugMessages(LOGGER, trigger);
-
-        //Update doors
-        if (player.getLevel().getBlockState(position).getBlock() instanceof DoorBlock) {
-            final DoubleBlockHalf half = (player).getLevel().getBlockState(position).getValue(DoorBlock.HALF);
-            if (half == DoubleBlockHalf.LOWER) {
-                final BlockState other = (player).getLevel().getBlockState(position.above());
-                ServerHelper.SendPacket(player, new ClientboundBlockUpdatePacket(position.above(), other));
-            } else {
-                final BlockState other = (player).getLevel().getBlockState(position.below());
-                ServerHelper.SendPacket(player, new ClientboundBlockUpdatePacket(position.below(), other));
-            }
+        final boolean denied = isInteractionDenied(standingOn, player, world, position, handItem, trigger);
+        if (denied) {
+            resendBlockToPlayer(player, world, position);
         }
+        return denied;
+    }
+
+    public static void resendBlockToPlayer(final ServerPlayer player, final ServerLevel world, final BlockPos position) {
+        final BlockState clickedState = world.getBlockState(position);
+        ServerHelper.SendPacket(player, new ClientboundBlockUpdatePacket(position, clickedState));
+
+        if (clickedState.getBlock() instanceof DoorBlock) {
+            final BlockPos otherHalf = clickedState.getValue(DoorBlock.HALF) == DoubleBlockHalf.LOWER ? position.above() : position.below();
+            ServerHelper.SendPacket(player, new ClientboundBlockUpdatePacket(otherHalf, world.getBlockState(otherHalf)));
+        }
+    }
+
+    public static boolean isInteractionDenied(final AtomicReference<Island> standingOn, final ServerPlayer player, final ServerLevel world, final BlockPos position, final ItemStack handItem, final String trigger) {
+        SkyBlockAddon.CustomDebugMessages(LOGGER, trigger);
 
         final Optional<IslandGroup> group = standingOn.get().getGroupForEntityUUID(player.getUUID());
         if(group.isEmpty()) {
@@ -181,11 +188,6 @@ public class InteractionHandler {
             }
 
             runFail = (!blockAllowed || !itemAllowed);
-        }
-
-        //Update redstone signals to cancel
-        if(runFail) {
-            ServerHelper.forceUnpowerOrTogglePoweredBlock(world, position);
         }
 
         return runFail;
