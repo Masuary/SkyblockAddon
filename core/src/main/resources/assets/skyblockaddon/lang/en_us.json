@@ -36,6 +36,7 @@
   "commands.leave.undo": "We have added you back to the island as a member.",
   "commands.leave.undo.failure": "We could not add you to island '%s', please contact a server admin and share this id.",
   "commands.leave.undo.island.gone": "That island no longer exists, so leaving it cannot be undone.",
+  "commands.leave.undo.banned": "You have been banned from that island since you left, so leaving it cannot be undone.",
 
   "commands.invite.self": "You cannot invite yourself, sorry.",
   "commands.invite.success": "You have invited %s to join your island.",
