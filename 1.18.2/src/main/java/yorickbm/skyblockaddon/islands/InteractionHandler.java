@@ -282,6 +282,14 @@ public class InteractionHandler {
     }
 
     /**
+     * A break by an area tool (gadgets): judged on the tool alone, so without a target block any lacked permission with
+     * block rules denies it, wherever the player stands.
+     */
+    public static InteractionSubject subjectOfUntargetedBreak(final ItemStack breakingTool) {
+        return new InteractionSubject(itemId(breakingTool), Optional.empty(), Optional.empty());
+    }
+
+    /**
      * The stack a hand-agnostic placement uses: the main hand when it holds a block or the off hand does not, else the
      * off hand.
      */

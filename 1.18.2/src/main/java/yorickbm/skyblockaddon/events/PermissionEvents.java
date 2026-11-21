@@ -82,10 +82,8 @@ public class PermissionEvents {
                     .withDenialEffect((event, player) -> InteractionHandler.pushPlayerBack(player)),
 
             TriggerRule.playerInteraction(PlayerInteractEvent.EntityInteract.class, PermissionTriggers.ON_RIGHT_CLICK_ENTITY),
-            TriggerRule.playerInteraction(PlayerInteractEvent.RightClickEmpty.class, PermissionTriggers.ON_RIGHT_CLICK_EMPTY),
             TriggerRule.playerInteraction(PlayerInteractEvent.RightClickItem.class, PermissionTriggers.ON_RIGHT_CLICK_ITEM),
-            TriggerRule.playerInteraction(PlayerInteractEvent.LeftClickBlock.class, PermissionTriggers.ON_LEFT_CLICK_BLOCK),
-            TriggerRule.playerInteraction(PlayerInteractEvent.LeftClickEmpty.class, PermissionTriggers.ON_LEFT_CLICK_EMPTY)
+            TriggerRule.playerInteraction(PlayerInteractEvent.LeftClickBlock.class, PermissionTriggers.ON_LEFT_CLICK_BLOCK)
     );
 
     public static void register(final IEventBus eventBus) {

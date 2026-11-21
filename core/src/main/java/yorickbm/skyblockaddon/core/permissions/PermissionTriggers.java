@@ -21,10 +21,8 @@ public final class PermissionTriggers {
     public static final String ON_PLACE_BLOCK = "onPlaceBlock";
     public static final String ON_BREAK_BLOCK = "onBreakBlock";
     public static final String ON_PORTAL_IGNITION = "onPortalIgnition";
-    public static final String ON_RIGHT_CLICK_EMPTY = "onRightClickEmpty";
     public static final String ON_RIGHT_CLICK_ITEM = "onRightClickItem";
     public static final String ON_LEFT_CLICK_BLOCK = "onLeftClickBlock";
-    public static final String ON_LEFT_CLICK_EMPTY = "onLeftClickEmpty";
     public static final String ON_ATTACK = "onAttack";
     public static final String ON_USE = "onUse";
     public static final String ON_PLAYER_CHANGED_DIMENSION = "onPlayerChangedDimension";

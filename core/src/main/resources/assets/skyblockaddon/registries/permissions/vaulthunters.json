@@ -94,7 +94,8 @@
       "triggers": [
         "onLeftClickBlock",
         "onAttack",
-        "onQuarkPickarangMixin"
+        "onQuarkPickarangMixin",
+        "onBreakBlock"
       ],
       "data": {
         "skyblockaddon": [],

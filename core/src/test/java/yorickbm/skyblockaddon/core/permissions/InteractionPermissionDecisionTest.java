@@ -143,6 +143,24 @@ class InteractionPermissionDecisionTest {
                 clickWith("minecraft:flint_and_steel", null, "minecraft:obsidian")).isPresent());
     }
 
+    private static final String LIVE_DESTROY_BLOCKS = """
+            {"id": "destroy_blocks", "category": "General", "triggers": ["onLeftClickBlock", "onAttack", "onQuarkPickarangMixin", "onBreakBlock"],
+             "data": {"skyblockaddon": [], "items": ["quark:flamerang", "quark:pickarang"], "blocks": ["!the_vault:animal_pen"],
+                      "entities": ["minecraft:minecart"]}}
+            """;
+
+    @Test
+    void untargetedBreakIsDeniedByALackedPermissionWithBlockRules() {
+        assertTrue(InteractionPermissionDecision.findDenyingPermission(PermissionTriggers.ON_BREAK_BLOCK, List.of(permission(LIVE_DESTROY_BLOCKS)), VISITOR,
+                clickWith("buildinggadgets:gadget_destruction", null, null)).isPresent());
+    }
+
+    @Test
+    void untargetedBreakIsAllowedForGroupsThatMayDestroy() {
+        assertTrue(InteractionPermissionDecision.findDenyingPermission(PermissionTriggers.ON_BREAK_BLOCK, List.of(permission(LIVE_DESTROY_BLOCKS)), MEMBER,
+                clickWith("buildinggadgets:gadget_destruction", null, null)).isEmpty());
+    }
+
     private static boolean entityPlacementDenied(final List<Permission> placePermissions, final Predicate<String> group, final String placerItemId) {
         return InteractionPermissionDecision.findDenyingEntityPlacement(placePermissions, group, placerItemId).isPresent();
     }

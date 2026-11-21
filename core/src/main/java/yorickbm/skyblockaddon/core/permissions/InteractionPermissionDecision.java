@@ -18,15 +18,17 @@ public final class InteractionPermissionDecision {
      * <p>
      * For {@link PermissionTriggers#ON_PLACE_BLOCK} the block subject is the held block when a block item is held (so
      * carve-outs follow what is being placed, not what was clicked), else the target block; a placement with neither
-     * is denied by any lacked permission that has block rules. Other triggers judge the target block only and skip the
-     * block rules when there is none.
+     * is denied by any lacked permission that has block rules. {@link PermissionTriggers#ON_BREAK_BLOCK} (fired for
+     * area tools such as gadgets, never with a single target) is judged the same way without a target block. Other
+     * triggers judge the target block only and skip the block rules when there is none.
      */
     public static Optional<Permission> findDenyingPermission(final String trigger, final List<Permission> triggerPermissions,
                                                              final Predicate<String> groupHasPermission, final InteractionSubject subject) {
         final Optional<String> blockSubject = PermissionTriggers.ON_PLACE_BLOCK.equals(trigger)
                 ? subject.heldBlockId().or(subject::targetBlockId)
                 : subject.targetBlockId();
-        final boolean placementWithoutBlockSubject = PermissionTriggers.ON_PLACE_BLOCK.equals(trigger) && blockSubject.isEmpty();
+        final boolean untargetedTrigger = PermissionTriggers.ON_PLACE_BLOCK.equals(trigger) || PermissionTriggers.ON_BREAK_BLOCK.equals(trigger);
+        final boolean untargetedWithoutBlockSubject = untargetedTrigger && blockSubject.isEmpty();
 
         for (final Permission permission : triggerPermissions) {
             if (groupHasPermission.test(permission.getId())) continue;
@@ -38,7 +40,7 @@ public final class InteractionPermissionDecision {
             final boolean itemDenied = !itemRules.isEmpty() && subject.handItemId()
                     .map(handItemId -> PermissionManager.checkMatch(itemRules, handItemId) == MatchResult.BLOCK)
                     .orElse(false);
-            final boolean blockDenied = !blockRules.isEmpty() && (placementWithoutBlockSubject || blockSubject
+            final boolean blockDenied = !blockRules.isEmpty() && (untargetedWithoutBlockSubject || blockSubject
                     .map(blockId -> PermissionManager.checkMatch(blockRules, blockId) == MatchResult.BLOCK)
                     .orElse(false));
             if (itemDenied || blockDenied) return Optional.of(permission);
