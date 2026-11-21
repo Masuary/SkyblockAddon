@@ -10,7 +10,6 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.storage.LevelResource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldProvider;
@@ -20,10 +19,7 @@ import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.permissions.Permission;
 import yorickbm.skyblockaddon.core.permissions.PermissionManager;
-import yorickbm.skyblockaddon.islands.ForgeIsland;
-import yorickbm.skyblockaddon.util.NBTEncoder;
 
-import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Objects;
 
@@ -147,15 +143,8 @@ public class AdminPermissionCommand {
 
     private void persistAllIslands(final CommandSourceStack command) {
         final var overworld = Objects.requireNonNull(command.getServer().getLevel(Level.OVERWORLD));
-        final var capability = overworld.getCapability(SkyblockAddonWorldProvider.SKYBLOCKADDON_WORLD_CAPABILITY);
-        if (!capability.isPresent()) {
-            throw new IllegalStateException("SkyblockAddon world capability is not attached to the overworld; cannot persist islands.");
-        }
-
-        final Path worldPath = command.getServer().getWorldPath(LevelResource.ROOT).normalize();
-        final Path filePath = worldPath.resolve("islanddata");
-
-        NBTEncoder.saveToFile(IslandManager.getInstance().getIslands().stream()
-                .map(s -> (ForgeIsland) s).toList(), filePath);
+        overworld.getCapability(SkyblockAddonWorldProvider.SKYBLOCKADDON_WORLD_CAPABILITY).resolve()
+                .orElseThrow(() -> new IllegalStateException("SkyblockAddon world capability is not attached to the overworld; cannot persist islands."))
+                .saveIslandsToDisk();
     }
 }

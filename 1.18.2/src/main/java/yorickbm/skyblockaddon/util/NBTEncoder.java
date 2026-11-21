@@ -5,8 +5,10 @@ import net.minecraft.nbt.NbtIo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import yorickbm.skyblockaddon.core.util.IslandDataFiles;
+import yorickbm.skyblockaddon.core.util.IslandFileWriteTracker;
 
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -148,13 +150,7 @@ public class NBTEncoder {
      * @param collection - Collection of clazz
      */
     public static <T extends NBTSerializable> void saveToFile(final Collection<T> collection, final Path filePath) throws RuntimeException {
-        //Create folder if it doesn't exist
-        if (!filePath.toFile().exists()) {
-            final boolean rslt = filePath.toFile().mkdirs();
-            if (!rslt) {
-                throw new RuntimeException("Failed to create container at '" + filePath.toFile().getAbsolutePath() + "'.");
-            }
-        }
+        createFolderIfMissing(filePath);
 
         final List<UUID> failedSaves = new ArrayList<>();
         for (final T data : collection) {
@@ -170,12 +166,68 @@ public class NBTEncoder {
         }
     }
 
+    public record IslandSaveReport(int written, int skipped, List<UUID> failed) {
+    }
+
+    /**
+     * Save only the islands whose serialized bytes differ from their last successful write (or whose file is gone),
+     * each through temp-file + fsync + atomic rename. A failed island is reported and retried at the next save.
+     */
+    public static <T extends NBTSerializable> IslandSaveReport saveChangedToFile(final Collection<T> collection, final Path folderPath,
+                                                                                 final IslandFileWriteTracker writeTracker) {
+        createFolderIfMissing(folderPath);
+
+        int written = 0;
+        int skipped = 0;
+        final List<UUID> failedSaves = new ArrayList<>();
+        for (final T data : collection) {
+            try {
+                final CompoundTag islandTag = data.serializeNBT();
+                final byte[] serializedIsland = uncompressedBytes(islandTag);
+                final boolean fileExists = Files.isRegularFile(folderPath.resolve(IslandDataFiles.fileNameFor(data.getId())));
+                if (fileExists && !writeTracker.needsWrite(data.getId(), serializedIsland)) {
+                    skipped++;
+                    continue;
+                }
+                writeAtomically(data.getId(), islandTag, folderPath);
+                writeTracker.recordWritten(data.getId(), serializedIsland);
+                written++;
+            } catch (final IOException | RuntimeException e) {
+                failedSaves.add(data.getId());
+                LOGGER.error("Failed to save island {} to '{}'", data.getId(), folderPath.toAbsolutePath(), e);
+            }
+        }
+        if (!failedSaves.isEmpty()) {
+            LOGGER.error("{} of {} island file(s) were not saved: {}", failedSaves.size(), collection.size(), failedSaves);
+        }
+        return new IslandSaveReport(written, skipped, List.copyOf(failedSaves));
+    }
+
+    private static void createFolderIfMissing(final Path folderPath) {
+        if (folderPath.toFile().exists()) return;
+        if (!folderPath.toFile().mkdirs()) {
+            throw new RuntimeException("Failed to create container at '" + folderPath.toFile().getAbsolutePath() + "'.");
+        }
+    }
+
+    private static byte[] uncompressedBytes(final CompoundTag tag) throws IOException {
+        final ByteArrayOutputStream serialized = new ByteArrayOutputStream();
+        try (final DataOutputStream output = new DataOutputStream(serialized)) {
+            NbtIo.write(tag, output);
+        }
+        return serialized.toByteArray();
+    }
+
     private static <T extends NBTSerializable> void writeAtomically(final T data, final Path folderPath) throws IOException {
-        final Path path = folderPath.resolve(IslandDataFiles.fileNameFor(data.getId()));
-        final Path tempPath = folderPath.resolve(data.getId() + IslandDataFiles.TEMPORARY_EXTENSION);
+        writeAtomically(data.getId(), data.serializeNBT(), folderPath);
+    }
+
+    private static void writeAtomically(final UUID islandId, final CompoundTag islandTag, final Path folderPath) throws IOException {
+        final Path path = folderPath.resolve(IslandDataFiles.fileNameFor(islandId));
+        final Path tempPath = folderPath.resolve(islandId + IslandDataFiles.TEMPORARY_EXTENSION);
         try {
             final ByteArrayOutputStream compressedIsland = new ByteArrayOutputStream();
-            NbtIo.writeCompressed(data.serializeNBT(), compressedIsland);
+            NbtIo.writeCompressed(islandTag, compressedIsland);
             try (final FileChannel tempFile = FileChannel.open(tempPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
                 final ByteBuffer remainingBytes = ByteBuffer.wrap(compressedIsland.toByteArray());
                 while (remainingBytes.hasRemaining()) tempFile.write(remainingBytes);
