@@ -10,6 +10,8 @@ Branch `gui-redesign`, version stays 8.7 until the deploy (not shipped yet). No 
 - Every bug B1-B14 is fixed as recommended; all six cleanup stages run before the deploy; F1-F5 and F7 are built before the deploy, F6 as a read-only report.
 - Independent review of the fix diff: Fable subagent (dupe/item-loss risk), given code and spec only.
 
+- One line for both servers (sir, 2026-11-21): after the U4 deploy, `gui-redesign` becomes the single branch for Skyvault (Remastered) and Wolds. Until then the Wolds line gets one R1-only hotfix (9.12) once the R1 fix here is tested; deploying it to the live Wolds servers still needs sir's per-action go.
+
 ## Phases
 
 | Phase | Contents | Status |
@@ -27,3 +29,12 @@ Branch `gui-redesign`, version stays 8.7 until the deploy (not shipped yet). No 
 P3, P4 and P5 run in parallel worktrees (`/mnt/data/AI/work/skyblockaddon-phaseR-impl-2026-11-21/wt-p3..p5`, branches `phaseR-p3..p5`), merged into `gui-redesign` after review.
 
 Each phase: failing test first where testable, `gradlew build` and tests green with zero warnings, commits on `gui-redesign`.
+
+## After U4: one branch for Remastered and Wolds
+
+| Step | Contents | Status |
+|---|---|---|
+| W0 Wolds hotfix | R1 fix (place_blocks with non-block items, empty hand, offhand, gadgets) cherry-picked onto `SkyblockAddon-Wolds` `gui-redesign-wolds` as 9.12, build + Wolds testnet check; live deploy only with sir's go | open (after R1 is verified here) |
+| W1 Port Wolds-only code | EffortlessBuilding visitor mixins (`8beeff0`, `de94247`, `d4c93e7`, `a3e00a4`) as an optional mixin config, Mods permission category (`9a49f02`) if not covered by the permission-switch redesign | open |
+| W2 Two VH lines | compile against VH Remastered 7209, link-check against the VH build Wold's Vaults ships (curse-maven-fix two-lines pattern) | open |
+| W3 One version | 10.0 for both; Wolds testnet pass with the unified jar; then the Wolds repo and `wolds`/`gui-redesign-wolds` branches move to the archive area (kept, never deleted) | open |
