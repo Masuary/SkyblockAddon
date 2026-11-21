@@ -13,6 +13,7 @@ import net.minecraft.world.level.storage.LevelResource;
 import org.slf4j.Logger;
 import yorickbm.skyblockaddon.SkyBlockAddon;
 import yorickbm.skyblockaddon.configs.SkyblockAddonConfig;
+import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.islands.IslandSlot;
 import yorickbm.skyblockaddon.core.islands.IslandSlotAllocator;
@@ -78,15 +79,20 @@ public class SkyblockAddonWorldCapability {
      * Persist every in-memory island to its NBT file. Single source of truth for island-file
      * writes - both the capability serialize hook and {@code WorldEvent.Save} call this so the
      * two save paths can't diverge on which islands get written or how they're serialised.
-     * Must run on the server thread (reads {@link IslandManager} singleton state).
+     * Serializes the live island objects, so it must run on the server thread, where islands are changed.
      */
     public void saveIslandsToDisk() {
-        final Path worldPath = serverInstance.getWorldPath(LevelResource.ROOT).normalize();
-        final Path filePath = worldPath.resolve("islanddata");
-
+        if (!serverInstance.isSameThread()) {
+            throw new IllegalStateException("Islands are saved from the live objects and must be saved on the server thread, not on " + Thread.currentThread().getName());
+        }
         NBTEncoder.saveToFile(IslandManager.getInstance().getIslands().stream()
-                .map(ForgeIsland::new) // constructor copies data from Island
-                .collect(Collectors.toList()), filePath);
+                .map(SkyblockAddonWorldCapability::asForgeIsland)
+                .toList(), islandDataFolder());
+    }
+
+    private static ForgeIsland asForgeIsland(final Island island) {
+        if (island instanceof final ForgeIsland forgeIsland) return forgeIsland;
+        throw new IllegalStateException("Island " + island.getId() + " is a " + island.getClass().getName() + ", not a ForgeIsland, and cannot be saved");
     }
 
     /**
