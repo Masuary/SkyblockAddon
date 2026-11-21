@@ -47,7 +47,7 @@ public class AdminMenuCommand extends OverWorldCommandStack {
         command.getLevel().getCapability(SkyblockAddonWorldProvider.SKYBLOCKADDON_WORLD_CAPABILITY).ifPresent(cap -> {
             ForgeIsland island = null;
 
-            if (islandId == null) island = (ForgeIsland) IslandManager.getInstance().getIslandByPos(ForgeConverter.ForgeToInternalVec3i(executor.getOnPos()));
+            if (islandId == null) island = (ForgeIsland) IslandManager.getInstance().getIslandByPos(ForgeConverter.forgeToInternalVec3i(executor.getOnPos()));
             else island = (ForgeIsland) IslandManager.getInstance().getIslandByUUID(islandId);
 
             if (island == null) {

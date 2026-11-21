@@ -76,11 +76,11 @@ public class InteractionHandler {
      * lacks. A lacked permission without data denies outright.
      */
     public static boolean isDeniedByMatchData(final Optional<IslandGroup> group, final String trigger, final String matchValue, final Function<PermissionDataJson, List<String>> dataExtractor, final boolean logDecision) {
-        if(logDecision) SkyBlockAddon.CustomDebugMessages(LOGGER, trigger);
+        if(logDecision) SkyBlockAddon.logPermissionDebug(LOGGER, trigger);
 
         final List<Permission> perms = PermissionManager.getInstance().getPermissionsForTrigger(trigger);
         if (perms.isEmpty()) {
-            if(logDecision) SkyBlockAddon.CustomDebugMessages(LOGGER, "No permissions found for trigger (ALLOWED)");
+            if(logDecision) SkyBlockAddon.logPermissionDebug(LOGGER, "No permissions found for trigger (ALLOWED)");
             return false;
         }
         if(group.isEmpty()) return false;
@@ -88,18 +88,18 @@ public class InteractionHandler {
         boolean runFail = false;
         for (final Permission perm : perms) {
             if (group.get().canDo(perm.getId())) {
-                if(logDecision) SkyBlockAddon.CustomDebugMessages(LOGGER, "action is ALLOWED on " + perm.getId() + " in group " + group.get().getName());
+                if(logDecision) SkyBlockAddon.logPermissionDebug(LOGGER, "action is ALLOWED on " + perm.getId() + " in group " + group.get().getName());
                 continue;
             }
             if (runFail) break;
 
             final List<String> data = dataExtractor.apply(perm.getData());
             if (data.isEmpty()) {
-                if(logDecision) SkyBlockAddon.CustomDebugMessages(LOGGER, "action is BLOCKED on " + perm.getId() + " in group " + group.get().getName());
+                if(logDecision) SkyBlockAddon.logPermissionDebug(LOGGER, "action is BLOCKED on " + perm.getId() + " in group " + group.get().getName());
                 runFail = true;
             } else {
                 final MatchResult rslt = PermissionManager.checkMatch(data, matchValue);
-                if(logDecision) SkyBlockAddon.CustomDebugMessages(LOGGER, matchValue + " is " + rslt + " on " + perm.getId() + " in group " + group.get().getName());
+                if(logDecision) SkyBlockAddon.logPermissionDebug(LOGGER, matchValue + " is " + rslt + " on " + perm.getId() + " in group " + group.get().getName());
                 if (rslt == MatchResult.BLOCK) runFail = true;
             }
         }
@@ -129,7 +129,7 @@ public class InteractionHandler {
                 if (cap.isEmpty())
                     return EntityVerification.CAP_NOT_FOUND;
 
-                final Island island = IslandManager.getInstance().getIslandByPos(ForgeConverter.ForgeToInternalVec3i(player.getOnPos()));
+                final Island island = IslandManager.getInstance().getIslandByPos(ForgeConverter.forgeToInternalVec3i(player.getOnPos()));
                 if (island == null)
                     return EntityVerification.NOT_ON_ISLAND;
 
@@ -159,7 +159,7 @@ public class InteractionHandler {
         if(cap.isEmpty()) return EntityVerification.CAP_NOT_FOUND; //Could not find Capability
 
 
-        final Island island = IslandManager.getInstance().getIslandByPos(ForgeConverter.ForgeToInternalVec3i(new BlockPos(triggerPoint.getX() * 8, triggerPoint.getY(), triggerPoint.getZ() * 8)));
+        final Island island = IslandManager.getInstance().getIslandByPos(ForgeConverter.forgeToInternalVec3i(new BlockPos(triggerPoint.getX() * 8, triggerPoint.getY(), triggerPoint.getZ() * 8)));
         if(island == null) return EntityVerification.NOT_ON_ISLAND; //Not within protection
 
         standingOn.set(island); //Set atomic reference
@@ -187,17 +187,17 @@ public class InteractionHandler {
 
     public static void resendBlockToPlayer(final ServerPlayer player, final ServerLevel world, final BlockPos position) {
         final BlockState clickedState = world.getBlockState(position);
-        ServerHelper.SendPacket(player, new ClientboundBlockUpdatePacket(position, clickedState));
+        ServerHelper.sendPacket(player, new ClientboundBlockUpdatePacket(position, clickedState));
 
         if (clickedState.getBlock() instanceof DoorBlock) {
             final BlockPos otherHalf = clickedState.getValue(DoorBlock.HALF) == DoubleBlockHalf.LOWER ? position.above() : position.below();
-            ServerHelper.SendPacket(player, new ClientboundBlockUpdatePacket(otherHalf, world.getBlockState(otherHalf)));
+            ServerHelper.sendPacket(player, new ClientboundBlockUpdatePacket(otherHalf, world.getBlockState(otherHalf)));
         }
 
         final BlockEntity blockEntity = world.getBlockEntity(position);
         if (blockEntity != null) {
             final Packet<ClientGamePacketListener> blockEntityUpdate = blockEntity.getUpdatePacket();
-            if (blockEntityUpdate != null) ServerHelper.SendPacket(player, blockEntityUpdate);
+            if (blockEntityUpdate != null) ServerHelper.sendPacket(player, blockEntityUpdate);
         }
     }
 
@@ -214,7 +214,7 @@ public class InteractionHandler {
     }
 
     public static boolean isInteractionDenied(final AtomicReference<Island> standingOn, final ServerPlayer player, final String trigger, final InteractionSubject subject) {
-        SkyBlockAddon.CustomDebugMessages(LOGGER, trigger);
+        SkyBlockAddon.logPermissionDebug(LOGGER, trigger);
 
         final Optional<IslandGroup> group = standingOn.get().getGroupForEntityUUID(player.getUUID());
         if(group.isEmpty()) {
@@ -223,7 +223,7 @@ public class InteractionHandler {
 
         final Optional<Permission> denyingPermission = InteractionPermissionDecision.findDenyingPermission(
                 trigger, PermissionManager.getInstance().getPermissionsForTrigger(trigger), group.get()::canDo, subject);
-        denyingPermission.ifPresent(permission -> SkyBlockAddon.CustomDebugMessages(LOGGER, subject + " is BLOCKED on " + permission.getId() + " in group " + group.get().getName()));
+        denyingPermission.ifPresent(permission -> SkyBlockAddon.logPermissionDebug(LOGGER, subject + " is BLOCKED on " + permission.getId() + " in group " + group.get().getName()));
         return denyingPermission.isPresent();
     }
 
@@ -239,7 +239,7 @@ public class InteractionHandler {
 
         final Optional<Permission> denyingPermission = InteractionPermissionDecision.findDenyingEntityPlacement(
                 PermissionManager.getInstance().getPermissionsForTrigger(PermissionTriggers.ON_PLACE_BLOCK), group.get()::canDo, itemId(handItem).orElseThrow());
-        denyingPermission.ifPresent(permission -> SkyBlockAddon.CustomDebugMessages(LOGGER, handItem.getItem().getRegistryName() + " (entity placer) is BLOCKED on " + permission.getId() + " in group " + group.get().getName()));
+        denyingPermission.ifPresent(permission -> SkyBlockAddon.logPermissionDebug(LOGGER, handItem.getItem().getRegistryName() + " (entity placer) is BLOCKED on " + permission.getId() + " in group " + group.get().getName()));
         return denyingPermission.isPresent();
     }
 

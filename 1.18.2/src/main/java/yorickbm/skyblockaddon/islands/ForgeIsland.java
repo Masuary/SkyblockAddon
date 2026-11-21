@@ -44,8 +44,8 @@ public class ForgeIsland extends Island implements NBTSerializable {
     public ForgeIsland(UUID uuid, Vec3i vec) {
         super.setId(UUID.randomUUID());
         super.setOwner(uuid);
-        super.setSpawn(ForgeConverter.ForgeToInternalVec3i(vec));
-        super.setCenter(ForgeConverter.ForgeToInternalVec3i(vec));
+        super.setSpawn(ForgeConverter.forgeToInternalVec3i(vec));
+        super.setCenter(ForgeConverter.forgeToInternalVec3i(vec));
         super.setVisibility(false);
 
         this.genBasicGroups();
@@ -125,7 +125,7 @@ public class ForgeIsland extends Island implements NBTSerializable {
 
     public boolean isStandingOn(final ServerPlayer player) {
         return player.getLevel().dimension() == Level.OVERWORLD
-                && getIslandBoundingBox().isInside(ForgeConverter.ForgeToInternalVec3i(player.getOnPos()));
+                && getIslandBoundingBox().isInside(ForgeConverter.forgeToInternalVec3i(player.getOnPos()));
     }
 
     /**
@@ -166,7 +166,7 @@ public class ForgeIsland extends Island implements NBTSerializable {
         setBiome(biome); //Store full namespaced id so modded biomes persist correctly
 
         final ServerLevel serverlevel = server.overworld();
-        final BoundingBox boundingbox = ForgeConverter.InternalToForgeBoundingBox(getIslandBoundingBox());
+        final BoundingBox boundingbox = ForgeConverter.internalToForgeBoundingBox(getIslandBoundingBox());
         final Holder<Biome> holder = serverlevel.registryAccess()
                 .registryOrThrow(Registry.BIOME_REGISTRY)
                 .getOrCreateHolder(ResourceKey.create(ForgeRegistries.BIOMES.getRegistryKey(), ResourceLocation.parse(biome)));
@@ -214,7 +214,7 @@ public class ForgeIsland extends Island implements NBTSerializable {
                 QuartPos.fromBlock(pos.getMiddleBlockZ()));
         if (existing.is(targetKey.get())) return false;
 
-        final BoundingBox islandBbox = ForgeConverter.InternalToForgeBoundingBox(getIslandBoundingBox());
+        final BoundingBox islandBbox = ForgeConverter.internalToForgeBoundingBox(getIslandBoundingBox());
         applyConfiguredBiomeToChunk(chunk, serverlevel, targetHolder, islandBbox);
         return true;
     }
@@ -256,8 +256,8 @@ public class ForgeIsland extends Island implements NBTSerializable {
         tag.putString("skullTexture", getSkullTexture());
         tag.putBoolean("travelability", isVisible());
         tag.putLong(LAST_ACTIVE_TAG, getLastActiveEpochMillis());
-        tag.put("spawn", NBTUtil.Vec3iToNBT(getSpawn()));
-        tag.put("center", NBTUtil.Vec3iToNBT(getCenter()));
+        tag.put("spawn", NBTUtil.vec3iToNBT(getSpawn()));
+        tag.put("center", NBTUtil.vec3iToNBT(getCenter()));
 
         final CompoundTag groups = new CompoundTag();
         for(final IslandGroup group : getGroups()) {
@@ -298,8 +298,8 @@ public class ForgeIsland extends Island implements NBTSerializable {
         setVisibility(tag.getBoolean("travelability"));
         setLastActiveEpochMillis(tag.getLong(LAST_ACTIVE_TAG));
         setSkullTexture(tag.getString("skullTexture"));
-        setSpawn(NBTUtil.NBTToVec3i(tag.getCompound("spawn")));
-        setCenter(NBTUtil.NBTToVec3i(tag.getCompound("center")));
+        setSpawn(NBTUtil.nbtToVec3i(tag.getCompound("spawn")));
+        setCenter(NBTUtil.nbtToVec3i(tag.getCompound("center")));
 
         final CompoundTag groups = tag.getCompound("groups");
         for(final String groupUuid : groups.getAllKeys()) {

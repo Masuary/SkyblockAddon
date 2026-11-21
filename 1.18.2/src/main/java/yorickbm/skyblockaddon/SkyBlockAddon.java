@@ -79,7 +79,7 @@ public class SkyBlockAddon {
         if(SkyblockAddonConfig.getForKey("island.particles.border").equalsIgnoreCase("TRUE")) MinecraftForge.EVENT_BUS.register(new ParticleEvents());
     }
 
-    public static void CustomDebugMessages(final org.apache.logging.log4j.Logger log, final String msg) {
+    public static void logPermissionDebug(final org.apache.logging.log4j.Logger log, final String msg) {
         if(SkyblockAddonConfig.getForKey("permissions.debug").equalsIgnoreCase("TRUE")) log.info(msg);
     }
 

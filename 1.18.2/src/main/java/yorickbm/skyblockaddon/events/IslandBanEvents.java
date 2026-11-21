@@ -40,9 +40,9 @@ public class IslandBanEvents {
         final ServerLevel overworld = server.overworld();
         for (final ServerPlayer player : List.copyOf(overworld.players())) {
             if (player instanceof FakePlayer) continue;
-            final Island island = IslandManager.getInstance().getIslandByPos(ForgeConverter.ForgeToInternalVec3i(player.getOnPos()));
+            final Island island = IslandManager.getInstance().getIslandByPos(ForgeConverter.forgeToInternalVec3i(player.getOnPos()));
             if (island == null || !IslandActionService.isBannedFrom(island, player)) continue;
-            if (island.getIslandBoundingBox().isInside(ForgeConverter.ForgeToInternalVec3i(overworld.getSharedSpawnPos()))) continue;
+            if (island.getIslandBoundingBox().isInside(ForgeConverter.forgeToInternalVec3i(overworld.getSharedSpawnPos()))) continue;
 
             ForgeIsland.sendToWorldSpawn(player);
             player.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("island.banned.removed")

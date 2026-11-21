@@ -27,15 +27,15 @@ public class ServerHelper {
     private static final Logger LOGGER = LogManager.getLogger();
 
     public static void playSongToPlayer(final ServerPlayer player, final SoundEvent event, final float vol, final float pitch) {
-        ServerHelper.SendPacket(player, new ClientboundSoundPacket(event, SoundSource.PLAYERS, player.position().x, player.position().y, player.position().z, vol, pitch));
+        ServerHelper.sendPacket(player, new ClientboundSoundPacket(event, SoundSource.PLAYERS, player.position().x, player.position().y, player.position().z, vol, pitch));
     }
 
-    public static void SendPacket(final ServerPlayer player, final Packet<?> packet) {
+    public static void sendPacket(final ServerPlayer player, final Packet<?> packet) {
         player.connection.send(packet);
     }
 
     public static void showParticleToPlayer(final ServerPlayer player, final Vec3i location, final ParticleOptions particle, final int count) {
-        ServerHelper.SendPacket(player, new ClientboundLevelParticlesPacket(particle, false, location.getX() + 0.5f, location.getY() + 0.5f, location.getZ() + 0.5f, 0.1f, 0f, 0.1f, 0f, count));
+        ServerHelper.sendPacket(player, new ClientboundLevelParticlesPacket(particle, false, location.getX() + 0.5f, location.getY() + 0.5f, location.getZ() + 0.5f, 0.1f, 0f, 0.1f, 0f, count));
     }
 
     /**

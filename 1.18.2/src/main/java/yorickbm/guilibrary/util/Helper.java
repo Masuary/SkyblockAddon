@@ -62,6 +62,6 @@ public class Helper {
      * @param pitch - Sound pitch
      */
     public static void playSongToPlayer(final ServerPlayer player, final SoundEvent event, final float vol, final float pitch) {
-        ServerHelper.SendPacket(player, new ClientboundSoundPacket(event, SoundSource.PLAYERS, player.position().x, player.position().y, player.position().z, vol, pitch));
+        ServerHelper.sendPacket(player, new ClientboundSoundPacket(event, SoundSource.PLAYERS, player.position().x, player.position().y, player.position().z, vol, pitch));
     }
 }
