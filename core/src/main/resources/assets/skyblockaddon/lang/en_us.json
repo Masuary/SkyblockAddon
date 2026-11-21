@@ -1,6 +1,7 @@
 {
   "commands.not.in.overworld": "You can only execute this command in the overworld.",
   "commands.other.not.in.overworld": "Who you are allowing to teleport is currently not in the overworld.",
+  "commands.other.offline": "%s is no longer online.",
   "commands.has.no.island": "You can not execute this command without having an island. Use '/island create' to make one.",
 
   "commands.admin.no.island": "This command requires you to be standing on an island.",
@@ -30,6 +31,7 @@
   "commands.teleporting.requested": "Requested teleport to %s's island...",
   "commands.teleporting.request": "Click me to accept teleport request from %s to your island.",
   "commands.teleporting.accepted": "Teleporting %s to your island...",
+  "commands.teleporting.accepted.not.in.overworld": "%s accepted your teleport request, but you are not in the overworld. Ask again from the overworld.",
 
   "commands.leave": "You have left your island, click me to undo this action.",
   "commands.leave.failure": "We could not remove you from the island, try again at a later moment.",
