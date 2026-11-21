@@ -3,6 +3,7 @@ package yorickbm.skyblockaddon.core.JSON;
 import com.google.gson.Gson;
 import yorickbm.skyblockaddon.core.util.JSON.JSONSerializable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -35,10 +36,14 @@ public class PermissionDataJson implements JSONSerializable {
         this.defaults = temp.defaults;
     }
 
-    public List<String> getSkyblockaddonData() { return Arrays.stream(this.skyblockaddon).collect(Collectors.toList()); }
-    public List<String> getItemsData() { return Arrays.stream(this.items).collect(Collectors.toList()); }
-    public List<String> getBlocksData() { return Arrays.stream(this.blocks).collect(Collectors.toList()); }
-    public List<String> getEntitiesData() { return Arrays.stream(this.entities).collect(Collectors.toList()); }
+    public List<String> getSkyblockaddonData() { return rulesOrEmpty(this.skyblockaddon); }
+    public List<String> getItemsData() { return rulesOrEmpty(this.items); }
+    public List<String> getBlocksData() { return rulesOrEmpty(this.blocks); }
+    public List<String> getEntitiesData() { return rulesOrEmpty(this.entities); }
+
+    private static List<String> rulesOrEmpty(final String[] rules) {
+        return rules == null ? new ArrayList<>() : Arrays.stream(rules).collect(Collectors.toList());
+    }
 
     public Stream<String> getItemBlockAndEntityRules() {
         return Stream.of(this.items, this.blocks, this.entities).filter(Objects::nonNull).flatMap(Arrays::stream);

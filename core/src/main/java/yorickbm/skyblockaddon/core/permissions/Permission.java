@@ -43,8 +43,12 @@ public class Permission implements JSONSerializable {
 
     public ItemStackJson getItem() { return item; }
 
+    public String[] getTriggers() {
+        return triggers;
+    }
+
     public boolean hasTrigger(final String trigger) {
-        return Arrays.stream(triggers).toList().contains(trigger);
+        return Arrays.asList(triggers).contains(trigger);
     }
 
     public PermissionDataJson getData() { return this.data; }
