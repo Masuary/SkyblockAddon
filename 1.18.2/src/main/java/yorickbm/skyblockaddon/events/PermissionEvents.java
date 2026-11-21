@@ -98,8 +98,9 @@ public class PermissionEvents {
                     ? PermissionTriggers.ON_RIGHT_CLICK_BLOCK
                     : PermissionTriggers.ON_PLACE_BLOCK;
 
-            if (InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getPlayer(), (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(), trigger)) {
-                InteractionHandler.deny(event, event.getPlayer());
+            final ServerPlayer player = (ServerPlayer) event.getPlayer();
+            if (InteractionHandler.checkPlayerInteraction(standingOn, player, (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(), trigger)) {
+                InteractionHandler.denyBlockClick(event, player);
             }
         }
 

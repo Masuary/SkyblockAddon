@@ -26,6 +26,13 @@ public final class PermissionTriggers {
     public static final String ON_HOSTILE_MOB_SPAWN = "OnHostileMobSpawn";
     public static final String ON_PASSIVE_MOB_SPAWN = "OnPassiveMobSpawn";
     public static final String ON_QUARK_PICKARANG = "onQuarkPickarangMixin";
+    public static final String ON_EASY_VILLAGERS_BLOCK_INTERACT = "onEVBlockInteract";
+    public static final String ON_PICKUP_VILLAGER = "onPickupVillager";
+    public static final String ON_EASY_PIGLINS_BLOCK_INTERACT = "onEPBlockInteract";
+    public static final String ON_PICKUP_PIGLIN = "onPickupPiglin";
+    public static final String ON_ENTER_NETHER_PORTAL = "onEnterNetherPortal";
+    public static final String ON_ENTER_VAULT_PORTAL = "onEnterVaultPortal";
+    public static final String ON_ELEVATOR_USE = "onElevatorUse";
 
     private PermissionTriggers() {
     }
