@@ -153,7 +153,7 @@ def modDep = { String property, Object fallback ->
 // cursemaven-helper:end
 
 dependencies {
-    implementation 'yorickbm.skyblockaddon.core:SkyBlockAddon-Core:8.0'
+    implementation 'yorickbm.skyblockaddon.core:SkyBlockAddon-Core:10.0'
 
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 

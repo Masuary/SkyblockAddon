@@ -141,7 +141,7 @@ public class SkyBlockAddon {
 
         LOGGER.info(String.format("Loaded %s guis.", GUILibraryRegistry.getGuis()));
         LOGGER.info(String.format("Loaded %s permissions.", PermissionManager.getInstance().getPermissions().size()));
-        LOGGER.info("Vaulthunters Skyblock addon v{} has loaded!", SkyblockAddonCore.VERSION);
+        LOGGER.info("Vaulthunters Skyblock addon v{} has loaded!", ModList.get().getModContainerById(SkyblockAddonCore.MOD_ID).orElseThrow().getModInfo().getVersion());
     }
 
     /**
