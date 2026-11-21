@@ -164,7 +164,7 @@ public abstract class Island {
             if(group == null) return false;
 
             group.addMember(entity);
-            if(id.equals(SkyblockAddonCore.MOD_UUID) && !this.members.contains(entity)) this.members.add(entity);
+            if(!id.equals(SkyblockAddonCore.MOD_UUID2) && !this.members.contains(entity)) this.members.add(entity);
         }
         return true;
     }

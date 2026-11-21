@@ -23,7 +23,12 @@ import java.util.UUID;
 
 public class AdminAddMemberCommand {
     public AdminAddMemberCommand(final CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("island")
+        register(dispatcher, "island");
+        register(dispatcher, "is"); // Alias
+    }
+
+    private void register(final CommandDispatcher<CommandSourceStack> dispatcher, final String rootLiteral) {
+        dispatcher.register(Cmds.literal(rootLiteral)
             .then(Cmds.literal("admin")
                 .requires(source -> source.hasPermission(Commands.LEVEL_GAMEMASTERS))
                 .then(Cmds.literal("addMember")

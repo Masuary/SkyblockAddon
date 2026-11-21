@@ -39,8 +39,13 @@ public class AdminPurgeCommand extends OverWorldCommandStack {
     private static final Logger LOGGER = LogManager.getLogger();
 
     public AdminPurgeCommand(final CommandDispatcher<CommandSourceStack> dispatcher) {
+        register(dispatcher, "island");
+        register(dispatcher, "is"); // Alias
+    }
+
+    private void register(final CommandDispatcher<CommandSourceStack> dispatcher, final String rootLiteral) {
         dispatcher.register(
-                Cmds.literal("island")
+                Cmds.literal(rootLiteral)
                         .then(Cmds.literal("admin")
                                 .requires(source -> source.getEntity() instanceof ServerPlayer &&
                                         source.hasPermission(Commands.LEVEL_GAMEMASTERS))

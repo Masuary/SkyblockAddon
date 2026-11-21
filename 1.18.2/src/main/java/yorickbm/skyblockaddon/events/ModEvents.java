@@ -4,7 +4,6 @@ import com.mojang.authlib.GameProfile;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.storage.LevelResource;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
@@ -21,10 +20,6 @@ import yorickbm.skyblockaddon.commands.op.*;
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.util.UsernameCache;
-import yorickbm.skyblockaddon.islands.ForgeIsland;
-import yorickbm.skyblockaddon.util.NBTEncoder;
-
-import java.nio.file.Path;
 
 public class ModEvents {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -64,12 +59,9 @@ public class ModEvents {
     @SubscribeEvent
     public void onWorldSave(final WorldEvent.Save event) {
         if (event.getWorld().isClientSide()) return;
-        event.getWorld().getServer().getLevel(Level.OVERWORLD).getCapability(SkyblockAddonWorldProvider.SKYBLOCKADDON_WORLD_CAPABILITY).ifPresent(cap -> {
-            final Path worldPath = event.getWorld().getServer().getWorldPath(LevelResource.ROOT).normalize();
-            final Path filePath = worldPath.resolve("islanddata");
-
-            NBTEncoder.saveToFile(IslandManager.getInstance().getIslandsFromCache().stream().map(s -> (ForgeIsland)s).toList(), filePath); //Save islands to drive on world save
-        });
+        if (!(event.getWorld() instanceof ServerLevel level)) return;
+        if (level.dimension() != Level.OVERWORLD) return; //World save fires once per dimension; only act on the overworld.
+        level.getCapability(SkyblockAddonWorldProvider.SKYBLOCKADDON_WORLD_CAPABILITY).ifPresent(SkyblockAddonWorldCapability::saveIslandsToDisk);
     }
 
     @SubscribeEvent
