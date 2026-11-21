@@ -8,3 +8,4 @@ out/
 .vscode/
 .DS_Store
 __pycache__/
+1.18.2/libs/

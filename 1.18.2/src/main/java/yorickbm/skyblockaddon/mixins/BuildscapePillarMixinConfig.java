@@ -12,7 +12,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.common.util.FakePlayer;
-import com.kingodogo.buildscape.block.PillarBlock;
+import com.kingodogo.buildscape.feature.pillar.AshenKingPillarBlock;
+import com.kingodogo.buildscape.feature.pillar.PillarBlock;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -23,7 +24,7 @@ import yorickbm.skyblockaddon.islands.InteractionHandler;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-@Mixin(value = {PillarBlock.class}, remap = false)
+@Mixin(value = {PillarBlock.class, AshenKingPillarBlock.class}, remap = false)
 public abstract class BuildscapePillarMixinConfig {
 
     @Inject(method = "m_6227_", at = @At("HEAD"), cancellable = true)

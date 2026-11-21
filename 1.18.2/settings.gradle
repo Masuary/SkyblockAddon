@@ -13,3 +13,9 @@ plugins {
 }
 
 rootProject.name = 'skyblockaddon'
+
+includeBuild('../core') {
+    dependencySubstitution {
+        substitute module('yorickbm.skyblockaddon.core:SkyBlockAddon-Core') using project(':')
+    }
+}
