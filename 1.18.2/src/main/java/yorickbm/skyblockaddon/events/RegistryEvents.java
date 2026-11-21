@@ -2,6 +2,8 @@ package yorickbm.skyblockaddon.events;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -17,11 +19,16 @@ import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldProvider;
 import yorickbm.skyblockaddon.core.GuiDataKeys;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
+import yorickbm.skyblockaddon.core.registries.PlayerListRegistry;
 import yorickbm.skyblockaddon.core.registries.interfaces.SkyblockAddonRegistry;
+import yorickbm.skyblockaddon.islands.ForgeIsland;
+import yorickbm.skyblockaddon.util.PlayerNames;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Cancelable
@@ -127,7 +134,12 @@ public class RegistryEvents extends GuiDrawFillerEvent {
             super(instance, filler, slots);
 
             instance.getOwner().getLevel().getCapability(SkyblockAddonWorldProvider.SKYBLOCKADDON_WORLD_CAPABILITY).ifPresent(cap -> {
-                super.registry = new yorickbm.skyblockaddon.core.registries.IslandRegistry(IslandManager.getInstance().getIslands().stream().toList());
+                final MinecraftServer server = Objects.requireNonNull(instance.getOwner().getServer());
+                super.registry = new yorickbm.skyblockaddon.core.registries.IslandRegistry(
+                        IslandManager.getInstance().getIslands(),
+                        instance.getOwner().getUUID(),
+                        island -> PlayerNames.nameOf(server, island.getOwner()),
+                        System.currentTimeMillis());
 
                 final int maxPage = (int)Math.ceil((double) getRegistry().getSize() / super.getItemsPerPage()); //Divide the item amounts we have by available slots per page
                 super.setMaxPage(maxPage);
@@ -199,5 +211,41 @@ public class RegistryEvents extends GuiDrawFillerEvent {
             super.setMaxPage(maxPage);
             getRegistry().setIndex(((super.getCurrentPage() - 1) * super.getItemsPerPage())-1);;
         }
+    }
+
+    @Cancelable
+    public static class VisitorsRegistry extends RegistryEvents {
+        public VisitorsRegistry(final ServerInterface instance, final GUIFiller filler, final int slots) {
+            super(instance, filler, slots);
+            if(!instance.getData().contains(GuiDataKeys.ISLAND_ID))  this.setCanceled(true); //No island ID found
+
+            final Island island = IslandManager.getInstance().getIslandByUUID(instance.getData().getUUID(GuiDataKeys.ISLAND_ID));
+            if(island == null) return;
+
+            final List<UUID> visitors = ((ForgeIsland) island).visitorsStandingOn(Objects.requireNonNull(instance.getOwner().getServer())).stream()
+                    .map(ServerPlayer::getUUID)
+                    .toList();
+            usePlayerList(visitors);
+        }
+    }
+
+    @Cancelable
+    public static class BannedPlayersRegistry extends RegistryEvents {
+        public BannedPlayersRegistry(final ServerInterface instance, final GUIFiller filler, final int slots) {
+            super(instance, filler, slots);
+            if(!instance.getData().contains(GuiDataKeys.ISLAND_ID))  this.setCanceled(true); //No island ID found
+
+            final Island island = IslandManager.getInstance().getIslandByUUID(instance.getData().getUUID(GuiDataKeys.ISLAND_ID));
+            if(island == null) return;
+
+            usePlayerList(island.getBannedPlayers());
+        }
+    }
+
+    protected void usePlayerList(final List<UUID> players) {
+        this.registry = new PlayerListRegistry(players);
+        final int maxPage = (int)Math.ceil((double) getRegistry().getSize() / getItemsPerPage());
+        setMaxPage(maxPage);
+        getRegistry().setIndex(((getCurrentPage() - 1) * getItemsPerPage())-1);
     }
 }

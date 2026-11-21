@@ -62,9 +62,19 @@ public class IslandInviteCommand extends OverWorldCommandStack {
                 return;
             }
 
+            if (sourceIsland.isBanned(target.getUUID())) {
+                command.sendFailure(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.invite.banned").formatted(target.getDisplayName().getString())));
+                return;
+            }
+
             final UUID functionKey = UUID.randomUUID();
             FunctionRegistry.registerFunction(functionKey, (e) -> {
                 if(super.execute(command, e) == 0) return true;
+
+                if (sourceIsland.isBanned(e.getUUID())) {
+                    e.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.invite.cancelled")).withStyle(ChatFormatting.RED), e.getUUID());
+                    return true;
+                }
 
                 final ForgeIsland targetIsland = (ForgeIsland) IslandManager.getInstance().getIslandByEntityUUID(target.getUUID());
                 if(targetIsland != null) {

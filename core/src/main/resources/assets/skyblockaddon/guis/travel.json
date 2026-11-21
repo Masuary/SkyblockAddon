@@ -26,6 +26,14 @@
         "lore": [
           [
             "{\"text\":\"\u00bb Click to travel to this island.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Members: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_member_count%\",\"color\":\"white\"}"
+          ],
+          [
+            "{\"text\":\"\u2666 Last active: \",\"color\":\"dark_gray\"}",
+            "{\"text\":\"%data_last_active%\",\"color\":\"white\"}"
           ]
         ],
         "data": {}

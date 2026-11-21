@@ -266,6 +266,7 @@ public final class IslandCreationQueue {
         }
 
         final ForgeIsland island = new ForgeIsland(playerId, spawnPosition);
+        island.setLastActiveEpochMillis(System.currentTimeMillis());
         IslandManager.getInstance().registerIsland(island, playerId);
         build.islandRegistered = true;
         activeBuild = null;

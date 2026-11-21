@@ -9,7 +9,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import yorickbm.guilibrary.GUILibraryRegistry;
 import yorickbm.skyblockaddon.core.islands.Island;
+import yorickbm.skyblockaddon.core.islands.IslandActionResult;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
+import yorickbm.skyblockaddon.islands.IslandActionService;
 
 import java.util.List;
 
@@ -23,8 +25,12 @@ public final class ConfirmRemoveGroupGui {
                         new TextComponent("This cannot be undone.").withStyle(ChatFormatting.GRAY)),
                 "Remove", ButtonStyle.DANGER,
                 p -> {
-                    island.removeGroup(group.getId());
-                    p.sendMessage(new TextComponent("Group '" + group.getName() + "' removed.").withStyle(ChatFormatting.RED), p.getUUID());
+                    IslandActionResult result = IslandActionService.removeGroup(p, island, group.getId());
+                    if (result.succeeded()) {
+                        p.sendMessage(new TextComponent("Group '" + group.getName() + "' removed.").withStyle(ChatFormatting.RED), p.getUUID());
+                    } else {
+                        IslandActionService.sendFailure(p, result, group.getName());
+                    }
                     GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:groups", data);
                 },
                 p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:permissions", data));

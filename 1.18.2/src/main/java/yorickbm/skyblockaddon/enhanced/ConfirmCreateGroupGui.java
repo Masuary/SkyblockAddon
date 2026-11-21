@@ -12,11 +12,12 @@ import yorickbm.guilibrary.GUILibraryRegistry;
 import yorickbm.skyblockaddon.core.GuiDataKeys;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
+import yorickbm.skyblockaddon.core.islands.IslandActionResult;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
-import yorickbm.skyblockaddon.islands.ForgeIslandGroup;
+import yorickbm.skyblockaddon.islands.IslandActionService;
 
 import java.util.List;
-import java.util.UUID;
+import java.util.Objects;
 
 public final class ConfirmCreateGroupGui {
 
@@ -41,27 +42,18 @@ public final class ConfirmCreateGroupGui {
     }
 
     private static void createGroup(ServerPlayer player, CompoundTag data) {
-        ItemStack held = player.getMainHandItem();
-        if (held.isEmpty() || held.getItem() == Items.AIR) {
-            player.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.group.failure"))
-                    .withStyle(ChatFormatting.RED), player.getUUID());
-            GUILibraryRegistry.openGUIForPlayer(player, "skyblockaddon:groups", data);
-            return;
-        }
         Island island = IslandManager.getInstance().getIslandByUUID(data.getUUID(GuiDataKeys.ISLAND_ID));
         if (island == null) return;
+        ItemStack held = player.getMainHandItem().copy();
         String newGroupName = held.getDisplayName().getString().trim();
-        boolean nameExists = island.getGroups().stream().anyMatch(group -> group.getName().equalsIgnoreCase(newGroupName));
-        if (nameExists) {
-            player.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.group.name.exists")
-                    .formatted(newGroupName)).withStyle(ChatFormatting.RED), player.getUUID());
-            GUILibraryRegistry.openGUIForPlayer(player, "skyblockaddon:groups", data);
-            return;
+        IslandActionResult result = IslandActionService.createGroupFromHeldItem(player, island);
+        if (result.succeeded()) {
+            player.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.group.created")
+                    .formatted(newGroupName, Objects.requireNonNull(held.getItem().getRegistryName()).getPath()))
+                    .withStyle(ChatFormatting.GREEN), player.getUUID());
+        } else {
+            IslandActionService.sendFailure(player, result, newGroupName);
         }
-        island.addGroup(new ForgeIslandGroup(UUID.randomUUID(), held, false));
-        player.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.group.created")
-                .formatted(newGroupName, held.getItem().getRegistryName().toString().split(":")[1].trim()))
-                .withStyle(ChatFormatting.GREEN), player.getUUID());
         GUILibraryRegistry.openGUIForPlayer(player, "skyblockaddon:groups", data);
     }
 }

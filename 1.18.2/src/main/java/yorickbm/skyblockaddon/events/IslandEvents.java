@@ -118,4 +118,32 @@ public class IslandEvents extends GuiClickItemEvent {
             super(instance, player, slot, item);
         }
     }
+
+    @Cancelable
+    public static class TransferOwnership extends IslandEvents {
+        public TransferOwnership(final ServerInterface instance, final ServerPlayer player, final Slot slot, final GUIItem item) {
+            super(instance, player, slot, item);
+        }
+    }
+
+    @Cancelable
+    public static class ExpelVisitor extends IslandEvents {
+        public ExpelVisitor(final ServerInterface instance, final ServerPlayer player, final Slot slot, final GUIItem item) {
+            super(instance, player, slot, item);
+        }
+    }
+
+    @Cancelable
+    public static class BanPlayer extends IslandEvents {
+        public BanPlayer(final ServerInterface instance, final ServerPlayer player, final Slot slot, final GUIItem item) {
+            super(instance, player, slot, item);
+        }
+    }
+
+    @Cancelable
+    public static class UnbanPlayer extends IslandEvents {
+        public UnbanPlayer(final ServerInterface instance, final ServerPlayer player, final Slot slot, final GUIItem item) {
+            super(instance, player, slot, item);
+        }
+    }
 }

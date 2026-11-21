@@ -27,6 +27,9 @@ public class EnhancedGuiListener {
         HANDLERS.put(modId + ":permissions", PermissionCategoriesGui::open);
         HANDLERS.put(modId + ":set_permission", PermissionTogglesGui::open);
         HANDLERS.put(modId + ":confirm_leave", ConfirmLeaveGui::open);
+        HANDLERS.put(modId + ":visitors", (p, d) -> ScrollableListGui.open(p, d, "visitors"));
+        HANDLERS.put(modId + ":bans", (p, d) -> ScrollableListGui.open(p, d, "bans"));
+        HANDLERS.put(modId + ":transfer", (p, d) -> ScrollableListGui.open(p, d, "transfer"));
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)

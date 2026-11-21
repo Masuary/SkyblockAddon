@@ -8,31 +8,30 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.item.Items;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import yorickbm.skyblockaddon.core.GuiDataKeys;
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
+import yorickbm.skyblockaddon.core.islands.IslandActionResult;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.util.UsernameCache;
 import yorickbm.skyblockaddon.events.IslandEvents;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
 import yorickbm.skyblockaddon.islands.ForgeIslandGroup;
+import yorickbm.skyblockaddon.islands.IslandActionService;
+import yorickbm.skyblockaddon.islands.OwnershipTransferConfirmation;
 import yorickbm.skyblockaddon.util.ForgeConverter;
 import yorickbm.skyblockaddon.util.FunctionRegistry;
-import yorickbm.skyblockaddon.util.IslandGroupAssignments;
 import yorickbm.skyblockaddon.util.ServerHelper;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 
 public class IslandGuiEvents {
-    private static final Logger LOGGER = LogManager.getLogger();
-
     @SubscribeEvent
     public void onTeleportToIslandEvent(final IslandEvents.TeleportToIsland event) {
         if(event.isCanceled()) return; //Skip if canceled
@@ -82,7 +81,11 @@ public class IslandGuiEvents {
 
     @SubscribeEvent
     public void onChangeIslandVisiblityEvent(final IslandEvents.ChangeVisibility event) {
-        event.getIsland().toggleVisibility();
+        final IslandActionResult result = IslandActionService.toggleVisibility(event.getTarget(), event.getIsland());
+        if (!result.succeeded()) {
+            denyWithMessage(event, result, "");
+            return;
+        }
         event.getHolder().update();
     }
 
@@ -104,6 +107,11 @@ public class IslandGuiEvents {
         }
 
         event.getHolder().close();
+        if (IslandActionService.isBannedFrom(island, event.getTarget())) {
+            event.getTarget().sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("island.banned.travel")).withStyle(ChatFormatting.RED), event.getTarget().getUUID());
+            event.setResult(Event.Result.DENY);
+            return;
+        }
 
         island.teleportTo(event.getTarget());
         event.getTarget().sendMessage(new TextComponent(
@@ -115,10 +123,12 @@ public class IslandGuiEvents {
     public void onInviteNewMemberEvent(final IslandEvents.InviteNewMember event) {
         final CompoundTag guiData = event.getHolder().getData();
 
-        LOGGER.info(guiData);
-
         if(!guiData.contains(GuiDataKeys.GROUP_ID)) {
             event.setResult(Event.Result.DENY);
+            return;
+        }
+        if (!IslandActionService.canManage(event.getIsland(), event.getTarget())) {
+            denyWithMessage(event, IslandActionResult.NOT_ALLOWED, "");
             return;
         }
 
@@ -135,42 +145,27 @@ public class IslandGuiEvents {
 
     @SubscribeEvent
     public void onCreateNewGroupEvent(final IslandEvents.CreateNewGroup event) {
+        if (!IslandActionService.canManage(event.getIsland(), event.getTarget())) {
+            denyWithMessage(event, IslandActionResult.NOT_ALLOWED, "");
+            return;
+        }
         event.getHolder().close();
 
-        //Create clickable command
         final UUID id = UUID.randomUUID();
         final Function<ServerPlayer, Boolean> function = executor -> {
-            // Check if hand is empty or air
-            if (executor.getMainHandItem().isEmpty() || executor.getMainHandItem().getItem() == Items.AIR) {
-                executor.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.group.failure")
-                                .formatted(executor.getMainHandItem().getDisplayName().getString(),
-                                        Objects.requireNonNull(executor.getMainHandItem().getItem().getRegistryName()).toString().split(":")[1]))
-                                .withStyle(ChatFormatting.RED),
-                        executor.getUUID());
-                return false;
-            }
-
-            // Check if group name is unique
-            final String newGroupName = executor.getMainHandItem().getDisplayName().getString().trim();
-            final boolean nameAlreadyExists = event.getIsland().getGroups().stream()
-                    .anyMatch(g -> g.getName().equalsIgnoreCase(newGroupName));
-
-            if (nameAlreadyExists) {
-                executor.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.group.name.exists")
-                                .formatted(newGroupName))
-                                .withStyle(ChatFormatting.RED),
-                        executor.getUUID());
-                return false;
+            final ItemStack heldItem = executor.getMainHandItem().copy();
+            final String newGroupName = heldItem.getDisplayName().getString().trim();
+            final IslandActionResult result = IslandActionService.createGroupFromHeldItem(executor, event.getIsland());
+            if (!result.succeeded()) {
+                IslandActionService.sendFailure(executor, result, newGroupName);
+                return result != IslandActionResult.HELD_ITEM_MISSING && result != IslandActionResult.GROUP_NAME_EXISTS;
             }
 
             ServerHelper.playSongToPlayer(executor, SoundEvents.NOTE_BLOCK_CHIME, SkyblockAddonCore.UI_SUCCESS_VOL, 1f);
-            event.getIsland().addGroup(new ForgeIslandGroup(UUID.randomUUID(), executor.getMainHandItem(), false));
-
             executor.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.group.created")
-                            .formatted(newGroupName, Objects.requireNonNull(executor.getMainHandItem().getItem().getRegistryName()).toString().split(":")[1].trim()))
+                            .formatted(newGroupName, Objects.requireNonNull(heldItem.getItem().getRegistryName()).getPath()))
                             .withStyle(ChatFormatting.GREEN),
                     executor.getUUID());
-
             return true;
         };
         FunctionRegistry.registerFunction(id, function, 15);
@@ -213,13 +208,18 @@ public class IslandGuiEvents {
         }
 
         final UUID playerUUID = guiData.getUUID(GuiDataKeys.PLAYER_ID);
-        event.getIsland().kickMember(event.getTarget(), playerUUID);
+        final String playerName = UsernameCache.getBlocking(playerUUID);
+        final IslandActionResult result = IslandActionService.kickMember(event.getTarget(), event.getIsland(), playerUUID);
         event.getHolder().close();
+        if (!result.succeeded()) {
+            denyWithMessage(event, result, playerName);
+            return;
+        }
 
         event.getTarget().sendMessage(
                 new TextComponent(
                         SkyBlockAddonLanguage.getLocalizedString("island.member.kicked")
-                                .formatted( UsernameCache.getBlocking(playerUUID) )
+                                .formatted(playerName)
                 ).withStyle(ChatFormatting.GREEN),
                 event.getTarget().getUUID());
     }
@@ -236,13 +236,10 @@ public class IslandGuiEvents {
 
         final UUID groupUUID = modData.getUUID(GuiDataKeys.GROUP_ID);
         final UUID playerUUID = guiData.getUUID(GuiDataKeys.PLAYER_ID);
-        final var targetGroup = event.getIsland().getGroup(groupUUID);
-
-        final boolean assigned = event.getIsland().isPartOf(playerUUID)
-                ? event.getIsland().addMember(playerUUID, groupUUID)
-                : IslandGroupAssignments.assignWithoutMembership(event.getIsland(), playerUUID, targetGroup);
-        if(!assigned) {
-            event.setResult(Event.Result.DENY);
+        final String playerName = UsernameCache.getBlocking(playerUUID);
+        final IslandActionResult result = IslandActionService.assignGroup(event.getTarget(), event.getIsland(), playerUUID, groupUUID);
+        if(!result.succeeded()) {
+            denyWithMessage(event, result, playerName);
             return;
         }
         event.getHolder().close();
@@ -251,8 +248,8 @@ public class IslandGuiEvents {
                 new TextComponent(
                         SkyBlockAddonLanguage.getLocalizedString("island.member.group.set")
                                 .formatted(
-                                        UsernameCache.getBlocking(playerUUID),
-                                        targetGroup.getName()
+                                        playerName,
+                                        event.getIsland().getGroup(groupUUID).getName()
                                 )
                 ).withStyle(ChatFormatting.GREEN),
                 event.getTarget().getUUID());
@@ -269,22 +266,108 @@ public class IslandGuiEvents {
         final UUID groupUUID = guiData.getUUID(GuiDataKeys.GROUP_ID);
         final ForgeIslandGroup group = (ForgeIslandGroup) event.getIsland().getGroup(groupUUID);
         event.getHolder().close();
+        if (group == null) {
+            denyWithMessage(event, IslandActionResult.GROUP_NOT_FOUND, "");
+            return;
+        }
+        final String groupName = group.getItem().getDisplayName().getString().trim();
 
-        if(event.getIsland().removeGroup(groupUUID)) {
-            event.getTarget().sendMessage(new TextComponent(String.format(SkyBlockAddonLanguage.getLocalizedString("island.group.remove.success"),
-                            group.getItem().getDisplayName().getString().trim()))
+        final IslandActionResult result = IslandActionService.removeGroup(event.getTarget(), event.getIsland(), groupUUID);
+        if(result.succeeded()) {
+            event.getTarget().sendMessage(new TextComponent(String.format(SkyBlockAddonLanguage.getLocalizedString("island.group.remove.success"), groupName))
                             .withStyle(ChatFormatting.RED)
                     ,event.getTarget().getUUID());
             event.setResult(Event.Result.ALLOW);
             return;
         }
 
-        event.getTarget().sendMessage(new TextComponent(String.format(SkyBlockAddonLanguage.getLocalizedString("island.group.remove.failed"),
-                        group.getItem().getDisplayName().getString().trim()))
-                        .withStyle(ChatFormatting.RED)
-                ,event.getTarget().getUUID());
-        event.setResult(Event.Result.DENY);
+        if (result == IslandActionResult.NO_CHANGE) {
+            event.getTarget().sendMessage(new TextComponent(String.format(SkyBlockAddonLanguage.getLocalizedString("island.group.remove.failed"), groupName))
+                            .withStyle(ChatFormatting.RED)
+                    ,event.getTarget().getUUID());
+            event.setResult(Event.Result.DENY);
+            return;
+        }
+        denyWithMessage(event, result, groupName);
+    }
 
+    @SubscribeEvent
+    public void onTransferOwnershipEvent(final IslandEvents.TransferOwnership event) {
+        final Optional<UUID> newOwner = clickedPlayerId(event);
+        if (newOwner.isEmpty()) {
+            event.setResult(Event.Result.DENY);
+            return;
+        }
+        event.getHolder().close();
+        OwnershipTransferConfirmation.offer(event.getTarget(), event.getIsland(), newOwner.get());
+    }
+
+    @SubscribeEvent
+    public void onExpelVisitorEvent(final IslandEvents.ExpelVisitor event) {
+        final Optional<UUID> visitorId = clickedPlayerId(event);
+        if (visitorId.isEmpty()) {
+            event.setResult(Event.Result.DENY);
+            return;
+        }
+        final String visitorName = UsernameCache.getBlocking(visitorId.get());
+        final ServerPlayer visitor = Objects.requireNonNull(event.getTarget().getServer()).getPlayerList().getPlayer(visitorId.get());
+        final IslandActionResult result = visitor == null
+                ? IslandActionResult.TARGET_NOT_ON_ISLAND
+                : IslandActionService.expelVisitor(event.getTarget(), event.getIsland(), visitor);
+        if (!result.succeeded()) {
+            denyWithMessage(event, result, visitorName);
+            return;
+        }
+        event.getTarget().sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.expel.success").formatted(visitorName))
+                .withStyle(ChatFormatting.GREEN), event.getTarget().getUUID());
+        event.getHolder().update();
+    }
+
+    @SubscribeEvent
+    public void onBanPlayerEvent(final IslandEvents.BanPlayer event) {
+        final Optional<UUID> playerId = clickedPlayerId(event);
+        if (playerId.isEmpty()) {
+            event.setResult(Event.Result.DENY);
+            return;
+        }
+        final String playerName = UsernameCache.getBlocking(playerId.get());
+        final IslandActionResult result = IslandActionService.banPlayer(event.getTarget(), event.getIsland(), playerId.get());
+        if (!result.succeeded()) {
+            denyWithMessage(event, result, playerName);
+            return;
+        }
+        event.getTarget().sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.ban.success").formatted(playerName))
+                .withStyle(ChatFormatting.GREEN), event.getTarget().getUUID());
+        event.getHolder().update();
+    }
+
+    @SubscribeEvent
+    public void onUnbanPlayerEvent(final IslandEvents.UnbanPlayer event) {
+        final Optional<UUID> playerId = clickedPlayerId(event);
+        if (playerId.isEmpty()) {
+            event.setResult(Event.Result.DENY);
+            return;
+        }
+        final String playerName = UsernameCache.getBlocking(playerId.get());
+        final IslandActionResult result = IslandActionService.unbanPlayer(event.getTarget(), event.getIsland(), playerId.get());
+        if (!result.succeeded()) {
+            denyWithMessage(event, result, playerName);
+            return;
+        }
+        event.getTarget().sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.unban.success").formatted(playerName))
+                .withStyle(ChatFormatting.GREEN), event.getTarget().getUUID());
+        event.getHolder().update();
+    }
+
+    private static Optional<UUID> clickedPlayerId(final IslandEvents event) {
+        final CompoundTag itemData = event.getClickedItem().getOrCreateTagElement(SkyblockAddonCore.MOD_ID);
+        if (!itemData.hasUUID(GuiDataKeys.PLAYER_ID)) return Optional.empty();
+        return Optional.of(itemData.getUUID(GuiDataKeys.PLAYER_ID));
+    }
+
+    private static void denyWithMessage(final IslandEvents event, final IslandActionResult result, final String subject) {
+        IslandActionService.sendFailure(event.getTarget(), result, subject);
+        event.setResult(Event.Result.DENY);
     }
 
     @SubscribeEvent

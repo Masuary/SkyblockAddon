@@ -2,27 +2,36 @@ package yorickbm.skyblockaddon.events.Gui;
 
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import yorickbm.guilibrary.GUILibraryRegistry;
 import yorickbm.guilibrary.events.GuiDrawItemEvent;
 import yorickbm.guilibrary.events.OpenMenuEvent;
 import yorickbm.skyblockaddon.core.GuiDataKeys;
+import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
+import yorickbm.skyblockaddon.core.islands.Island;
+import yorickbm.skyblockaddon.core.islands.IslandActionResult;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.util.UsernameCache;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
+import yorickbm.skyblockaddon.islands.IslandActionService;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class GuiEvents {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final String GUI_PREFIX = SkyblockAddonCore.MOD_ID + ":";
+    private static final Set<String> MANAGER_MENUS = Set.of(
+            GUI_PREFIX + "settings", GUI_PREFIX + "biomes", GUI_PREFIX + "groups", GUI_PREFIX + "permissions",
+            GUI_PREFIX + "set_permission", GUI_PREFIX + "members_group", GUI_PREFIX + "set_group",
+            GUI_PREFIX + "visitors", GUI_PREFIX + "bans");
+    private static final Set<String> OWNER_MENUS = Set.of(GUI_PREFIX + "transfer");
 
     @SubscribeEvent
     public void itemRenderer(final GuiDrawItemEvent event) {
@@ -40,16 +49,12 @@ public class GuiEvents {
         final boolean isNotAdmin = event.getItemHolder().hasCondition("!is_admin");
 
         if (isAdmin || isNotAdmin) {
-            final Optional<IslandGroup> group = island.getGroupForEntityUUID(event.getHolder().getOwner().getUUID());
-            final boolean canAccessAdminMenu = group.map(g -> g.canDo("admin_menu")).orElse(true);
-            final boolean isOwner = island.isOwner(event.getHolder().getOwner().getUUID());
-            final boolean hasAdminPermissions = event.getHolder().getOwner().hasPermissions(Commands.LEVEL_ADMINS);
+            final boolean canManage = IslandActionService.canManage(island, (ServerPlayer) event.getHolder().getOwner());
+            event.setCanceled(isAdmin != canManage);
+        }
 
-            final boolean shouldCancel = isAdmin
-                    ? !canAccessAdminMenu && !isOwner && !hasAdminPermissions // Same logic as before
-                    : canAccessAdminMenu || isOwner || hasAdminPermissions;   // Negated logic
-
-            event.setCanceled(shouldCancel);
+        if (event.getItemHolder().hasCondition("is_owner")) {
+            event.setCanceled(!island.isOwner(event.getHolder().getOwner().getUUID()));
         }
 
         if(event.getItemHolder().hasCondition("is_op")) {
@@ -61,6 +66,32 @@ public class GuiEvents {
         } else if(event.getItemHolder().hasCondition("!is_part")) {
             event.setCanceled(island.isPartOf(event.getHolder().getOwner().getUUID()));
         }
+    }
+
+    /**
+     * Menus that change the island open only for players allowed to use them, for vanilla and modded clients alike.
+     */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void guardRestrictedMenus(final OpenMenuEvent event) {
+        final String guiId = event.getGuiId();
+        final boolean managerMenu = MANAGER_MENUS.contains(guiId);
+        final boolean ownerMenu = OWNER_MENUS.contains(guiId);
+        if (!managerMenu && !ownerMenu) return;
+
+        final ServerPlayer player = event.getTarget();
+        final Island island = event.getData().hasUUID(GuiDataKeys.ISLAND_ID)
+                ? IslandManager.getInstance().getIslandByUUID(event.getData().getUUID(GuiDataKeys.ISLAND_ID))
+                : null;
+        if (island == null) {
+            event.setCanceled(true);
+            return;
+        }
+
+        final boolean allowed = ownerMenu ? island.isOwner(player.getUUID()) : IslandActionService.canManage(island, player);
+        if (allowed) return;
+
+        event.setCanceled(true);
+        IslandActionService.sendFailure(player, ownerMenu ? IslandActionResult.OWNER_ONLY : IslandActionResult.NOT_ALLOWED, "");
     }
 
     @SubscribeEvent
