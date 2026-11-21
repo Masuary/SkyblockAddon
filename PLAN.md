@@ -2,7 +2,7 @@
 
 Source of truth for the findings and sir's answers: `/mnt/data/Projects/skyvault-update4-2026-11-20/9-mod-review/findings/15-skyblockaddon.md` (B1-B14, F1-F7, cleanup stages, upstream comparison, answers 2026-11-21). The previous ItemGrid redesign plan was superseded by the ListView redesign (`efe1458`) and is in git history.
 
-Branch `gui-redesign`, version stays 8.7 until the deploy (not shipped yet). No pushes. Wolds sibling (`SkyblockAddon-Wolds`) is read only: fixes are ported from it, never edited there.
+Branch `main` (created 2026-11-21 from `gui-redesign` at `5e191cd`; sir: this becomes the main line and ships as 10.0, one version for Remastered and Wolds). `main` is local only: push it and make it the GitHub default only with sir's go after the testnet QA. `remastered`, `gui-redesign` and the wolds branches stay as they are (archived after the Wolds switch, never deleted). Wolds sibling (`SkyblockAddon-Wolds`) is read only: fixes are ported from it, never edited there.
 
 ## Decisions (sir, 2026-11-21)
 
@@ -38,4 +38,4 @@ Each phase: failing test first where testable, `gradlew build` and tests green w
 | W1 Port Wolds-only code | EffortlessBuilding visitor mixins (`8beeff0`, `de94247`, `d4c93e7`, `a3e00a4`) as an optional mixin config, Mods permission category (`9a49f02`) if not covered by the permission-switch redesign | open |
 | W1b Defaults per pack | Bundled config defaults follow the loaded pack (sir, 2026-11-21: Wolds has other mods): `RegistrySelector` picks `registries/permissions/woldsvaults.json` when mod `woldsvaults` (Wold's Vaults official mod) is loaded, else `vaulthunters.json` when `the_vault` is loaded, else `default.json`; same selection for any other default that differs per pack (biome registry, GUI files if they diverge). Wolds defaults come from `SkyblockAddon-Wolds` `6f4ae08` and the live Wolds config. Only affects files that do not exist yet: servers keep their own `config/skyblockaddon/` files | open |
 | W2 Two VH lines | compile against VH Remastered 7209, link-check against the VH build Wold's Vaults ships (VH 3rd Edition 3.21.6.6884 in pack 0.34.x; curse-maven-fix two-lines pattern); every VH mixin and VH class use must resolve in both | open |
-| W3 One version | 10.0 for both; Wolds testnet pass with the unified jar; then the Wolds repo and `wolds`/`gui-redesign-wolds` branches move to the archive area (kept, never deleted) | open |
+| W3 One version | 10.0 for both (version bumped on `main` in `bf4861c`); Wolds testnet pass with the unified jar; then the Wolds repo and `wolds`/`gui-redesign-wolds` branches move to the archive area (kept, never deleted) | open |
