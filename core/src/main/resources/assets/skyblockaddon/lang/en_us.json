@@ -82,5 +82,9 @@
   "commands.admin.purge.done": "%s island(s) have been purged! There locations have been freed up to reuse.",
   "commands.admin.purge.notallowed": "This island may not be purged, as its not abandoned.",
   "commands.admin.purge.zero": "No purgable islands found.",
-  "commands.admin.purge.skipped": "Skipped island %s: it has an owner or members again, so its file and slot were kept."
+  "commands.admin.purge.skipped": "Skipped island %s: it has an owner or members again, so its file and slot were kept.",
+  "commands.admin.abandoned.none": "No abandoned islands (no owner and no members) found.",
+  "commands.admin.abandoned.header": "Abandoned islands (no owner and no members): %s in total, page %s of %s.",
+  "commands.admin.abandoned.entry": "%s | center %s, %s | slot %s, %s | tracked chunks %s",
+  "commands.admin.abandoned.next": "Next page: %s"
 }
