@@ -39,7 +39,7 @@ import yorickbm.skyblockaddon.core.permissions.PermissionManager;
 import yorickbm.skyblockaddon.core.util.MatchResult;
 import yorickbm.skyblockaddon.islands.InteractionHandler;
 import yorickbm.skyblockaddon.util.ForgeConverter;
-import yorickbm.skyblockaddon.util.ServerHelper;
+import yorickbm.skyblockaddon.util.BlockInteractability;
 
 import java.util.List;
 import java.util.Objects;
@@ -251,7 +251,7 @@ public class PermissionEvents {
         if(!InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) {
             final BlockState state = event.getWorld().getBlockState(event.getPos());
             final BlockEntity be = event.getWorld().getBlockEntity(event.getPos());
-            final String trigger = ServerHelper.isBlockInteractable(event.getWorld(), event.getPos(), event.getPlayer(), event.getHand(), event.getHitVec()) ? "onRightClickBlock" : "onPlaceBlock";
+            final String trigger = BlockInteractability.isRightClickInteraction(event.getWorld(), event.getPos(), event.getPlayer(), event.getHand()) ? "onRightClickBlock" : "onPlaceBlock";
 
             if(InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) event.getPlayer(), (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(),  trigger)) {
                 event.getPlayer().displayClientMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("toolbar.overlay.nothere")).withStyle(ChatFormatting.DARK_RED), true);

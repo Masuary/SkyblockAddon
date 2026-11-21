@@ -17,24 +17,13 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.common.util.FakePlayerFactory;
-import net.minecraftforge.energy.CapabilityEnergy;
-import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
-import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -85,47 +74,6 @@ public class ServerHelper {
         itemStack.getOrCreateTag().put("SkullOwner", profileTag);
 
         return itemStack;
-    }
-
-    /**
-     * Checks if the block at the given position in the world is interactable.
-     *
-     * @param world the level/world
-     * @param pos the block position clicked
-     * @param player the player interacting (used for FakePlayer context)
-     * @param hand the hand used for interaction (can be player.getUsedItemHand())
-     * @return true if the block is interactable (has GUI/capabilities or overrides use)
-     */
-    public static boolean isBlockInteractable(final Level world, final BlockPos pos, final Player player, final InteractionHand hand, final BlockHitResult vector) {
-        final BlockState state = world.getBlockState(pos);
-        final BlockEntity be = world.getBlockEntity(pos);
-
-        // Blocks with no BlockEntity are usually pure placement targets (dirt, stone, etc.).
-        // Treat sneak + held item against such a block as a placement attempt.
-        // Mod blocks with a BE frequently implement sneak-interactions (e.g. Vault Wardrobe
-        // swap-on-sneak), so we deliberately do NOT short-circuit when a BE is present.
-        if (be == null && player.isShiftKeyDown() && !player.getItemInHand(hand).isEmpty()) {
-            return false;
-        }
-
-        // Check common capabilities (inventory, energy, fluid)
-        if (be != null) {
-            if (be.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).isPresent()) return true;
-            if (be.getCapability(CapabilityEnergy.ENERGY, null).isPresent()) return true;
-            if (be.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, null).isPresent()) return true;
-        }
-
-        // Use a FakePlayer to test the block's use() method without side effects
-        final FakePlayer fakePlayer = FakePlayerFactory.getMinecraft((ServerLevel) world);
-        try {
-            final InteractionResult result = state.use(world, fakePlayer, hand, vector);
-            return result != InteractionResult.PASS;
-        } catch (final Exception ignored) {
-            return true;
-        } finally {
-            fakePlayer.closeContainer();
-            fakePlayer.kill();
-        }
     }
 
     /**
