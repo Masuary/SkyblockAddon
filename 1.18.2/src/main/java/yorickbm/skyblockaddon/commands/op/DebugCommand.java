@@ -17,9 +17,9 @@ public class DebugCommand {
 
     private void register(final CommandDispatcher<CommandSourceStack> dispatcher, final String rootLiteral) {
         dispatcher.register(Cmds.literal(rootLiteral)
-                .then(Cmds.literal("admin")
-                        .requires(source -> source.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                .then(Cmds.adminLiteral()
                         .then(Cmds.literal("debug")
+                                .requires(Cmds.permissionLevel(Commands.LEVEL_GAMEMASTERS))
                                 .executes(context -> execute(context.getSource()))
                         )
                 )

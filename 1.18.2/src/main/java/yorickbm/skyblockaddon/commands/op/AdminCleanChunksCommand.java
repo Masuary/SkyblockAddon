@@ -61,9 +61,9 @@ public class AdminCleanChunksCommand {
 
     private void register(final CommandDispatcher<CommandSourceStack> dispatcher, final String rootLiteral) {
         dispatcher.register(Cmds.literal(rootLiteral)
-                .then(Cmds.literal("admin")
-                        .requires(s -> s.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                .then(Cmds.adminLiteral()
                         .then(Cmds.literal("cleanchunks")
+                                .requires(Cmds.permissionLevel(Commands.LEVEL_GAMEMASTERS))
                                 .then(Cmds.literal("all")
                                         .executes(ctx -> executeAll(ctx.getSource())))
                                 .then(Cmds.argument("uuid", UuidArgument.uuid())

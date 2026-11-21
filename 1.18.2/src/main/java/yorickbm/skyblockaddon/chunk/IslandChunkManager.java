@@ -3,9 +3,7 @@ package yorickbm.skyblockaddon.chunk;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
-import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -21,15 +19,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public class IslandChunkManager {
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final int CHUNK_SIZE = 16;
 
-    public static void createDummies(List<ForgeIsland> islands, ProgressBar bar, Consumer<ForgeIsland> onIslandFinished, Runnable onDone, ServerLevel level) {
+    public static void createDummies(List<ForgeIsland> islands, ProgressBar bar, Predicate<ForgeIsland> islandStillPurgeable, Consumer<ForgeIsland> onIslandFinished, Runnable onDone, ServerLevel level) {
         Task tracker = new Task(onDone, bar);
+        tracker.ProposeSubTask();
         bar.sendToast(new TextComponent("Loading " + islands.size() + " island(s)..."));
 
         for(ForgeIsland island : islands) {
@@ -45,21 +46,26 @@ public class IslandChunkManager {
             task.ProposeSubTask();
             for (ChunkPos chunkPos : island.getModifiedChunks()) {
                 task.AddSubTask();
-                requestChunkLoad(level, chunkPos, task);
+                requestChunkLoad(level, chunkPos, task, () -> islandStillPurgeable.test(island));
             }
             task.CompleteSubTask(true);
         }
+        tracker.CompleteSubTask(true);
     }
 
-    public static void requestChunkLoad(ServerLevel level, ChunkPos pos, Task task) {
+    public static void requestChunkLoad(ServerLevel level, ChunkPos pos, Task task, BooleanSupplier clearingAllowed) {
         ChunkTaskScheduler.queue(() -> {
+            if (!clearingAllowed.getAsBoolean()) {
+                task.CompleteSubTask(false);
+                return;
+            }
             task.getBar().sendToast(new TextComponent("Loading chunk " + pos + ""));
             ChunkAccess chunk = level.getChunk(pos.x, pos.z, ChunkStatus.FULL, true);
-            processChunk(chunk, level, task);
+            processChunk(chunk, level, task, clearingAllowed);
         });
     }
 
-    public static void processChunk(ChunkAccess chunk, ServerLevel level, Task task) {
+    public static void processChunk(ChunkAccess chunk, ServerLevel level, Task task, BooleanSupplier clearingAllowed) {
         new Thread(() -> {
 
             LOGGER.debug("Processing chunk {} for task {}", chunk.getPos(), task.getId());
@@ -84,7 +90,7 @@ public class IslandChunkManager {
             }
 
             if (nonAirBlocks.isEmpty()) {
-                task.CompleteSubTask(false);
+                level.getServer().execute(() -> task.CompleteSubTask(false));
                 LOGGER.debug("Finished processing (empty) chunk {} for task {}", chunk.getPos(), task.getId());
                 return;
             }
@@ -96,15 +102,17 @@ public class IslandChunkManager {
                 final int end = Math.min(i + batchSize, nonAirBlocks.size());
 
                 ChunkTaskScheduler.queue(() -> {
-                    for (int j = start; j < end; j++) {
-                        BlockPos pos = nonAirBlocks.get(j);
-                        chunk.setBlockState(pos, Blocks.AIR.defaultBlockState(), false); // silent
+                    if (clearingAllowed.getAsBoolean()) {
+                        for (int j = start; j < end; j++) {
+                            BlockPos pos = nonAirBlocks.get(j);
+                            chunk.setBlockState(pos, Blocks.AIR.defaultBlockState(), false); // silent
+                        }
                     }
 
                     // After last batch, send chunk update to players
                     if (end >= nonAirBlocks.size()) {
-                        ((ServerChunkCache) level.getChunkSource()).chunkMap.getPlayers(chunk.getPos(), false)
-                                .forEach(player -> ((ServerGamePacketListenerImpl) player.connection)
+                        level.getChunkSource().chunkMap.getPlayers(chunk.getPos(), false)
+                                .forEach(player -> player.connection
                                         .send(new ClientboundLevelChunkWithLightPacket((LevelChunk) chunk, level.getLightEngine(), null, null, false)));
 
                         task.CompleteSubTask(false);

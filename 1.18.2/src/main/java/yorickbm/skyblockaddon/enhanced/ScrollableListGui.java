@@ -158,7 +158,7 @@ public final class ScrollableListGui {
                     ForgeIsland island = (ForgeIsland) IslandManager.getInstance()
                             .getIslandByUUID(data.getUUID("island_id"));
                     if (island != null) {
-                        island.updateBiome(itemData.getString("biome"), player.getLevel());
+                        island.updateBiome(itemData.getString("biome"), player.server);
                         player.sendMessage(new TextComponent("Biome updated to " + itemData.getString("biome"))
                                 .withStyle(ChatFormatting.GREEN), player.getUUID());
                     }

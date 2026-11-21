@@ -192,7 +192,7 @@ public class IslandGuiEvents {
         }
 
         final String biome = modData.getString("biome");
-        event.getIsland().updateBiome(biome, event.getTarget().getLevel());
+        event.getIsland().updateBiome(biome, event.getTarget().server);
         event.getHolder().close();
 
         event.getTarget().sendMessage(

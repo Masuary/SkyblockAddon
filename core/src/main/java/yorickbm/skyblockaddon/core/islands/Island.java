@@ -213,6 +213,10 @@ public abstract class Island {
         return !hasOwner && !hasMembers;
     }
 
+    public boolean hasNoOwnerAndNoMembers() {
+        return this.getOwner().equals(SkyblockAddonCore.MOD_UUID) && this.getMembers().isEmpty();
+    }
+
     /**
      * Get bounding box for island from center point.
      * @return BoundingBox of Island
