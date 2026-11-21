@@ -19,7 +19,13 @@ public class ForgeIslandGroup extends IslandGroup implements NBTSerializable {
 
     public ForgeIslandGroup(UUID modUuid, ItemStack item, boolean b) {
         super(modUuid, b);
-        this.item = item;
+        this.item = singleItemCopyOf(item);
+    }
+
+    private static ItemStack singleItemCopyOf(final ItemStack source) {
+        final ItemStack singleItem = source.copy();
+        if (!singleItem.isEmpty()) singleItem.setCount(1);
+        return singleItem;
     }
 
     public ForgeIslandGroup(ForgeIslandGroup group) {

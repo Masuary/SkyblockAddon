@@ -57,7 +57,7 @@ public final class ConfirmCreateGroupGui {
             GUILibraryRegistry.openGUIForPlayer(player, "skyblockaddon:groups", data);
             return;
         }
-        island.addGroup(new ForgeIslandGroup(UUID.randomUUID(), held.copy(), false));
+        island.addGroup(new ForgeIslandGroup(UUID.randomUUID(), held, false));
         player.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.group.created")
                 .formatted(newGroupName, held.getItem().getRegistryName().toString().split(":")[1].trim()))
                 .withStyle(ChatFormatting.GREEN), player.getUUID());
