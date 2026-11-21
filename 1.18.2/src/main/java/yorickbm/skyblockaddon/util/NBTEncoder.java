@@ -6,13 +6,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import yorickbm.skyblockaddon.core.util.IslandDataFiles;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -138,7 +141,7 @@ public class NBTEncoder {
     /**
      * Save a collection of clazz to nbt files.
      *
-     * Each file is written via temp-file + atomic rename so a crash mid-write cannot leave a
+     * Each file is written via temp-file + fsync + atomic rename so a crash mid-write cannot leave a
      * truncated/corrupt file on disk. Stale `.tmp` siblings from a prior aborted save are
      * cleaned up before the new attempt.
      *
@@ -171,8 +174,12 @@ public class NBTEncoder {
         final Path path = folderPath.resolve(IslandDataFiles.fileNameFor(data.getId()));
         final Path tempPath = folderPath.resolve(data.getId() + IslandDataFiles.TEMPORARY_EXTENSION);
         try {
-            try (final OutputStream out = Files.newOutputStream(tempPath)) {
-                NbtIo.writeCompressed(data.serializeNBT(), out);
+            final ByteArrayOutputStream compressedIsland = new ByteArrayOutputStream();
+            NbtIo.writeCompressed(data.serializeNBT(), compressedIsland);
+            try (final FileChannel tempFile = FileChannel.open(tempPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
+                final ByteBuffer remainingBytes = ByteBuffer.wrap(compressedIsland.toByteArray());
+                while (remainingBytes.hasRemaining()) tempFile.write(remainingBytes);
+                tempFile.force(true);
             }
             try {
                 Files.move(tempPath, path, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
