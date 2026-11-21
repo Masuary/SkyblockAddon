@@ -4,10 +4,12 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import yorickbm.skyblockaddon.core.util.IslandDataFiles;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -15,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 public class NBTEncoder {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -40,7 +43,7 @@ public class NBTEncoder {
             instance.deserializeNBT(NBT);
             return instance;
         } catch (final Exception e) {
-            LOGGER.error("Failed to load '" + filePath.getFileName() + "'");
+            LOGGER.error("Failed to load island file '{}'", filePath.toAbsolutePath(), e);
             return null;
         }
     }
@@ -100,24 +103,33 @@ public class NBTEncoder {
             }
         }
 
-        //List files into list (skipping in-progress temp files)
-        final List<Path> nbtFiles = new ArrayList<>();
-        try {
-            Files.list(folderPath)
-                    .filter(p -> p.getFileName().toString().endsWith(".nbt"))
-                    .forEach(nbtFiles::add);
+        final List<Path> islandFiles = new ArrayList<>();
+        try (final Stream<Path> folderEntries = Files.list(folderPath)) {
+            folderEntries.filter(Files::isRegularFile).forEach(path -> {
+                if (IslandDataFiles.islandIdFromFileName(path.getFileName().toString()).isPresent()) {
+                    islandFiles.add(path);
+                } else if (!path.getFileName().toString().endsWith(IslandDataFiles.TEMPORARY_EXTENSION)) {
+                    LOGGER.warn("Ignoring '{}' in '{}': island files are named <island id>.nbt", path.getFileName(), folderPath);
+                }
+            });
         } catch (final IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to list island files in '" + folderPath.toAbsolutePath() + "'", e);
         }
 
-        for (final Path path : nbtFiles) {
+        for (final Path path : islandFiles) {
+            final UUID idFromFileName = IslandDataFiles.islandIdFromFileName(path.getFileName().toString()).orElseThrow();
             try (final FileInputStream fileInputStream = new FileInputStream(path.toFile())) {
                 final CompoundTag NBT = NbtIo.readCompressed(fileInputStream);
                 final T instance = clazz.getDeclaredConstructor().newInstance();
                 instance.deserializeNBT(NBT);
+                if (!idFromFileName.equals(instance.getId())) {
+                    LOGGER.error("Island file '{}' holds island {}; not loaded. Rename it to {} if it is the only copy of that island.",
+                            path.toAbsolutePath(), instance.getId(), IslandDataFiles.fileNameFor(instance.getId()));
+                    continue;
+                }
                 objects.add(instance);
             } catch (final Exception e) {
-                LOGGER.error("Failed to load '"+path.toFile().getName()+"'", e);
+                LOGGER.error("Failed to load island file '{}'; that island is not loaded", path.toAbsolutePath(), e);
             }
         }
         return objects;
@@ -141,24 +153,34 @@ public class NBTEncoder {
             }
         }
 
+        final List<UUID> failedSaves = new ArrayList<>();
         for (final T data : collection) {
-            final Path path = filePath.resolve(data.getId().toString() + ".nbt");
-            final Path tempPath = filePath.resolve(data.getId().toString() + ".nbt.tmp");
             try {
-                Files.deleteIfExists(tempPath);
-                try (final OutputStream out = Files.newOutputStream(tempPath)) {
-                    NbtIo.writeCompressed(data.serializeNBT(), out);
-                }
-                try {
-                    Files.move(tempPath, path, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-                } catch (final IOException atomicMoveFailed) {
-                    // Some filesystems (e.g. cross-device) don't support ATOMIC_MOVE; fall back to plain replace.
-                    Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING);
-                }
-            } catch (final IOException e) {
-                try { Files.deleteIfExists(tempPath); } catch (final IOException ignored) {}
-                throw new RuntimeException("Failed to save NBT for " + data.getId(), e);
+                writeAtomically(data, filePath);
+            } catch (final IOException | RuntimeException e) {
+                failedSaves.add(data.getId());
+                LOGGER.error("Failed to save island {} to '{}'", data.getId(), filePath.toAbsolutePath(), e);
             }
+        }
+        if (!failedSaves.isEmpty()) {
+            LOGGER.error("{} of {} island file(s) were not saved: {}", failedSaves.size(), collection.size(), failedSaves);
+        }
+    }
+
+    private static <T extends NBTSerializable> void writeAtomically(final T data, final Path folderPath) throws IOException {
+        final Path path = folderPath.resolve(IslandDataFiles.fileNameFor(data.getId()));
+        final Path tempPath = folderPath.resolve(data.getId() + IslandDataFiles.TEMPORARY_EXTENSION);
+        try {
+            try (final OutputStream out = Files.newOutputStream(tempPath)) {
+                NbtIo.writeCompressed(data.serializeNBT(), out);
+            }
+            try {
+                Files.move(tempPath, path, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            } catch (final AtomicMoveNotSupportedException atomicMoveNotSupported) {
+                Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally {
+            Files.deleteIfExists(tempPath);
         }
     }
 
