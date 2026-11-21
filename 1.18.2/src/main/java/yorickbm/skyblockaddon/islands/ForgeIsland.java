@@ -1,11 +1,13 @@
 package yorickbm.skyblockaddon.islands;
 
-import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.properties.Property;
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.QuartPos;
+import net.minecraft.core.Registry;
+import net.minecraft.core.SectionPos;
+import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -29,9 +31,18 @@ import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
-import yorickbm.skyblockaddon.util.*;
+import yorickbm.skyblockaddon.util.BiomeUtil;
+import yorickbm.skyblockaddon.util.ForgeConverter;
+import yorickbm.skyblockaddon.util.NBTSerializable;
+import yorickbm.skyblockaddon.util.NBTUtil;
+import yorickbm.skyblockaddon.util.ServerHelper;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 
 public class ForgeIsland extends Island implements NBTSerializable {
     private static final String BANNED_PLAYERS_TAG = "bannedPlayers";

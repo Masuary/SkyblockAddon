@@ -28,7 +28,14 @@ import yorickbm.skyblockaddon.util.NBTEncoder;
 import yorickbm.skyblockaddon.util.NBTUtil;
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class SkyblockAddonWorldCapability {

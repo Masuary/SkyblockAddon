@@ -23,7 +23,6 @@ import yorickbm.skyblockaddon.util.ForgeConverter;
 import yorickbm.skyblockaddon.util.ServerHelper;
 
 import java.util.Optional;
-import java.util.UUID;
 
 public class RegistryGuiEvents {
     private static final Logger LOGGER = LogManager.getLogger();

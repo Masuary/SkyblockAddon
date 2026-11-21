@@ -13,7 +13,11 @@ import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.util.ForgeConverter;
 import yorickbm.skyblockaddon.util.ServerHelper;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class ParticleEvents {
     private final Map<UUID, Island> LastIslandOn = new HashMap<>();
