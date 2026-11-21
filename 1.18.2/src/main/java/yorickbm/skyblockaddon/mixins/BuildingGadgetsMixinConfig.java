@@ -32,7 +32,7 @@ public class BuildingGadgetsMixinConfig {
         if(InteractionHandler.verifyEntity(player, standingOn).asBoolean()) return;
 
         if(
-                InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) player, (ServerLevel) player.getLevel(), player.getOnPos(), player.getMainHandItem(),  PermissionTriggers.ON_PLACE_BLOCK)
+                InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) player, (ServerLevel) player.getLevel(), player.getOnPos(), PermissionTriggers.ON_PLACE_BLOCK, InteractionHandler.subjectOfUntargetedPlacement(stack))
                 ||
                 InteractionHandler.checkPlayerInteraction(standingOn, (ServerPlayer) player, (ServerLevel) player.getLevel(), player.getOnPos(), player.getMainHandItem(),  PermissionTriggers.ON_BREAK_BLOCK)
         ) {

@@ -112,7 +112,8 @@ public class PermissionEvents {
         final AtomicReference<Island> standingOn = new AtomicReference<>();
         if (!InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) {
             final ServerPlayer player = (ServerPlayer) event.getEntity();
-            if (InteractionHandler.checkPlayerInteraction(standingOn, player, (ServerLevel) event.getWorld(), event.getPos(), player.getMainHandItem(), PermissionTriggers.ON_PLACE_BLOCK)) {
+            if (InteractionHandler.checkPlayerInteraction(standingOn, player, (ServerLevel) event.getWorld(), event.getPos(), PermissionTriggers.ON_PLACE_BLOCK,
+                    InteractionHandler.subjectOfPlacedBlock(player.getMainHandItem(), event.getPlacedBlock()))) {
                 InteractionHandler.deny(event, player);
             }
         }
