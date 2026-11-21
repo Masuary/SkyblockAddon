@@ -52,7 +52,13 @@ public class ForgeIsland extends Island implements NBTSerializable {
         super.setBiome(island.getBiome());
         setChunks(((ForgeIsland)island).getModifiedChunks());
 
-        island.getGroups().forEach(super::addGroup);
+        island.getGroups().forEach(group -> {
+            if(group instanceof ForgeIslandGroup forgeGroup) {
+                super.addGroup(new ForgeIslandGroup(forgeGroup));
+            } else {
+                super.addGroup(group);
+            }
+        });
         island.getMembers().forEach(m -> {
             final UUID groupId = island.getGroupForEntityUUID(m)
                     .map(IslandGroup::getId)
