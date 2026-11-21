@@ -53,6 +53,7 @@ public class ModEvents {
         new AdminPermissionCommand(event.getDispatcher());
         new AdminCleanChunksCommand(event.getDispatcher());
         new AdminAbandonedIslandsCommand(event.getDispatcher());
+        new AdminReservedSlotsCommand(event.getDispatcher());
 
         ConfigCommand.register(event.getDispatcher());
         LOGGER.info("Registered commands for " + SkyblockAddonCore.MOD_ID);

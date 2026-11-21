@@ -5,22 +5,17 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
-import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
+import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerChunkCache;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.ChunkStatus;
-import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.storage.LevelResource;
 import org.slf4j.Logger;
 import yorickbm.skyblockaddon.SkyBlockAddon;
 import yorickbm.skyblockaddon.configs.SkyblockAddonConfig;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
+import yorickbm.skyblockaddon.core.islands.IslandSlot;
+import yorickbm.skyblockaddon.core.islands.IslandSlotAllocator;
 import yorickbm.skyblockaddon.core.util.exceptions.NBTNotFoundException;
 import yorickbm.skyblockaddon.core.util.geometry.Vec3i;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
@@ -36,6 +31,7 @@ import java.util.stream.Collectors;
 
 public class SkyblockAddonWorldCapability {
     private static final Logger LOGGER = LogUtils.getLogger();
+    private static final String RESERVED_SLOTS_TAG = "reservedSlots";
     MinecraftServer serverInstance;
 
     public SkyblockAddonWorldCapability(final MinecraftServer server) {
@@ -49,7 +45,7 @@ public class SkyblockAddonWorldCapability {
      * Save data into NBT.
      */
     public void saveNBTData(final CompoundTag nbt) {
-        nbt.put("lastIsland", NBTUtil.Vec3iToNBT(IslandManager.getInstance().getLastLocation()));
+        nbt.put("lastIsland", NBTUtil.Vec3iToNBT(IslandManager.getInstance().getNextFreshSlot()));
         nbt.putInt("nbt-v", 6);
 
         ListTag listTag = new ListTag();
@@ -61,6 +57,15 @@ public class SkyblockAddonWorldCapability {
             listTag.add(vecTag);
         }
         nbt.put("reusableLocations", listTag);
+
+        final ListTag reservedSlotsTag = new ListTag();
+        for (final IslandSlot reservedSlot : IslandManager.getInstance().getAdminReservedSlots()) {
+            final CompoundTag slotTag = new CompoundTag();
+            slotTag.putInt("x", reservedSlot.x());
+            slotTag.putInt("z", reservedSlot.z());
+            reservedSlotsTag.add(slotTag);
+        }
+        nbt.put(RESERVED_SLOTS_TAG, reservedSlotsTag);
 
         saveIslandsToDisk();
     }
@@ -101,6 +106,13 @@ public class SkyblockAddonWorldCapability {
             }
         }
 
+        final List<IslandSlot> adminReservedSlots = new ArrayList<>();
+        final ListTag reservedSlotsTag = nbt.getList(RESERVED_SLOTS_TAG, Tag.TAG_COMPOUND);
+        for (int index = 0; index < reservedSlotsTag.size(); index++) {
+            final CompoundTag slotTag = reservedSlotsTag.getCompound(index);
+            adminReservedSlots.add(new IslandSlot(slotTag.getInt("x"), slotTag.getInt("z")));
+        }
+
         //legacy check
         if(nbt.contains("nbt-v") && nbt.getInt("nbt-v") < 5) {
             LOGGER.info("Converted {} island(s).", LegacyFormatter.formatLegacy(nbt, filePath));
@@ -110,8 +122,8 @@ public class SkyblockAddonWorldCapability {
         }
 
         final Collection<ForgeIsland> islands = NBTEncoder.loadFromFolder(filePath, ForgeIsland.class);
-        IslandManager.getInstance().initializeData(islands.stream().toList(), reusableLocations, lastLocation);
-        LOGGER.info("Loaded {} island(s).", islands.size());
+        IslandManager.getInstance().initializeData(islands.stream().toList(), reusableLocations, lastLocation, adminReservedSlots);
+        LOGGER.info("Loaded {} island(s), {} admin reserved slot(s).", islands.size(), adminReservedSlots.size());
     }
 
     /**
@@ -122,11 +134,13 @@ public class SkyblockAddonWorldCapability {
         public final List<BuildingBlock> blocks;
         public final int bigestX;
         public final int bigestZ;
+        public final long parseMillis;
 
-        public ParsedIslandStructure(final List<BuildingBlock> blocks, final int bigestX, final int bigestZ) {
+        public ParsedIslandStructure(final List<BuildingBlock> blocks, final int bigestX, final int bigestZ, final long parseMillis) {
             this.blocks = blocks;
             this.bigestX = bigestX;
             this.bigestZ = bigestZ;
+            this.parseMillis = parseMillis;
         }
     }
 
@@ -136,7 +150,7 @@ public class SkyblockAddonWorldCapability {
      */
     public ParsedIslandStructure parseIslandStructure() {
         final long parseStartNanos = System.nanoTime();
-        final CompoundTag nbt = SkyBlockAddon.getIslandNBT(serverInstance);
+        final CompoundTag nbt = Objects.requireNonNull(SkyBlockAddon.getIslandNBT(serverInstance), "island.nbt could not be read from the config folder or the mod jar");
 
         final ListTag paletteNbt = nbt.getList("palette", 10);
         final ListTag blocksNbt = nbt.getList("blocks", 10);
@@ -167,41 +181,44 @@ public class SkyblockAddonWorldCapability {
             throw new NBTNotFoundException();
         }
 
-        final long parseMs = (System.nanoTime() - parseStartNanos) / 1_000_000L;
-        LOGGER.info("Island gen: parsed structure NBT in {}ms ({} blocks, {} palette entries)", parseMs, blocks.size(), palette.size());
-
-        return new ParsedIslandStructure(blocks, bigestX, bigestZ);
+        final long parseMillis = (System.nanoTime() - parseStartNanos) / 1_000_000L;
+        return new ParsedIslandStructure(blocks, bigestX, bigestZ, parseMillis);
     }
 
     /**
      * A reserved island slot plus the chunk set the structure will touch. Returned by
-     * {@link #reserveIslandLocation}; consumed by {@link #placeReservedIsland}. Held by the
-     * IslandCreateCommand worker thread between the two so chunks can be pre-loaded off the
-     * server tick.
+     * {@link #reserveIslandLocation}; the island creation queue keeps those chunks loaded with a
+     * ticket and places the structure into them over several ticks.
      */
     public static final class IslandReservation {
         public final net.minecraft.core.Vec3i islandLocation;
         public final int height;
         public final net.minecraft.core.Vec3i offset;
         public final Set<ChunkPos> chunks;
+        public final List<IslandSlot> skippedSlots;
 
-        public IslandReservation(final net.minecraft.core.Vec3i islandLocation, final int height, final net.minecraft.core.Vec3i offset, final Set<ChunkPos> chunks) {
+        public IslandReservation(final net.minecraft.core.Vec3i islandLocation, final int height, final net.minecraft.core.Vec3i offset, final Set<ChunkPos> chunks, final List<IslandSlot> skippedSlots) {
             this.islandLocation = islandLocation;
             this.height = height;
             this.offset = offset;
             this.chunks = chunks;
+            this.skippedSlots = skippedSlots;
+        }
+
+        public Vec3i slotCenter() {
+            return ForgeConverter.ForgeToInternalVec3i(islandLocation);
         }
     }
 
     /**
-     * Server-thread only. Reserves the next grid slot via {@link IslandManager#getNextIslandGen()}
-     * and pre-computes the set of chunks the structure will touch. The caller is expected to
-     * pre-load those chunks (off-thread) and then call {@link #placeReservedIsland} on the server
-     * thread.
+     * Takes the next free grid slot (reserved and occupied slots are skipped) and computes the
+     * chunks the structure will touch. The caller owns the slot from here on and must either
+     * register an island on it or return it with {@link IslandManager#islandSpaceReusable}.
      */
     public IslandReservation reserveIslandLocation(final ParsedIslandStructure parsed) {
-        final net.minecraft.core.Vec3i islandLocation = ForgeConverter.InternalToForgeVec3i(IslandManager.getInstance().getNextIslandGen());
         final int height = Integer.parseInt(SkyblockAddonConfig.getForKey("island.spawn.height"));
+        final IslandSlotAllocator.Allocation allocation = IslandManager.getInstance().allocateIslandSlot();
+        final net.minecraft.core.Vec3i islandLocation = ForgeConverter.InternalToForgeVec3i(allocation.center());
         final net.minecraft.core.Vec3i offset = islandLocation.offset(-(parsed.bigestX / 2), height, -(parsed.bigestZ / 2));
 
         final Set<ChunkPos> chunks = new HashSet<>();
@@ -209,76 +226,9 @@ public class SkyblockAddonWorldCapability {
             if (building.getState().isAir()) continue;
             chunks.add(new ChunkPos(building.getPos().offset(offset)));
         }
-        //Also include the chunk we read the spawn heightmap from.
         chunks.add(new ChunkPos(new BlockPos(islandLocation.getX(), height, islandLocation.getZ())));
 
-        return new IslandReservation(islandLocation, height, offset, chunks);
-    }
-
-    /**
-     * Place a parsed structure into the world using a pre-reserved slot. Must run on the server
-     * thread. Pairs with {@link #reserveIslandLocation}.
-     *
-     * Performance: writes directly to {@link ChunkAccess#setBlockState} (no neighbor updates, no
-     * per-block packets) and sends one batched chunk packet per touched chunk at the end. This is
-     * the same pattern used by AdminPurgeCommand's chunk clear path. On a modded server with
-     * pervasive block-update listeners, a 16k-block island used to take minutes via
-     * {@code setBlockAndUpdate}; the direct-chunk approach completes well inside a single tick,
-     * provided the chunks were pre-loaded so {@code level.getChunk} doesn't trigger worldgen.
-     */
-    public net.minecraft.core.Vec3i placeReservedIsland(final ServerLevel level, final ParsedIslandStructure parsed, final IslandReservation reservation) {
-        final long placeStartNanos = System.nanoTime();
-
-        int placedCount = 0;
-        final HashMap<ChunkPos, ChunkAccess> touchedChunks = new HashMap<>();
-        for (final BuildingBlock building : parsed.blocks) {
-            if (building.getState().isAir()) continue;
-            final BlockPos pos = building.getPos().offset(reservation.offset);
-            final ChunkAccess chunk = touchedChunks.computeIfAbsent(
-                    new ChunkPos(pos),
-                    cp -> level.getChunk(cp.x, cp.z, ChunkStatus.FULL, true));
-            chunk.setBlockState(pos, building.getState(), false);
-            placedCount++;
-        }
-        final long writeMs = (System.nanoTime() - placeStartNanos) / 1_000_000L;
-
-        final long packetStartNanos = System.nanoTime();
-        final ServerChunkCache chunkSource = level.getChunkSource();
-        touchedChunks.forEach((cp, chunk) -> {
-            if (!(chunk instanceof LevelChunk levelChunk)) return;
-            chunkSource.chunkMap.getPlayers(cp, false).forEach(player ->
-                    ((ServerGamePacketListenerImpl) player.connection).send(
-                            new ClientboundLevelChunkWithLightPacket(levelChunk, level.getLightEngine(), null, null, false))
-            );
-        });
-        final long packetMs = (System.nanoTime() - packetStartNanos) / 1_000_000L;
-
-        final ChunkAccess heightChunk = level.getChunk(new BlockPos(reservation.islandLocation.getX(), reservation.height, reservation.islandLocation.getZ()));
-        final int topHeight = heightChunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, reservation.islandLocation.getX(), reservation.islandLocation.getZ()) + 2;
-
-        LOGGER.info("Island gen: placed {} blocks across {} chunk(s) at {} in {}ms (chunk packets: {}ms)",
-                placedCount, touchedChunks.size(), reservation.islandLocation, writeMs, packetMs);
-
-        return new net.minecraft.core.Vec3i(reservation.islandLocation.getX(), topHeight, reservation.islandLocation.getZ());
-    }
-
-    /**
-     * Server-thread convenience wrapper: reserves a slot AND places in one synchronous call.
-     * Triggers worldgen on the server tick if the touched chunks are not yet loaded. Prefer
-     * {@link #reserveIslandLocation} + off-thread chunk preload + {@link #placeReservedIsland}
-     * for performance.
-     */
-    public net.minecraft.core.Vec3i placeIslandStructure(final ServerLevel level, final ParsedIslandStructure parsed) {
-        return placeReservedIsland(level, parsed, reserveIslandLocation(parsed));
-    }
-
-    /**
-     * Server-thread-only convenience wrapper. Prefer {@link #parseIslandStructure()} +
-     * {@link #placeIslandStructure(ServerLevel, ParsedIslandStructure)} when you can do the
-     * parse off-thread.
-     */
-    public net.minecraft.core.Vec3i genIsland(final ServerLevel level) {
-        return placeIslandStructure(level, parseIslandStructure());
+        return new IslandReservation(islandLocation, height, offset, chunks, allocation.skippedSlots());
     }
 
     public void removeIslandNBT(ForgeIsland data) {
