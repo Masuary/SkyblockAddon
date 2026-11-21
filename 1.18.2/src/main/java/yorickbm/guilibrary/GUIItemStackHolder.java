@@ -54,7 +54,6 @@ public class GUIItemStackHolder implements Cloneable {
     public void setItem(final Item item) { this.item = item; }
     public Item getItem() { return this.item; }
 
-    public void setAmount(final int amount) { this.amount = amount; }
     public int getAmount() { return this.amount; }
 
     public ItemStack getItemStack() {
@@ -80,9 +79,6 @@ public class GUIItemStackHolder implements Cloneable {
 
     public void putData(final String key, final String value) {
         this.tag.putString(key, value);
-    }
-    public void setData(final CompoundTag tag) {
-        this.tag = tag;
     }
     public CompoundTag getData() {
         return this.tag;

@@ -1,7 +1,6 @@
 package yorickbm.skyblockaddon.core.islands;
 
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
-import yorickbm.skyblockaddon.core.util.geometry.Square;
 import yorickbm.skyblockaddon.core.util.geometry.Vec3i;
 
 import java.util.Optional;
@@ -21,11 +20,6 @@ final class TestIsland extends Island {
         final UUID groupId = UUID.randomUUID();
         addGroup(new TestGroup(groupId, name, false));
         return groupId;
-    }
-
-    @Override
-    public Square getIslandBoundingBoxAsSquare() {
-        throw new UnsupportedOperationException("not needed in tests");
     }
 
     @Override

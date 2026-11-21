@@ -1,11 +1,13 @@
 package yorickbm.skyblockaddon.islands;
 
-import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.properties.Property;
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.QuartPos;
+import net.minecraft.core.Registry;
+import net.minecraft.core.SectionPos;
+import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -24,20 +26,25 @@ import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.lang3.mutable.MutableInt;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
-import yorickbm.skyblockaddon.core.util.geometry.Square;
-import yorickbm.skyblockaddon.util.*;
+import yorickbm.skyblockaddon.util.BiomeUtil;
+import yorickbm.skyblockaddon.util.ForgeConverter;
+import yorickbm.skyblockaddon.util.NBTSerializable;
+import yorickbm.skyblockaddon.util.NBTUtil;
+import yorickbm.skyblockaddon.util.ServerHelper;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 
 public class ForgeIsland extends Island implements NBTSerializable {
-    private static final Logger LOGGER = LogManager.getLogger();
     private static final String BANNED_PLAYERS_TAG = "bannedPlayers";
     private static final String LAST_ACTIVE_TAG = "lastActive";
     private final List<ChunkPos> playerLoadedChunks = new ArrayList<>();
@@ -45,40 +52,11 @@ public class ForgeIsland extends Island implements NBTSerializable {
     public ForgeIsland() {
         super();
     }
-    public ForgeIsland(Island island) {
-        super.setId(island.getId());
-        super.setOwner(island.getOwner());
-        super.setSpawn(island.getSpawn());
-        super.setCenter(island.getCenter());
-        super.setVisibility(island.isVisible());
-        super.setSkullTexture(island.getSkullTexture());
-        super.setBiome(island.getBiome());
-        super.setLastActiveEpochMillis(island.getLastActiveEpochMillis());
-        setChunks(((ForgeIsland)island).getModifiedChunks());
-
-        island.getGroups().forEach(group -> {
-            if(group instanceof ForgeIslandGroup forgeGroup) {
-                super.addGroup(new ForgeIslandGroup(forgeGroup));
-            } else {
-                super.addGroup(group);
-            }
-        });
-        island.getMembers().forEach(m -> {
-            final UUID groupId = island.getGroupForEntityUUID(m)
-                    .map(IslandGroup::getId)
-                    .filter(gid -> !gid.equals(SkyblockAddonCore.VISITORS_GROUP_ID))
-                    .orElse(SkyblockAddonCore.MEMBERS_GROUP_ID);
-            if(!super.addMember(m, groupId)) {
-                LOGGER.warn("Failed to copy member {} into island {} during snapshot", m, getId());
-            }
-        });
-        island.getBannedPlayers().forEach(super::banPlayer);
-    }
     public ForgeIsland(UUID uuid, Vec3i vec) {
         super.setId(UUID.randomUUID());
         super.setOwner(uuid);
-        super.setSpawn(ForgeConverter.ForgeToInternalVec3i(vec));
-        super.setCenter(ForgeConverter.ForgeToInternalVec3i(vec));
+        super.setSpawn(ForgeConverter.forgeToInternalVec3i(vec));
+        super.setCenter(ForgeConverter.forgeToInternalVec3i(vec));
         super.setVisibility(false);
 
         this.genBasicGroups();
@@ -158,7 +136,7 @@ public class ForgeIsland extends Island implements NBTSerializable {
 
     public boolean isStandingOn(final ServerPlayer player) {
         return player.getLevel().dimension() == Level.OVERWORLD
-                && getIslandBoundingBox().isInside(ForgeConverter.ForgeToInternalVec3i(player.getOnPos()));
+                && getIslandBoundingBox().isInside(ForgeConverter.forgeToInternalVec3i(player.getOnPos()));
     }
 
     /**
@@ -199,7 +177,7 @@ public class ForgeIsland extends Island implements NBTSerializable {
         setBiome(biome); //Store full namespaced id so modded biomes persist correctly
 
         final ServerLevel serverlevel = server.overworld();
-        final BoundingBox boundingbox = ForgeConverter.InternalToForgeBoundingBox(getIslandBoundingBox());
+        final BoundingBox boundingbox = ForgeConverter.internalToForgeBoundingBox(getIslandBoundingBox());
         final Holder<Biome> holder = serverlevel.registryAccess()
                 .registryOrThrow(Registry.BIOME_REGISTRY)
                 .getOrCreateHolder(ResourceKey.create(ForgeRegistries.BIOMES.getRegistryKey(), ResourceLocation.parse(biome)));
@@ -247,7 +225,7 @@ public class ForgeIsland extends Island implements NBTSerializable {
                 QuartPos.fromBlock(pos.getMiddleBlockZ()));
         if (existing.is(targetKey.get())) return false;
 
-        final BoundingBox islandBbox = ForgeConverter.InternalToForgeBoundingBox(getIslandBoundingBox());
+        final BoundingBox islandBbox = ForgeConverter.internalToForgeBoundingBox(getIslandBoundingBox());
         applyConfiguredBiomeToChunk(chunk, serverlevel, targetHolder, islandBbox);
         return true;
     }
@@ -273,15 +251,6 @@ public class ForgeIsland extends Island implements NBTSerializable {
     public boolean removeChunk(final ChunkPos pos) {
         return playerLoadedChunks.remove(pos);
     }
-    public void setChunks(Collection<ChunkPos> data) {
-        this.playerLoadedChunks.addAll(data);
-    }
-
-    @Override
-    public Square getIslandBoundingBoxAsSquare() {
-        final yorickbm.skyblockaddon.core.util.geometry.BoundingBox box = getIslandBoundingBox();
-        return new yorickbm.skyblockaddon.util.geometry.Square(new Vec3i(box.minX, 0, box.minZ), new Vec3i(box.maxX, 0, box.maxZ));
-    }
 
     @Override
     public Optional<UUID> getGroupByName(String groupName) {
@@ -298,8 +267,8 @@ public class ForgeIsland extends Island implements NBTSerializable {
         tag.putString("skullTexture", getSkullTexture());
         tag.putBoolean("travelability", isVisible());
         tag.putLong(LAST_ACTIVE_TAG, getLastActiveEpochMillis());
-        tag.put("spawn", NBTUtil.Vec3iToNBT(getSpawn()));
-        tag.put("center", NBTUtil.Vec3iToNBT(getCenter()));
+        tag.put("spawn", NBTUtil.vec3iToNBT(getSpawn()));
+        tag.put("center", NBTUtil.vec3iToNBT(getCenter()));
 
         final CompoundTag groups = new CompoundTag();
         for(final IslandGroup group : getGroups()) {
@@ -340,8 +309,8 @@ public class ForgeIsland extends Island implements NBTSerializable {
         setVisibility(tag.getBoolean("travelability"));
         setLastActiveEpochMillis(tag.getLong(LAST_ACTIVE_TAG));
         setSkullTexture(tag.getString("skullTexture"));
-        setSpawn(NBTUtil.NBTToVec3i(tag.getCompound("spawn")));
-        setCenter(NBTUtil.NBTToVec3i(tag.getCompound("center")));
+        setSpawn(NBTUtil.nbtToVec3i(tag.getCompound("spawn")));
+        setCenter(NBTUtil.nbtToVec3i(tag.getCompound("center")));
 
         final CompoundTag groups = tag.getCompound("groups");
         for(final String groupUuid : groups.getAllKeys()) {

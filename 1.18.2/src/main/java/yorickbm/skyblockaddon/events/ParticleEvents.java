@@ -13,7 +13,11 @@ import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.util.ForgeConverter;
 import yorickbm.skyblockaddon.util.ServerHelper;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class ParticleEvents {
     private final Map<UUID, Island> LastIslandOn = new HashMap<>();
@@ -23,7 +27,7 @@ public class ParticleEvents {
         if(!(event.getEntity() instanceof  final ServerPlayer player) || event.getEntity() instanceof FakePlayer) return; //Ignore everything except server player
         if(player.getLevel().dimension() != Level.OVERWORLD) return; //Ignore none overworld events
 
-        Island island = IslandManager.getInstance().getIslandByPos(ForgeConverter.ForgeToInternalVec3i(player.getOnPos()));
+        Island island = IslandManager.getInstance().getIslandByPos(ForgeConverter.forgeToInternalVec3i(player.getOnPos()));
         if(island != null) {
             LastIslandOn.put(player.getUUID(), island);
         } else {
@@ -31,17 +35,17 @@ public class ParticleEvents {
         }
         if(island == null) return;
 
-        final BoundingBox box = ForgeConverter.InternalToForgeBoundingBox(island.getIslandBoundingBox());
+        final BoundingBox box = ForgeConverter.internalToForgeBoundingBox(island.getIslandBoundingBox());
         final Vec3i P3 = player.getOnPos().offset(0, 1, 0);
         final Vec3i P1 = new Vec3i(box.maxX(), P3.getY(), box.maxZ());
         final Vec3i P2 = new Vec3i(box.minX(), P3.getY(), box.minZ());
 
-        for(final Vec3i point : getLoationsOnEdge(P1, P2, P3)) {
+        for(final Vec3i point : getLocationsOnEdge(P1, P2, P3)) {
             ServerHelper.showParticleToPlayer(player, point, ParticleTypes.CLOUD, 3);
         }
     }
 
-    private List<Vec3i> getLoationsOnEdge(final Vec3i P1, final Vec3i P2, final Vec3i P3) {
+    private List<Vec3i> getLocationsOnEdge(final Vec3i P1, final Vec3i P2, final Vec3i P3) {
         final Vec3i AB = new Vec3i(P3.getX(), P3.getY(), P1.getZ());
         final Vec3i AD = new Vec3i(P1.getX(), P3.getY(), P3.getZ());
 

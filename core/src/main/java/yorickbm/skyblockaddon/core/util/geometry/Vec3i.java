@@ -11,7 +11,6 @@ public final class Vec3i {
         this.z = z;
     }
 
-    // --- Getters ---
     public int getX() {
         return x;
     }
@@ -24,41 +23,8 @@ public final class Vec3i {
         return z;
     }
 
-    // --- Basic operations ---
-
     public Vec3i add(Vec3i other) {
         return new Vec3i(this.x + other.x, this.y + other.y, this.z + other.z);
-    }
-
-    public Vec3i subtract(Vec3i other) {
-        return new Vec3i(this.x - other.x, this.y - other.y, this.z - other.z);
-    }
-
-    public Vec3i multiply(int scalar) {
-        return new Vec3i(this.x * scalar, this.y * scalar, this.z * scalar);
-    }
-
-    public Vec3i divide(int scalar) {
-        if (scalar == 0) throw new ArithmeticException("Division by zero");
-        return new Vec3i(this.x / scalar, this.y / scalar, this.z / scalar);
-    }
-
-    // --- Utility methods ---
-
-    public int dot(Vec3i other) {
-        return this.x * other.x + this.y * other.y + this.z * other.z;
-    }
-
-    public double length() {
-        return Math.sqrt(x * x + y * y + z * z);
-    }
-
-    public int manhattanLength() {
-        return Math.abs(x) + Math.abs(y) + Math.abs(z);
-    }
-
-    public Vec3i negate() {
-        return new Vec3i(-x, -y, -z);
     }
 
     @Override

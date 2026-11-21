@@ -65,7 +65,7 @@ public class IslandGuiEvents {
             return;
         }
 
-        if(!event.getIsland().getIslandBoundingBox().isInside(ForgeConverter.ForgeToInternalVec3i(event.getTarget().getOnPos()))) {
+        if(!event.getIsland().getIslandBoundingBox().isInside(ForgeConverter.forgeToInternalVec3i(event.getTarget().getOnPos()))) {
             event.getTarget().sendMessage(new TextComponent(
                     SkyBlockAddonLanguage.getLocalizedString("island.setspawn.outside")
             ).withStyle(ChatFormatting.RED),event.getTarget().getUUID());
@@ -74,7 +74,7 @@ public class IslandGuiEvents {
             return;
         }
 
-        event.getIsland().setSpawnPoint(ForgeConverter.ForgeToInternalVec3i(event.getTarget().blockPosition()));
+        event.getIsland().setSpawnPoint(ForgeConverter.forgeToInternalVec3i(event.getTarget().blockPosition()));
         event.getHolder().update();
     }
 

@@ -30,7 +30,7 @@ public class IslandChunkManager {
 
     public static void createDummies(List<ForgeIsland> islands, ProgressBar bar, Predicate<ForgeIsland> islandStillPurgeable, Consumer<ForgeIsland> onIslandFinished, Runnable onDone, ServerLevel level) {
         Task tracker = new Task(onDone, bar);
-        tracker.ProposeSubTask();
+        tracker.proposeSubTask();
         bar.sendToast(new TextComponent("Loading " + islands.size() + " island(s)..."));
 
         for(ForgeIsland island : islands) {
@@ -38,25 +38,25 @@ public class IslandChunkManager {
 
             Task task = new Task(() -> {
                 onIslandFinished.accept(island);
-                tracker.CompleteSubTask(false);
+                tracker.completeSubTask(false);
             }, bar);
-            tracker.AddSubTask();
+            tracker.addSubTask();
             LOGGER.debug("Created task {} for island {} ({})", task.getId(), island.getId(), island.getModifiedChunks().size());
 
-            task.ProposeSubTask();
+            task.proposeSubTask();
             for (ChunkPos chunkPos : island.getModifiedChunks()) {
-                task.AddSubTask();
+                task.addSubTask();
                 requestChunkLoad(level, chunkPos, task, () -> islandStillPurgeable.test(island));
             }
-            task.CompleteSubTask(true);
+            task.completeSubTask(true);
         }
-        tracker.CompleteSubTask(true);
+        tracker.completeSubTask(true);
     }
 
     public static void requestChunkLoad(ServerLevel level, ChunkPos pos, Task task, BooleanSupplier clearingAllowed) {
         ChunkTaskScheduler.queue(() -> {
             if (!clearingAllowed.getAsBoolean()) {
-                task.CompleteSubTask(false);
+                task.completeSubTask(false);
                 return;
             }
             task.getBar().sendToast(new TextComponent("Loading chunk " + pos + ""));
@@ -90,7 +90,7 @@ public class IslandChunkManager {
             }
 
             if (nonAirBlocks.isEmpty()) {
-                level.getServer().execute(() -> task.CompleteSubTask(false));
+                level.getServer().execute(() -> task.completeSubTask(false));
                 LOGGER.debug("Finished processing (empty) chunk {} for task {}", chunk.getPos(), task.getId());
                 return;
             }
@@ -115,7 +115,7 @@ public class IslandChunkManager {
                                 .forEach(player -> player.connection
                                         .send(new ClientboundLevelChunkWithLightPacket((LevelChunk) chunk, level.getLightEngine(), null, null, false)));
 
-                        task.CompleteSubTask(false);
+                        task.completeSubTask(false);
                         task.getBar().sendToast(new TextComponent("Cleared chunk " + chunk.getPos() + ""));
                     }
                 });
@@ -141,14 +141,14 @@ public class IslandChunkManager {
         }
 
 
-        public int ProposeSubTask() {
+        public int proposeSubTask() {
             return subTasks.incrementAndGet();
         }
-        public int AddSubTask() {
+        public int addSubTask() {
             bar.addTask();
-            return ProposeSubTask();
+            return proposeSubTask();
         }
-        public int CompleteSubTask(boolean isProposed) {
+        public int completeSubTask(boolean isProposed) {
             int remaining = subTasks.decrementAndGet();
             if(!isProposed) bar.completeTask();
 

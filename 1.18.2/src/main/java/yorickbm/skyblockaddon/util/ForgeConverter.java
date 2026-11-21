@@ -15,19 +15,19 @@ import java.util.stream.Collectors;
 
 public class ForgeConverter {
 
-    public static yorickbm.skyblockaddon.core.util.geometry.Vec3i ForgeToInternalVec3i(Vec3i vec) {
+    public static yorickbm.skyblockaddon.core.util.geometry.Vec3i forgeToInternalVec3i(Vec3i vec) {
         return new yorickbm.skyblockaddon.core.util.geometry.Vec3i(vec.getX(), vec.getY(), vec.getZ());
     }
 
-    public static Vec3i InternalToForgeVec3i(yorickbm.skyblockaddon.core.util.geometry.Vec3i vec) {
+    public static Vec3i internalToForgeVec3i(yorickbm.skyblockaddon.core.util.geometry.Vec3i vec) {
         return new Vec3i(vec.getX(), vec.getY(), vec.getZ());
     }
 
-    public static BoundingBox InternalToForgeBoundingBox(yorickbm.skyblockaddon.core.util.geometry.BoundingBox box) {
+    public static BoundingBox internalToForgeBoundingBox(yorickbm.skyblockaddon.core.util.geometry.BoundingBox box) {
         return new BoundingBox((int)box.minX, (int)box.minY, (int)box.minZ, (int)box.maxX, (int)box.maxY, (int)box.maxZ);
     }
 
-    public static GUIItemStackHolder JSONItemToGUIItemStackHolder(ItemStackJson jsonData) {
+    public static GUIItemStackHolder jsonItemToGUIItemStackHolder(ItemStackJson jsonData) {
         if (jsonData == null) return null;
 
         Item item = ForgeRegistries.ITEMS.getValue(ResourceLocation.parse(jsonData.getItem().toLowerCase()));;

@@ -65,7 +65,7 @@ public class ChunkEvents {
         //without this filter a vault placement at (x, z) gets attributed to whichever overworld
         //island's bbox contains that (x, z).
         if (serverLevel.dimension() != Level.OVERWORLD) return;
-        final ForgeIsland island = (ForgeIsland) IslandManager.getInstance().getIslandByPos(ForgeConverter.ForgeToInternalVec3i(pos));
+        final ForgeIsland island = (ForgeIsland) IslandManager.getInstance().getIslandByPos(ForgeConverter.forgeToInternalVec3i(pos));
         if (island == null) return;
         if (island.storeChunk(new ChunkPos(pos))) {
             LOGGER.debug("Chunk {} added to island {} via modification at {}", new ChunkPos(pos), island.getId(), pos);
@@ -85,10 +85,10 @@ public class ChunkEvents {
         if (!(event.getWorld() instanceof final ServerLevel serverLevel)) return;
         if (serverLevel.dimension() != Level.OVERWORLD) return; //Islands live in the overworld only.
 
-        final ChunkAccess chunk = (ChunkAccess) event.getChunk();
+        final ChunkAccess chunk = event.getChunk();
         final ChunkPos pos = chunk.getPos();
 
-        final ForgeIsland island = (ForgeIsland) IslandManager.getInstance().getIslandByPos(ForgeConverter.ForgeToInternalVec3i(chunk.getPos().getMiddleBlockPosition(155)));
+        final ForgeIsland island = (ForgeIsland) IslandManager.getInstance().getIslandByPos(ForgeConverter.forgeToInternalVec3i(chunk.getPos().getMiddleBlockPosition(155)));
         if (island == null) return;
 
         if (chunkHasAnyContent(chunk) && island.storeChunk(chunk)) {

@@ -111,7 +111,7 @@ public class PneumaticCraftProtectionEvents {
         if (ownerUuid == null) return false;
 
         final Island island = IslandManager.getInstance()
-                .getIslandByPos(ForgeConverter.ForgeToInternalVec3i(affectedPos));
+                .getIslandByPos(ForgeConverter.forgeToInternalVec3i(affectedPos));
         if (island == null) return false;
 
         return !island.isPartOf(ownerUuid);
@@ -129,7 +129,7 @@ public class PneumaticCraftProtectionEvents {
         if (player == null) return;
         if (!isPneumaticCraftItem(player.getMainHandItem()) && !isPneumaticCraftItem(player.getOffhandItem())) return;
         if (shouldBlock(player, event.getPos(), event.getWorld())) {
-            SkyBlockAddon.CustomDebugMessages(LOGGER, "PNC blocked: BreakEvent at " + event.getPos());
+            SkyBlockAddon.logPermissionDebug(LOGGER, "PNC blocked: BreakEvent at " + event.getPos());
             event.setCanceled(true);
             notifyDeny(player);
         }
@@ -145,7 +145,7 @@ public class PneumaticCraftProtectionEvents {
         }
         if (!placedIsPnc && !handIsPnc) return;
         if (shouldBlock(actor, event.getPos(), event.getWorld())) {
-            SkyBlockAddon.CustomDebugMessages(LOGGER, "PNC blocked: EntityPlaceEvent at " + event.getPos());
+            SkyBlockAddon.logPermissionDebug(LOGGER, "PNC blocked: EntityPlaceEvent at " + event.getPos());
             if (event.isCancelable()) event.setCanceled(true);
             else event.setResult(Event.Result.DENY);
             notifyDeny(actor);
@@ -160,7 +160,7 @@ public class PneumaticCraftProtectionEvents {
         final Vec3 center = event.getExplosion().getPosition();
         final BlockPos pos = new BlockPos(center.x, center.y, center.z);
         if (shouldBlock(source, pos, event.getWorld())) {
-            SkyBlockAddon.CustomDebugMessages(LOGGER, "PNC blocked: Explosion at " + pos);
+            SkyBlockAddon.logPermissionDebug(LOGGER, "PNC blocked: Explosion at " + pos);
             event.setCanceled(true);
         }
     }
@@ -172,7 +172,7 @@ public class PneumaticCraftProtectionEvents {
         final Vec3 hit = event.getRayTraceResult().getLocation();
         final BlockPos pos = new BlockPos(hit.x, hit.y, hit.z);
         if (shouldBlock(projectile, pos, projectile.getLevel())) {
-            SkyBlockAddon.CustomDebugMessages(LOGGER, "PNC blocked: ProjectileImpact " + projectile.getType() + " at " + pos);
+            SkyBlockAddon.logPermissionDebug(LOGGER, "PNC blocked: ProjectileImpact " + projectile.getType() + " at " + pos);
             event.setCanceled(true);
             projectile.discard();
         }
@@ -184,7 +184,7 @@ public class PneumaticCraftProtectionEvents {
         if (!isPneumaticCraftEntity(entity)) return;
         final BlockPos pos = entity.blockPosition();
         if (shouldBlock(entity, pos, event.getWorld())) {
-            SkyBlockAddon.CustomDebugMessages(LOGGER, "PNC blocked: EntityJoinWorld " + entity.getType() + " at " + pos);
+            SkyBlockAddon.logPermissionDebug(LOGGER, "PNC blocked: EntityJoinWorld " + entity.getType() + " at " + pos);
             event.setCanceled(true);
         }
     }
@@ -193,7 +193,7 @@ public class PneumaticCraftProtectionEvents {
     public void onRightClickItem(final PlayerInteractEvent.RightClickItem event) {
         if (!isPneumaticCraftItem(event.getItemStack())) return;
         if (shouldBlock(event.getPlayer(), event.getPlayer().blockPosition(), event.getWorld())) {
-            SkyBlockAddon.CustomDebugMessages(LOGGER, "PNC blocked: RightClickItem " + event.getItemStack().getItem());
+            SkyBlockAddon.logPermissionDebug(LOGGER, "PNC blocked: RightClickItem " + event.getItemStack().getItem());
             event.setCanceled(true);
             notifyDeny(event.getPlayer());
         }
@@ -205,7 +205,7 @@ public class PneumaticCraftProtectionEvents {
         final boolean targetIsPnc = isPneumaticCraftBlock(event.getWorld().getBlockState(event.getPos()));
         if (!handIsPnc && !targetIsPnc) return;
         if (shouldBlock(event.getPlayer(), event.getPos(), event.getWorld())) {
-            SkyBlockAddon.CustomDebugMessages(LOGGER, "PNC blocked: RightClickBlock at " + event.getPos());
+            SkyBlockAddon.logPermissionDebug(LOGGER, "PNC blocked: RightClickBlock at " + event.getPos());
             event.setCanceled(true);
             notifyDeny(event.getPlayer());
         }
@@ -215,7 +215,7 @@ public class PneumaticCraftProtectionEvents {
     public void onLeftClickBlock(final PlayerInteractEvent.LeftClickBlock event) {
         if (!isPneumaticCraftItem(event.getItemStack())) return;
         if (shouldBlock(event.getPlayer(), event.getPos(), event.getWorld())) {
-            SkyBlockAddon.CustomDebugMessages(LOGGER, "PNC blocked: LeftClickBlock at " + event.getPos());
+            SkyBlockAddon.logPermissionDebug(LOGGER, "PNC blocked: LeftClickBlock at " + event.getPos());
             event.setCanceled(true);
             notifyDeny(event.getPlayer());
         }
@@ -226,7 +226,7 @@ public class PneumaticCraftProtectionEvents {
         if (!isPneumaticCraftItem(event.getItem())) return;
         if (!(event.getEntity() instanceof Player player)) return;
         if (shouldBlock(player, player.blockPosition(), player.getLevel())) {
-            SkyBlockAddon.CustomDebugMessages(LOGGER, "PNC blocked: UseItemStart " + event.getItem().getItem());
+            SkyBlockAddon.logPermissionDebug(LOGGER, "PNC blocked: UseItemStart " + event.getItem().getItem());
             event.setCanceled(true);
             notifyDeny(player);
         }

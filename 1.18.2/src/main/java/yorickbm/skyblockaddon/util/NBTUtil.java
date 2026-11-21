@@ -10,7 +10,7 @@ import java.util.Objects;
 
 public class NBTUtil {
 
-    public static CompoundTag Vec3iToNBT(final Vec3i location) {
+    public static CompoundTag vec3iToNBT(final Vec3i location) {
         final CompoundTag tag = new CompoundTag();
         tag.putInt("x", location.getX());
         tag.putInt("y", location.getY());
@@ -18,11 +18,11 @@ public class NBTUtil {
         return tag;
     }
 
-    public static Vec3i NBTToVec3i(final CompoundTag tag) {
+    public static Vec3i nbtToVec3i(final CompoundTag tag) {
         return new Vec3i(tag.getInt("x"), tag.getInt("y"), tag.getInt("z"));
     }
 
-    public static CompoundTag ItemStackToNBT(final ItemStack item) {
+    public static CompoundTag itemStackToNBT(final ItemStack item) {
         final CompoundTag tag = new CompoundTag();
 
         tag.putString("registryName", Objects.requireNonNull(item.getItem().getRegistryName()).toString());
@@ -31,7 +31,7 @@ public class NBTUtil {
         return tag;
     }
 
-    public static ItemStack NBTToItemStack(final CompoundTag tag) {
+    public static ItemStack nbtToItemStack(final CompoundTag tag) {
         final ItemStack item = new ItemStack(ForgeRegistries.ITEMS.getValue(ResourceLocation.parse(tag.getString("registryName"))));
         item.setTag(tag.getCompound("NBT"));
         return item;

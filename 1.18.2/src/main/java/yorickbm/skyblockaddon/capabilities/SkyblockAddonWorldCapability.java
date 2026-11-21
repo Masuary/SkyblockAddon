@@ -28,7 +28,14 @@ import yorickbm.skyblockaddon.util.NBTEncoder;
 import yorickbm.skyblockaddon.util.NBTUtil;
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class SkyblockAddonWorldCapability {
@@ -65,7 +72,7 @@ public class SkyblockAddonWorldCapability {
 
     private static void writeGridState(final CompoundTag nbt, final Vec3i nextFreshSlot, final Collection<Vec3i> reusableSlots,
                                        final Collection<IslandSlot> adminReservedSlots) {
-        nbt.put("lastIsland", NBTUtil.Vec3iToNBT(nextFreshSlot));
+        nbt.put("lastIsland", NBTUtil.vec3iToNBT(nextFreshSlot));
         nbt.putInt("nbt-v", 6);
 
         ListTag listTag = new ListTag();
@@ -125,7 +132,7 @@ public class SkyblockAddonWorldCapability {
      * when this file is missing or unreadable.
      */
     public void loadNBTData(final CompoundTag nbt) {
-        Vec3i lastLocation = NBTUtil.NBTToVec3i(nbt.getCompound("lastIsland"));
+        Vec3i lastLocation = NBTUtil.nbtToVec3i(nbt.getCompound("lastIsland"));
         List<Vec3i> reusableLocations = new ArrayList<>();
 
         final Path filePath = islandDataFolder();
@@ -189,14 +196,14 @@ public class SkyblockAddonWorldCapability {
      */
     public static final class ParsedIslandStructure {
         public final List<BuildingBlock> blocks;
-        public final int bigestX;
-        public final int bigestZ;
+        public final int biggestX;
+        public final int biggestZ;
         public final long parseMillis;
 
-        public ParsedIslandStructure(final List<BuildingBlock> blocks, final int bigestX, final int bigestZ, final long parseMillis) {
+        public ParsedIslandStructure(final List<BuildingBlock> blocks, final int biggestX, final int biggestZ, final long parseMillis) {
             this.blocks = blocks;
-            this.bigestX = bigestX;
-            this.bigestZ = bigestZ;
+            this.biggestX = biggestX;
+            this.biggestZ = biggestZ;
             this.parseMillis = parseMillis;
         }
     }
@@ -214,15 +221,15 @@ public class SkyblockAddonWorldCapability {
 
         final ArrayList<BuildingBlock> blocks = new ArrayList<>();
         final ArrayList<BlockState> palette = new ArrayList<>();
-        int bigestX = 0, bigestZ = 0;
+        int biggestX = 0, biggestZ = 0;
 
         for (int i = 0; i < paletteNbt.size(); i++) palette.add(NbtUtils.readBlockState(paletteNbt.getCompound(i)));
         for (int i = 0; i < blocksNbt.size(); i++) {
             final CompoundTag blockNbt = blocksNbt.getCompound(i);
             final ListTag blockPosNbt = blockNbt.getList("pos", 3);
 
-            if (blockPosNbt.getInt(0) > bigestX) bigestX = blockPosNbt.getInt(0);
-            if (blockPosNbt.getInt(2) > bigestZ) bigestZ = blockPosNbt.getInt(2);
+            if (blockPosNbt.getInt(0) > biggestX) biggestX = blockPosNbt.getInt(0);
+            if (blockPosNbt.getInt(2) > biggestZ) biggestZ = blockPosNbt.getInt(2);
 
             blocks.add(new BuildingBlock(
                     new BlockPos(
@@ -239,7 +246,7 @@ public class SkyblockAddonWorldCapability {
         }
 
         final long parseMillis = (System.nanoTime() - parseStartNanos) / 1_000_000L;
-        return new ParsedIslandStructure(blocks, bigestX, bigestZ, parseMillis);
+        return new ParsedIslandStructure(blocks, biggestX, biggestZ, parseMillis);
     }
 
     /**
@@ -263,7 +270,7 @@ public class SkyblockAddonWorldCapability {
         }
 
         public Vec3i slotCenter() {
-            return ForgeConverter.ForgeToInternalVec3i(islandLocation);
+            return ForgeConverter.forgeToInternalVec3i(islandLocation);
         }
     }
 
@@ -275,8 +282,8 @@ public class SkyblockAddonWorldCapability {
     public IslandReservation reserveIslandLocation(final ParsedIslandStructure parsed) {
         final int height = Integer.parseInt(SkyblockAddonConfig.getForKey("island.spawn.height"));
         final IslandSlotAllocator.Allocation allocation = IslandManager.getInstance().allocateIslandSlot();
-        final net.minecraft.core.Vec3i islandLocation = ForgeConverter.InternalToForgeVec3i(allocation.center());
-        final net.minecraft.core.Vec3i offset = islandLocation.offset(-(parsed.bigestX / 2), height, -(parsed.bigestZ / 2));
+        final net.minecraft.core.Vec3i islandLocation = ForgeConverter.internalToForgeVec3i(allocation.center());
+        final net.minecraft.core.Vec3i offset = islandLocation.offset(-(parsed.biggestX / 2), height, -(parsed.biggestZ / 2));
 
         final Set<ChunkPos> chunks = new HashSet<>();
         for (final BuildingBlock building : parsed.blocks) {

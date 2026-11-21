@@ -31,9 +31,14 @@ import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.permissions.PermissionManager;
 import yorickbm.skyblockaddon.core.util.RegistrySelector;
 import yorickbm.skyblockaddon.core.util.ResourceManager;
-import yorickbm.skyblockaddon.core.util.ThreadManager;
 import yorickbm.skyblockaddon.core.util.UsernameCache;
-import yorickbm.skyblockaddon.events.*;
+import yorickbm.skyblockaddon.events.ChunkEvents;
+import yorickbm.skyblockaddon.events.IslandBanEvents;
+import yorickbm.skyblockaddon.events.ModEvents;
+import yorickbm.skyblockaddon.events.ParticleEvents;
+import yorickbm.skyblockaddon.events.PermissionEvents;
+import yorickbm.skyblockaddon.events.PlayerEvents;
+import yorickbm.skyblockaddon.events.PneumaticCraftProtectionEvents;
 import yorickbm.skyblockaddon.events.Gui.GuiEvents;
 import yorickbm.skyblockaddon.events.Gui.IslandGuiEvents;
 import yorickbm.skyblockaddon.events.Gui.RegistryGuiEvents;
@@ -80,7 +85,7 @@ public class SkyBlockAddon {
         if(SkyblockAddonConfig.getForKey("island.particles.border").equalsIgnoreCase("TRUE")) MinecraftForge.EVENT_BUS.register(new ParticleEvents());
     }
 
-    public static void CustomDebugMessages(final org.apache.logging.log4j.Logger log, final String msg) {
+    public static void logPermissionDebug(final org.apache.logging.log4j.Logger log, final String msg) {
         if(SkyblockAddonConfig.getForKey("permissions.debug").equalsIgnoreCase("TRUE")) log.info(msg);
     }
 
@@ -151,7 +156,6 @@ public class SkyBlockAddon {
     public void onServerShutDown(final ServerStoppedEvent event) {
         try {
             ChunkTaskScheduler.clear();
-            ThreadManager.terminateAllThreads();
         } catch (final NoClassDefFoundError ex) {
             //Seems to be thrown
         }

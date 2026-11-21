@@ -7,13 +7,18 @@ import yorickbm.skyblockaddon.core.util.geometry.BoundingBox;
 import yorickbm.skyblockaddon.core.util.geometry.Vec3i;
 
 import javax.annotation.Nonnull;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class IslandManager {
@@ -184,23 +189,6 @@ public class IslandManager {
      */
     public Collection<Island> getIslands() {
         return Collections.unmodifiableCollection(islandsByUUID.values());
-    }
-
-    /**
-     * Get collection of all current islands in cache
-     */
-    public Collection<Island> getIslandsFromCache() {
-        Set<UUID> activeIslandUUIDs = CACHE_islandByPlayerUUID
-                .asMap()
-                .values()
-                .stream()
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toSet());
-
-        return activeIslandUUIDs.stream()
-                .map(islandsByUUID::get)
-                .filter(Objects::nonNull).toList();
     }
 
     /**

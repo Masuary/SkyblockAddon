@@ -32,6 +32,10 @@ dependencies {
     testImplementation 'org.apache.logging.log4j:log4j-api:2.17.1'
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs.addAll(['-Xlint:all', '-Werror'])
+}
+
 test {
     useJUnitPlatform()
 }

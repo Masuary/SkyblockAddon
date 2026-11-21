@@ -226,13 +226,6 @@ public final class PermissionTogglesGui {
         return null;
     }
 
-    private static String prettifyCategory(String categoryId) {
-        if (categoryId == null || categoryId.isEmpty()) return "Permissions";
-        return Arrays.stream(categoryId.replace("_", " ").split(" "))
-                .map(w -> w.substring(0, 1).toUpperCase() + w.substring(1).toLowerCase())
-                .collect(Collectors.joining(" "));
-    }
-
     private static String prettifyPermissionId(String permissionId) {
         if (permissionId == null || permissionId.isEmpty()) return "Unknown";
         String name = permissionId;

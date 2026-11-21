@@ -42,7 +42,11 @@ import yorickbm.skyblockaddon.islands.ForgeIslandGroup;
 import yorickbm.skyblockaddon.islands.IslandActionService;
 import yorickbm.skyblockaddon.util.PlayerNames;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /** The island lists (travel, members, biomes, groups, group members, assign group, visitors, bans, transfer) as named rows with a back button. */
@@ -401,8 +405,8 @@ public final class ScrollableListGui {
             ItemStackComponent component = new ItemStackComponent();
             biomeRegistry.getNextData(component);
 
-            String biomeName = (String) component.getObject("biome", String.class);
-            String displayName = (String) component.getObject("name", String.class);
+            String biomeName = component.getObject("biome", String.class);
+            String displayName = component.getObject("name", String.class);
 
             Optional<String> iconItem = biomeRegistry.getDataForComponent(component);
             net.minecraft.world.item.Item itemType = Items.PAPER;

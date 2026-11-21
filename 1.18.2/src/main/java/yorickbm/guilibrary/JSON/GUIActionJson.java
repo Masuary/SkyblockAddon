@@ -24,13 +24,12 @@ public class GUIActionJson implements JSONSerializable {
         return !this.onSecondClick.isEmpty();
     }
 
-    @SuppressWarnings("unchecked")
     public Class<? extends GuiClickItemEvent> getPrimary() {
         try {
             // Dynamically load the class by its fully qualified name
             final Class<?> clazz = Class.forName(this.onClick);
             if (GuiClickItemEvent.class.isAssignableFrom(clazz)) {
-                return (Class<? extends GuiClickItemEvent>) clazz;
+                return clazz.asSubclass(GuiClickItemEvent.class);
             }
             else {
                 LOGGER.error(String.format("Class '%s' does not implement GuiClickItemEvent, primary click removed.", this.onClick));
@@ -44,13 +43,12 @@ public class GUIActionJson implements JSONSerializable {
         return null;
     }
 
-    @SuppressWarnings("unchecked")
     public Class<? extends GuiClickItemEvent> getSecondary() {
         try {
             // Dynamically load the class by its fully qualified name
             final Class<?> clazz = Class.forName(this.onSecondClick);
             if (GuiClickItemEvent.class.isAssignableFrom(clazz)) {
-                return (Class<? extends GuiClickItemEvent>) clazz;
+                return clazz.asSubclass(GuiClickItemEvent.class);
             }
             else {
                 LOGGER.error(String.format("Class '%s' does not implement GuiClickItemEvent, primary click removed.", this.onSecondClick));

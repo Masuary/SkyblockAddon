@@ -1,13 +1,21 @@
 package yorickbm.skyblockaddon.core.islands;
 
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
-import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.util.UsernameCache;
 import yorickbm.skyblockaddon.core.util.geometry.BoundingBox;
-import yorickbm.skyblockaddon.core.util.geometry.Square;
 import yorickbm.skyblockaddon.core.util.geometry.Vec3i;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 public abstract class Island {
     private UUID id = UUID.randomUUID(); //UUID Of island
@@ -280,16 +288,6 @@ public abstract class Island {
     }
 
     /**
-     * Get localized state of permission for group
-     * @param id - Permission ID
-     * @param groupId - Group UUID
-     * @return - Localized string of permission state
-     */
-    public String getPermissionState(final String id, final UUID groupId) {
-        return islandGroups.get(groupId).canDo(id) ? SkyBlockAddonLanguage.getLocalizedString("island.permission.enabled") : SkyBlockAddonLanguage.getLocalizedString("island.permission.disabled");
-    }
-
-    /**
      * Alter islands spawn point used for TeleportTo
      * @param point - New spawn point location
      */
@@ -387,6 +385,5 @@ public abstract class Island {
     /**
      * Forge implementations
      */
-    public abstract Square getIslandBoundingBoxAsSquare();
     public abstract Optional<UUID> getGroupByName(final String groupName);
 }

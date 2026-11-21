@@ -56,7 +56,6 @@ public class BiomeUtil {
             if(mutableObject.getValue() == null) {
                 mutableObject.setValue(new ClientboundLevelChunkWithLightPacket(levelChunk, serverlevel.getLightEngine(), null, null, true));
             }
-            //serverPlayer.untrackChunk(chunkPos);
             serverPlayer.trackChunk(chunkPos, mutableObject.getValue());
         }
     }

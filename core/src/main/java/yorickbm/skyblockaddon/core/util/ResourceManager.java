@@ -47,8 +47,6 @@ public class ResourceManager {
     }
 
     public static void commonSetup(Path FMLPath, RegistrySelector selector) throws ResourceNotFoundException {
-        //ResourceManager.getOrCreateDirectory(FMLPath.resolve(SkyblockAddonCore.MOD_ID), SkyblockAddonCore.MOD_ID);
-
         //Custom island.nbt
         generateFile(FMLPath, "island.nbt", "structures/island.nbt");
 
@@ -93,8 +91,7 @@ public class ResourceManager {
             if (!Files.exists(dir)) {
                 Files.createDirectories(dir);
             }
-        } catch (IOException e) {
-            //throw new RuntimeException("Failed to create directory: " + dir, e);
+        } catch (IOException ignored) {
         }
     }
 }

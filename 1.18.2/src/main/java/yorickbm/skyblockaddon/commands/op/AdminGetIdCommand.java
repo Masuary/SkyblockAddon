@@ -47,7 +47,7 @@ public class AdminGetIdCommand extends OverWorldCommandStack {
     private int executeForStandingPosition(final CommandSourceStack command, final ServerPlayer executor) {
         if(super.execute(command, executor) == 0) return Command.SINGLE_SUCCESS;
 
-        final ForgeIsland island = (ForgeIsland) IslandManager.getInstance().getIslandByPos(ForgeConverter.ForgeToInternalVec3i(executor.getOnPos()));
+        final ForgeIsland island = (ForgeIsland) IslandManager.getInstance().getIslandByPos(ForgeConverter.forgeToInternalVec3i(executor.getOnPos()));
         if (island == null) {
             command.sendFailure(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.admin.no.island")));
             return Command.SINGLE_SUCCESS;

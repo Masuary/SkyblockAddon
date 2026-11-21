@@ -27,7 +27,7 @@ public class PlayerEvents {
             if(entity instanceof ServerPlayer || entity instanceof DollMiniMeEntity || entity instanceof SpiritEntity) {
                 if(entity.getLevel().dimension() != Level.OVERWORLD) return; //Ignore non overworld events
 
-                final ForgeIsland island = (ForgeIsland) IslandManager.getInstance().getIslandByPos(ForgeConverter.ForgeToInternalVec3i(entity.getOnPos()));
+                final ForgeIsland island = (ForgeIsland) IslandManager.getInstance().getIslandByPos(ForgeConverter.forgeToInternalVec3i(entity.getOnPos()));
                 if(island == null) return;
                 event.setCanceled(true); //Cancel damage
 

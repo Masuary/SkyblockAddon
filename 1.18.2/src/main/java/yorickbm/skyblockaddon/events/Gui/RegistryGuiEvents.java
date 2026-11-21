@@ -23,7 +23,6 @@ import yorickbm.skyblockaddon.util.ForgeConverter;
 import yorickbm.skyblockaddon.util.ServerHelper;
 
 import java.util.Optional;
-import java.util.UUID;
 
 public class RegistryGuiEvents {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -100,7 +99,7 @@ public class RegistryGuiEvents {
                                 SkyBlockAddonLanguage.getLocalizedString("island.permission.enabled")
                         :
                                 SkyBlockAddonLanguage.getLocalizedString("island.permission.disabled"));
-                stack = ForgeConverter.JSONItemToGUIItemStackHolder(permission.get().getItem());
+                stack = ForgeConverter.jsonItemToGUIItemStackHolder(permission.get().getItem());
             }
 
             ItemStack item = event.processHolder(stack, data.copy()).getItemStack();

@@ -226,7 +226,7 @@ tasks.named('jar', Jar).configure {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
-    options.compilerArgs.addAll(['-Xlint:all', '-Xlint:-processing', '-Xlint:-classfile'])
+    options.compilerArgs.addAll(['-Xlint:all', '-Xlint:-processing', '-Xlint:-classfile', '-Werror'])
 }
 tasks.named('check') {
     dependsOn gradle.includedBuild('core').task(':test')
