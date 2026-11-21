@@ -9,6 +9,7 @@ import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -155,15 +156,16 @@ public class ForgeIsland extends Island implements NBTSerializable {
     }
 
     /**
-     * Set the biome for all loaded chunks of island
+     * Set the biome for all loaded overworld chunks of island
      * @param biome - Biome resource location
-     * @param serverlevel - Over-world of server
+     * @param server - Server whose overworld holds the island
      */
-    public void updateBiome(final String biome, final ServerLevel serverlevel) {
+    public void updateBiome(final String biome, final MinecraftServer server) {
         if (biome == null || biome.isEmpty() || biome.equals("Unknown") || !biome.contains(":")) return;
 
         setBiome(biome); //Store full namespaced id so modded biomes persist correctly
 
+        final ServerLevel serverlevel = server.overworld();
         final BoundingBox boundingbox = ForgeConverter.InternalToForgeBoundingBox(getIslandBoundingBox());
         final Holder<Biome> holder = serverlevel.registryAccess()
                 .registryOrThrow(Registry.BIOME_REGISTRY)
