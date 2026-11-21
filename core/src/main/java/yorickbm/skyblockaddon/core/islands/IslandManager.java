@@ -3,7 +3,6 @@ package yorickbm.skyblockaddon.core.islands;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.util.geometry.BoundingBox;
 import yorickbm.skyblockaddon.core.util.geometry.Vec3i;
 
@@ -13,13 +12,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class IslandManager {
-    private Vec3i lastLocation;
-    private Queue<Vec3i> reusableLocations;
     private final Map<UUID, Island> islandsByUUID = new ConcurrentHashMap<>();
+    private volatile Supplier<? extends Collection<IslandSlot>> configuredReservedSlotsSource = Set::of;
+    private final IslandSlotAllocator slotAllocator = new IslandSlotAllocator(() -> configuredReservedSlotsSource.get());
 
     LoadingCache<UUID, Optional<UUID>> CACHE_islandByPlayerUUID;
     LoadingCache<BoundingBox, Optional<UUID>> CACHE_islandByBoundingBox;
@@ -29,23 +29,21 @@ public class IslandManager {
         return instance;
     }
 
-    public IslandManager() {
-        lastLocation = new Vec3i(0,0,0);
-        reusableLocations = new LinkedList();
-    }
-
     /**
      * Initialize default data into manager
      * @param islands List of islands
-     * @param reusableLocations List of Vec3i objects
-     * @param lastLocation Vec3i object
+     * @param reusableLocations Centers of purged slots that may be handed out again
+     * @param nextFreshSlot Next unused slot of the island grid
+     * @param adminReservedSlots Slots reserved with /island admin reserve
      */
-    public void initializeData(List<? extends Island> islands, List<Vec3i> reusableLocations, Vec3i lastLocation) {
+    public void initializeData(List<? extends Island> islands, List<Vec3i> reusableLocations, Vec3i nextFreshSlot, List<IslandSlot> adminReservedSlots) {
         this.islandsByUUID.clear();
-        this.reusableLocations.clear();
         islands.forEach(island -> islandsByUUID.put(island.getId(), island)); //Store islands in map
-        this.reusableLocations.addAll(reusableLocations);
-        this.lastLocation = lastLocation;
+        slotAllocator.initialize(nextFreshSlot, reusableLocations, adminReservedSlots);
+    }
+
+    public void setConfiguredReservedSlotsSource(final Supplier<? extends Collection<IslandSlot>> configuredReservedSlotsSource) {
+        this.configuredReservedSlotsSource = configuredReservedSlotsSource;
     }
 
     /**
@@ -206,12 +204,14 @@ public class IslandManager {
     }
 
     /**
-     * Get next island generation location
+     * Take the next free island slot: never a reserved slot or one inside an existing island.
      */
-    public Vec3i getNextIslandGen() {
-        final Vec3i islandLocation = reusableLocations.isEmpty() ? lastLocation : reusableLocations.remove();
-        if(islandLocation == lastLocation) lastLocation = nextGridLocation(lastLocation);
-        return islandLocation;
+    public IslandSlotAllocator.Allocation allocateIslandSlot() {
+        return slotAllocator.allocate(this::isSlotOccupied);
+    }
+
+    private boolean isSlotOccupied(final Vec3i slotCenter) {
+        return islandsByUUID.values().stream().anyMatch(island -> island.getIslandBoundingBox().isInside(slotCenter));
     }
 
     /**
@@ -219,42 +219,31 @@ public class IslandManager {
      * @param center Vec3i object of island center
      */
     public void islandSpaceReusable(Vec3i center) {
-        reusableLocations.add(new Vec3i(center.getX(), 0, center.getZ()));
+        slotAllocator.release(center);
     }
 
-    /**
-     * Get next Vec3i for an island based on snake pattern island generation algorithm.
-     *
-     * @param location Last island location
-     * @return Location for next island
-     */
-    private Vec3i nextGridLocation(Vec3i location) {
-        int x = location.getX();
-        int z = location.getZ();
-        final int d = SkyblockAddonCore.ISLAND_SIZE * 2 + SkyblockAddonCore.ISLAND_BUFFER;
-
-        if (x < z) {
-            if (-1 * x < z) return new Vec3i(x + d, 0, z);
-            return new Vec3i(x, 0, z + d);
-        }
-
-        if (x > z) {
-            if (-1 * x >= z) return new Vec3i(x - d, 0, z);
-            return new Vec3i(x, 0, z - d);
-        }
-
-        if (x <= 0) return new Vec3i(x, 0, z + d);
-        return new Vec3i(x, 0, z - d);
+    public boolean reserveSlot(final IslandSlot slot) {
+        return slotAllocator.reserve(slot);
     }
 
-    /**
-     * Simple getters & setters
-     */
-    public Vec3i getLastLocation() {
-        return this.lastLocation;
+    public boolean unreserveSlot(final IslandSlot slot) {
+        return slotAllocator.unreserve(slot);
     }
-    public Queue<Vec3i> getReusableLocations() {
-        return reusableLocations;
+
+    public List<IslandSlot> getAdminReservedSlots() {
+        return slotAllocator.getAdminReservedSlots();
+    }
+
+    public Collection<IslandSlot> getConfiguredReservedSlots() {
+        return slotAllocator.getConfiguredReservedSlots();
+    }
+
+    public Vec3i getNextFreshSlot() {
+        return slotAllocator.getNextFreshSlot();
+    }
+
+    public List<Vec3i> getReusableLocations() {
+        return slotAllocator.getReusableSlots();
     }
     public Map<UUID, Island> getEntrySet() { return this.islandsByUUID; }
 }

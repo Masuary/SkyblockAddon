@@ -37,6 +37,7 @@ import yorickbm.skyblockaddon.events.*;
 import yorickbm.skyblockaddon.events.Gui.GuiEvents;
 import yorickbm.skyblockaddon.events.Gui.IslandGuiEvents;
 import yorickbm.skyblockaddon.events.Gui.RegistryGuiEvents;
+import yorickbm.skyblockaddon.islands.IslandCreationQueue;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,6 +57,7 @@ public class SkyBlockAddon {
         //Register configs
         FileUtils.getOrCreateDirectory(FMLPaths.CONFIGDIR.get().resolve(SkyblockAddonCore.MOD_ID), SkyblockAddonCore.MOD_ID);
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, SkyblockAddonConfig.SPEC, SkyblockAddonCore.MOD_ID + "/config.toml");
+        IslandManager.getInstance().setConfiguredReservedSlotsSource(SkyblockAddonConfig::getReservedSlots);
 
         //Register Forge minecraft events
         MinecraftForge.EVENT_BUS.register(this);
@@ -71,6 +73,7 @@ public class SkyBlockAddon {
         MinecraftForge.EVENT_BUS.register(new ChunkEvents());
         MinecraftForge.EVENT_BUS.register(new yorickbm.skyblockaddon.enhanced.EnhancedGuiListener());
         MinecraftForge.EVENT_BUS.register(new PneumaticCraftProtectionEvents());
+        MinecraftForge.EVENT_BUS.register(IslandCreationQueue.getInstance());
 
         if(SkyblockAddonConfig.getForKey("island.particles.border").equalsIgnoreCase("TRUE")) MinecraftForge.EVENT_BUS.register(new ParticleEvents());
     }
@@ -120,6 +123,7 @@ public class SkyBlockAddon {
      */
     @SubscribeEvent
     public void onServerStarting(final ServerStartingEvent event) {
+        SkyblockAddonConfig.validateIslandCreationSettings();
 
         //Loading public island owner names into username cache form Mojang API
         IslandManager.getInstance().getIslands().stream().filter(Island::isVisible).forEach(Island::updateName);
