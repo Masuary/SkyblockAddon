@@ -30,9 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class AdminPurgeCommand extends OverWorldCommandStack {
@@ -145,36 +143,43 @@ public class AdminPurgeCommand extends OverWorldCommandStack {
         List<ForgeIsland> islands = islandUUIDs.stream()
                 .map(s -> (ForgeIsland)IslandManager.getInstance().getIslandByUUID(s))
                 .filter(Objects::nonNull)
-                .filter(Island::isAbandoned)
+                .filter(Island::hasNoOwnerAndNoMembers)
                 .collect(Collectors.toList());
 
         ProgressBar bar = new ProgressBar(new TextComponent("Purging "));
         bar.start(executor);
 
-        IslandChunkManager manager = new IslandChunkManager();
-        manager.createDummies(islands, bar, island -> {
+        final AtomicInteger purgedIslandCount = new AtomicInteger();
+        IslandChunkManager.createDummies(islands, bar, AdminPurgeCommand::isStillRegisteredAndAbandoned, island -> {
+                    if (!isStillRegisteredAndAbandoned(island)) {
+                        LOGGER.warn("Purge skipped island {}: it has an owner or members again or was unloaded", island.getId());
+                        executor.sendMessage(new TextComponent(
+                                SkyBlockAddonLanguage.getLocalizedString("commands.admin.purge.skipped")
+                                        .formatted(island.getId().toString()))
+                                .withStyle(ChatFormatting.YELLOW), executor.getUUID());
+                        return;
+                    }
                     LOGGER.debug("Finished the island {}", island.getId());
                     bar.sendToast(new TextComponent("Completed purging island " + island.getId()));
 
                     IslandManager.getInstance().islandSpaceReusable(island.getCenter());
                     cap.removeIslandNBT(island);
                     IslandManager.getInstance().clearIslandCache(island);
+                    purgedIslandCount.incrementAndGet();
                 },
                 () -> {
                     LOGGER.debug("Finished purging");
-
-                    ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-                    scheduler.schedule(bar::kill, 800, TimeUnit.MILLISECONDS);
+                    bar.kill();
 
                     executor.sendMessage(new TextComponent(
                             SkyBlockAddonLanguage.getLocalizedString("commands.admin.purge.done")
-                                    .formatted(String.valueOf(islands.size())))
+                                    .formatted(String.valueOf(purgedIslandCount.get())))
                             .withStyle(ChatFormatting.GREEN), executor.getUUID());
                 },
                 executor.getLevel());
     }
+
+    private static boolean isStillRegisteredAndAbandoned(final ForgeIsland island) {
+        return IslandManager.getInstance().getIslandByUUID(island.getId()) == island && island.hasNoOwnerAndNoMembers();
+    }
 }
-
-
-//f6ad3af8-6861-4fd2-a512-024735d3403c -> -3005 150 -16017
-//c8adf14c-2238-48f0-9c66-c79bc5e9f464 -> 25993 121 22994

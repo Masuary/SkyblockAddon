@@ -80,5 +80,6 @@
   "commands.admin.purge.ask": "Click here to confirm purging %s island(s). This will take up a part of the servers resources.",
   "commands.admin.purge.done": "%s island(s) have been purged! There locations have been freed up to reuse.",
   "commands.admin.purge.notallowed": "This island may not be purged, as its not abandoned.",
-  "commands.admin.purge.zero": "No purgable islands found."
+  "commands.admin.purge.zero": "No purgable islands found.",
+  "commands.admin.purge.skipped": "Skipped island %s: it has an owner or members again, so its file and slot were kept."
 }
