@@ -142,6 +142,17 @@ class IslandActionsTest {
     }
 
     @Test
+    void kickingGuestRemovesTheirGroupAssignment() {
+        final TestIsland island = islandWithAdminAndPlainMember();
+        island.assignGroup(GUEST, helpersGroupId);
+
+        assertEquals(IslandActionResult.SUCCESS, IslandActions.kickMember(island, OWNER_ACTOR, GUEST));
+
+        assertFalse(island.isInAnyGroup(GUEST));
+        assertEquals(IslandActionResult.TARGET_NOT_MEMBER, IslandActions.kickMember(island, OWNER_ACTOR, GUEST));
+    }
+
+    @Test
     void operatorMayToggleVisibility() {
         final TestIsland island = islandWithAdminAndPlainMember();
 

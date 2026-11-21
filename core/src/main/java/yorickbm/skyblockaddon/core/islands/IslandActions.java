@@ -64,10 +64,16 @@ public final class IslandActions {
         if (!canManage(island, actor)) return IslandActionResult.NOT_ALLOWED;
         if (island.isOwner(target)) return IslandActionResult.TARGET_IS_OWNER;
         if (target.equals(actor.playerId())) return IslandActionResult.TARGET_IS_SELF;
-        if (!island.getMembers().contains(target)) return IslandActionResult.TARGET_NOT_MEMBER;
+        if (!island.getMembers().contains(target)) return removeGuestFromGroups(island, target);
 
         final UUID groupId = island.getGroupForEntityUUID(target).map(IslandGroup::getId).orElse(SkyblockAddonCore.MEMBERS_GROUP_ID);
         island.removeMember(target, groupId);
+        return IslandActionResult.SUCCESS;
+    }
+
+    private static IslandActionResult removeGuestFromGroups(final Island island, final UUID guest) {
+        if (!island.isInAnyGroup(guest)) return IslandActionResult.TARGET_NOT_MEMBER;
+        island.getGroups().forEach(group -> group.removeMember(guest));
         return IslandActionResult.SUCCESS;
     }
 
