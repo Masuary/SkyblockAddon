@@ -24,55 +24,22 @@ import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.lang3.mutable.MutableInt;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
-import yorickbm.skyblockaddon.core.util.geometry.Square;
 import yorickbm.skyblockaddon.util.*;
 
 import java.util.*;
 
 public class ForgeIsland extends Island implements NBTSerializable {
-    private static final Logger LOGGER = LogManager.getLogger();
     private static final String BANNED_PLAYERS_TAG = "bannedPlayers";
     private static final String LAST_ACTIVE_TAG = "lastActive";
     private final List<ChunkPos> playerLoadedChunks = new ArrayList<>();
 
     public ForgeIsland() {
         super();
-    }
-    public ForgeIsland(Island island) {
-        super.setId(island.getId());
-        super.setOwner(island.getOwner());
-        super.setSpawn(island.getSpawn());
-        super.setCenter(island.getCenter());
-        super.setVisibility(island.isVisible());
-        super.setSkullTexture(island.getSkullTexture());
-        super.setBiome(island.getBiome());
-        super.setLastActiveEpochMillis(island.getLastActiveEpochMillis());
-        setChunks(((ForgeIsland)island).getModifiedChunks());
-
-        island.getGroups().forEach(group -> {
-            if(group instanceof ForgeIslandGroup forgeGroup) {
-                super.addGroup(new ForgeIslandGroup(forgeGroup));
-            } else {
-                super.addGroup(group);
-            }
-        });
-        island.getMembers().forEach(m -> {
-            final UUID groupId = island.getGroupForEntityUUID(m)
-                    .map(IslandGroup::getId)
-                    .filter(gid -> !gid.equals(SkyblockAddonCore.VISITORS_GROUP_ID))
-                    .orElse(SkyblockAddonCore.MEMBERS_GROUP_ID);
-            if(!super.addMember(m, groupId)) {
-                LOGGER.warn("Failed to copy member {} into island {} during snapshot", m, getId());
-            }
-        });
-        island.getBannedPlayers().forEach(super::banPlayer);
     }
     public ForgeIsland(UUID uuid, Vec3i vec) {
         super.setId(UUID.randomUUID());
@@ -272,15 +239,6 @@ public class ForgeIsland extends Island implements NBTSerializable {
     }
     public boolean removeChunk(final ChunkPos pos) {
         return playerLoadedChunks.remove(pos);
-    }
-    public void setChunks(Collection<ChunkPos> data) {
-        this.playerLoadedChunks.addAll(data);
-    }
-
-    @Override
-    public Square getIslandBoundingBoxAsSquare() {
-        final yorickbm.skyblockaddon.core.util.geometry.BoundingBox box = getIslandBoundingBox();
-        return new yorickbm.skyblockaddon.util.geometry.Square(new Vec3i(box.minX, 0, box.minZ), new Vec3i(box.maxX, 0, box.maxZ));
     }
 
     @Override

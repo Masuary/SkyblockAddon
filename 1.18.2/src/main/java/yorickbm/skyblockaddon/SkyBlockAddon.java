@@ -31,7 +31,6 @@ import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.permissions.PermissionManager;
 import yorickbm.skyblockaddon.core.util.RegistrySelector;
 import yorickbm.skyblockaddon.core.util.ResourceManager;
-import yorickbm.skyblockaddon.core.util.ThreadManager;
 import yorickbm.skyblockaddon.core.util.UsernameCache;
 import yorickbm.skyblockaddon.events.*;
 import yorickbm.skyblockaddon.events.Gui.GuiEvents;
@@ -151,7 +150,6 @@ public class SkyBlockAddon {
     public void onServerShutDown(final ServerStoppedEvent event) {
         try {
             ChunkTaskScheduler.clear();
-            ThreadManager.terminateAllThreads();
         } catch (final NoClassDefFoundError ex) {
             //Seems to be thrown
         }

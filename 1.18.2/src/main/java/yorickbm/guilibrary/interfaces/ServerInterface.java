@@ -193,13 +193,6 @@ public class ServerInterface extends AbstractContainerMenu {
     }
 
     /**
-     * Remove item from data set if its not rendered (prevents action triggers)
-     */
-    public void removeItem(final int slot) {
-        this.items.remove(slot);
-    }
-
-    /**
      * Add item into data set to add action trigger for item
      * @param item
      */

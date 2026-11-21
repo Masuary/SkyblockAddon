@@ -187,23 +187,6 @@ public class IslandManager {
     }
 
     /**
-     * Get collection of all current islands in cache
-     */
-    public Collection<Island> getIslandsFromCache() {
-        Set<UUID> activeIslandUUIDs = CACHE_islandByPlayerUUID
-                .asMap()
-                .values()
-                .stream()
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toSet());
-
-        return activeIslandUUIDs.stream()
-                .map(islandsByUUID::get)
-                .filter(Objects::nonNull).toList();
-    }
-
-    /**
      * Take the next free island slot: never a reserved slot or one inside an existing island.
      */
     public IslandSlotAllocator.Allocation allocateIslandSlot() {

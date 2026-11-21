@@ -26,10 +26,6 @@ public record IslandSlot(int x, int z) {
         }
     }
 
-    public Vec3i toCenter() {
-        return new Vec3i(x, 0, z);
-    }
-
     public String format() {
         return x + "," + z;
     }

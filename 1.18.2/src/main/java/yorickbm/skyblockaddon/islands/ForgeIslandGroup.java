@@ -29,15 +29,6 @@ public class ForgeIslandGroup extends IslandGroup implements NBTSerializable {
         return singleItem;
     }
 
-    public ForgeIslandGroup(ForgeIslandGroup group) {
-        super(group.getId(), false);
-        this.item = group.item.copy();
-        this.members.clear();
-        this.members.addAll(group.members);
-        this.permissions.clear();
-        this.permissions.putAll(group.permissions);
-    }
-
     @Override
     public String getName() {
         return this.item.getDisplayName().getString().trim();
