@@ -33,8 +33,8 @@ public class IslandAddGroupMemberCommand extends OverWorldCommandStack {
     private void register(CommandDispatcher<CommandSourceStack> dispatcher, String rootLiteral) {
         dispatcher.register(
                 Cmds.literal(rootLiteral)
-                        .requires(source -> source.getEntity() instanceof ServerPlayer)
                         .then(Cmds.literal("group")
+                                .requires(source -> source.getEntity() instanceof ServerPlayer)
                                 .then(Cmds.argument("groupName", StringArgumentType.string())
                                         .suggests(this::groupOptions)
                                         .then(Cmds.literal("addMember")

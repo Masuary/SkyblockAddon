@@ -29,9 +29,9 @@ public class AdminAddMemberCommand {
 
     private void register(final CommandDispatcher<CommandSourceStack> dispatcher, final String rootLiteral) {
         dispatcher.register(Cmds.literal(rootLiteral)
-            .then(Cmds.literal("admin")
-                .requires(source -> source.hasPermission(Commands.LEVEL_GAMEMASTERS))
+            .then(Cmds.adminLiteral()
                 .then(Cmds.literal("addMember")
+                    .requires(Cmds.permissionLevel(Commands.LEVEL_GAMEMASTERS))
                     .then(Cmds.argument("islandId", UuidArgument.uuid())
                         .then(Cmds.argument("player", EntityArgument.player())
                                 .executes(context -> execute(context.getSource(),

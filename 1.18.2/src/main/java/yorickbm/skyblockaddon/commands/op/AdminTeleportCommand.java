@@ -26,9 +26,9 @@ public class AdminTeleportCommand extends OverWorldCommandStack {
 
     private void register(final CommandDispatcher<CommandSourceStack> dispatcher, final String rootLiteral) {
         dispatcher.register(Cmds.literal(rootLiteral)
-            .then(Cmds.literal("admin")
-                .requires(source -> source.getEntity() instanceof ServerPlayer && source.hasPermission(Commands.LEVEL_MODERATORS))
+            .then(Cmds.adminLiteral()
                 .then(Cmds.literal("tp")
+                    .requires(Cmds.playerWithPermissionLevel(Commands.LEVEL_MODERATORS))
                     .then(Cmds.argument("uuid", UuidArgument.uuid())
                         .executes(context -> execute(context.getSource(), (ServerPlayer) context.getSource().getEntity(), UuidArgument.getUuid(context, "uuid")))
                     )

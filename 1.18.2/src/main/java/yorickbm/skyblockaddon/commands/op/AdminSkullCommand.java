@@ -11,7 +11,6 @@ import net.minecraft.commands.arguments.UuidArgument;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextComponent;
-import net.minecraft.server.level.ServerPlayer;
 import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldProvider;
 import yorickbm.skyblockaddon.commands.interfaces.Cmds;
 import yorickbm.skyblockaddon.commands.interfaces.OverWorldCommandStack;
@@ -31,9 +30,9 @@ public class AdminSkullCommand extends OverWorldCommandStack {
 
     private void register(final CommandDispatcher<CommandSourceStack> dispatcher, final String rootLiteral) {
         dispatcher.register(Cmds.literal(rootLiteral)
-                .then(Cmds.literal("admin")
-                        .requires(source -> source.getEntity() instanceof ServerPlayer && source.hasPermission(Commands.LEVEL_MODERATORS))
+                .then(Cmds.adminLiteral()
                         .then(Cmds.literal("setSkull")
+                                .requires(Cmds.permissionLevel(Commands.LEVEL_MODERATORS))
                                 .then(Cmds.argument("islandId", UuidArgument.uuid())
                                         .then(Cmds.argument("skullTexture", StringArgumentType.greedyString())
                                                 .executes(context -> execute(context.getSource(),
@@ -48,7 +47,7 @@ public class AdminSkullCommand extends OverWorldCommandStack {
 
     public int execute(final CommandSourceStack command, UUID islandId, String skullTexture) {
 
-        command.getLevel().getCapability(SkyblockAddonWorldProvider.SKYBLOCKADDON_WORLD_CAPABILITY).ifPresent(cap -> {
+        command.getServer().overworld().getCapability(SkyblockAddonWorldProvider.SKYBLOCKADDON_WORLD_CAPABILITY).ifPresent(cap -> {
             final ForgeIsland island = (ForgeIsland) IslandManager.getInstance().getIslandByUUID(islandId);
             if (island == null) {
                 command.sendFailure(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.admin.no.island")));

@@ -41,9 +41,9 @@ public class AdminPermissionCommand {
 
     private void register(final CommandDispatcher<CommandSourceStack> dispatcher, final String rootLiteral) {
         dispatcher.register(Cmds.literal(rootLiteral)
-                .then(Cmds.literal("admin")
-                        .requires(source -> source.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                .then(Cmds.adminLiteral()
                         .then(Cmds.literal("permission")
+                                .requires(Cmds.permissionLevel(Commands.LEVEL_GAMEMASTERS))
                                 .then(Cmds.literal("set")
                                         .then(Cmds.argument("permissionId", StringArgumentType.word())
                                                 .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
