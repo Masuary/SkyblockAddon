@@ -3,7 +3,6 @@ package yorickbm.skyblockaddon.core.islands;
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.util.geometry.Vec3i;
 
-import java.util.Optional;
 import java.util.UUID;
 
 final class TestIsland extends Island {
@@ -20,11 +19,6 @@ final class TestIsland extends Island {
         final UUID groupId = UUID.randomUUID();
         addGroup(new TestGroup(groupId, name, false));
         return groupId;
-    }
-
-    @Override
-    public Optional<UUID> getGroupByName(final String groupName) {
-        return getGroups().stream().filter(group -> group.getName().equals(groupName)).map(IslandGroup::getId).findFirst();
     }
 
     static final class TestGroup extends IslandGroup {

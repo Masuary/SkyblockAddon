@@ -88,6 +88,46 @@ class IslandActionsTest {
     }
 
     @Test
+    void demotingAMemberToVisitorsRemovesThemFromTheIsland() {
+        final TestIsland island = islandWithAdminAndPlainMember();
+
+        final IslandActionResult result = IslandActions.assignGroup(island, OWNER_ACTOR, PLAIN_MEMBER, SkyblockAddonCore.VISITORS_GROUP_ID);
+
+        assertEquals(IslandActionResult.MEMBER_REMOVED, result);
+        assertTrue(result.succeeded());
+        assertFalse(island.isPartOf(PLAIN_MEMBER));
+        assertTrue(island.getGroups().stream().noneMatch(group -> group.hasMember(PLAIN_MEMBER)));
+    }
+
+    @Test
+    void demotingYourselfToVisitorsIsRefused() {
+        final TestIsland island = islandWithAdminAndPlainMember();
+
+        assertEquals(IslandActionResult.TARGET_IS_SELF, IslandActions.assignGroup(island, ADMIN_MEMBER_ACTOR, ADMIN_MEMBER, SkyblockAddonCore.VISITORS_GROUP_ID));
+
+        assertTrue(island.getMembers().contains(ADMIN_MEMBER));
+    }
+
+    @Test
+    void ownerCannotBeDemotedToVisitors() {
+        final TestIsland island = islandWithAdminAndPlainMember();
+
+        assertEquals(IslandActionResult.TARGET_IS_OWNER, IslandActions.assignGroup(island, OPERATOR_ACTOR, TestIsland.OWNER, SkyblockAddonCore.VISITORS_GROUP_ID));
+
+        assertTrue(island.isOwner(TestIsland.OWNER));
+    }
+
+    @Test
+    void movingAGuestToVisitorsIsAPlainAssignment() {
+        final TestIsland island = islandWithAdminAndPlainMember();
+        island.assignGroup(GUEST, helpersGroupId);
+
+        assertEquals(IslandActionResult.SUCCESS, IslandActions.assignGroup(island, OWNER_ACTOR, GUEST, SkyblockAddonCore.VISITORS_GROUP_ID));
+
+        assertEquals(SkyblockAddonCore.VISITORS_GROUP_ID, island.getGroupForEntityUUID(GUEST).orElseThrow().getId());
+    }
+
+    @Test
     void guestAssignedThroughActionDoesNotBecomeMember() {
         final TestIsland island = islandWithAdminAndPlainMember();
 

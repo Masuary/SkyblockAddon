@@ -6,7 +6,7 @@ import java.util.UUID;
 
 /**
  * The island actions shared by both GUIs and the commands. Every action checks the actor's rights first and only
- * changes the island when it returns {@link IslandActionResult#SUCCESS}.
+ * changes the island when its result {@link IslandActionResult#succeeded() succeeded}.
  */
 public final class IslandActions {
     public static final String ADMIN_MENU_PERMISSION = "admin_menu";
@@ -30,6 +30,7 @@ public final class IslandActions {
         if (!island.hasGroup(groupId)) return IslandActionResult.GROUP_NOT_FOUND;
         if (island.isOwner(target)) return IslandActionResult.TARGET_IS_OWNER;
         if (island.isBanned(target)) return IslandActionResult.TARGET_IS_BANNED;
+        if (island.isDemotionToVisitors(target, groupId)) return removeDemotedMember(island, actor, target);
 
         final boolean assigned = island.isPartOf(target)
                 ? island.addMember(target, groupId)
@@ -37,11 +38,19 @@ public final class IslandActions {
         return assigned ? IslandActionResult.SUCCESS : IslandActionResult.NO_CHANGE;
     }
 
+    /**
+     * Moving a member to Visitors removes them from the island like a kick, so a manager cannot do it to themselves
+     * (they leave with /island leave, which can be undone).
+     */
+    private static IslandActionResult removeDemotedMember(final Island island, final IslandActor actor, final UUID target) {
+        if (target.equals(actor.playerId())) return IslandActionResult.TARGET_IS_SELF;
+        island.removeFromIsland(target);
+        return IslandActionResult.MEMBER_REMOVED;
+    }
+
     public static IslandActionResult createGroup(final Island island, final IslandActor actor, final IslandGroup group) {
         if (!canManage(island, actor)) return IslandActionResult.NOT_ALLOWED;
-        final boolean nameExists = island.getGroups().stream()
-                .anyMatch(existing -> existing.getName().equalsIgnoreCase(group.getName()));
-        if (nameExists) return IslandActionResult.GROUP_NAME_EXISTS;
+        if (island.getGroupByName(group.getName()).isPresent()) return IslandActionResult.GROUP_NAME_EXISTS;
 
         island.addGroup(group);
         return IslandActionResult.SUCCESS;
@@ -66,8 +75,7 @@ public final class IslandActions {
         if (target.equals(actor.playerId())) return IslandActionResult.TARGET_IS_SELF;
         if (!island.getMembers().contains(target)) return removeGuestFromGroups(island, target);
 
-        final UUID groupId = island.getGroupForEntityUUID(target).map(IslandGroup::getId).orElse(SkyblockAddonCore.MEMBERS_GROUP_ID);
-        island.removeMember(target, groupId);
+        island.removeFromIsland(target);
         return IslandActionResult.SUCCESS;
     }
 

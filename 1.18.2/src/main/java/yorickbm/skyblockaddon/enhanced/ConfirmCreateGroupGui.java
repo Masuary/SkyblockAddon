@@ -14,6 +14,7 @@ import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandActionResult;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
+import yorickbm.skyblockaddon.islands.ForgeIslandGroup;
 import yorickbm.skyblockaddon.islands.IslandActionService;
 
 import java.util.List;
@@ -29,7 +30,7 @@ public final class ConfirmCreateGroupGui {
         ItemStack heldItem = player.getMainHandItem();
         boolean hasItem = !heldItem.isEmpty() && heldItem.getItem() != Items.AIR;
         List<Component> lines = hasItem
-                ? List.of(new TextComponent("New group: ").append(new TextComponent(heldItem.getDisplayName().getString().trim())
+                ? List.of(new TextComponent("New group: ").append(new TextComponent(ForgeIslandGroup.nameOf(heldItem))
                                 .withStyle(ChatFormatting.AQUA)),
                         new TextComponent("The held item is the icon and its").withStyle(ChatFormatting.GRAY),
                         new TextComponent("name is the group name.").withStyle(ChatFormatting.GRAY))
@@ -45,7 +46,7 @@ public final class ConfirmCreateGroupGui {
         Island island = IslandManager.getInstance().getIslandByUUID(data.getUUID(GuiDataKeys.ISLAND_ID));
         if (island == null) return;
         ItemStack held = player.getMainHandItem().copy();
-        String newGroupName = held.getDisplayName().getString().trim();
+        String newGroupName = ForgeIslandGroup.nameOf(held);
         IslandActionResult result = IslandActionService.createGroupFromHeldItem(player, island);
         if (result.succeeded()) {
             player.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.group.created")

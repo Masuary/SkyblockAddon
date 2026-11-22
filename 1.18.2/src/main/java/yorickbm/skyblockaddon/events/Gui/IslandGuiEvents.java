@@ -15,6 +15,7 @@ import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.IslandActionResult;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
+import yorickbm.skyblockaddon.core.islands.SpawnPointPlacement;
 import yorickbm.skyblockaddon.core.util.UsernameCache;
 import yorickbm.skyblockaddon.events.IslandEvents;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
@@ -65,9 +66,10 @@ public class IslandGuiEvents {
             return;
         }
 
-        if(!event.getIsland().getIslandBoundingBox().isInside(ForgeConverter.forgeToInternalVec3i(event.getTarget().getOnPos()))) {
+        final SpawnPointPlacement placement = IslandActionService.checkSpawnPlacement(event.getIsland(), event.getTarget());
+        if(!placement.allowed()) {
             event.getTarget().sendMessage(new TextComponent(
-                    SkyBlockAddonLanguage.getLocalizedString("island.setspawn.outside")
+                    SkyBlockAddonLanguage.getLocalizedString(placement.languageKey())
             ).withStyle(ChatFormatting.RED),event.getTarget().getUUID());
 
             event.setResult(Event.Result.DENY);
@@ -153,7 +155,7 @@ public class IslandGuiEvents {
         final UUID id = UUID.randomUUID();
         final Function<ServerPlayer, Boolean> function = executor -> {
             final ItemStack heldItem = executor.getMainHandItem().copy();
-            final String newGroupName = heldItem.getDisplayName().getString().trim();
+            final String newGroupName = ForgeIslandGroup.nameOf(heldItem);
             final IslandActionResult result = IslandActionService.createGroupFromHeldItem(executor, event.getIsland());
             if (!result.succeeded()) {
                 IslandActionService.sendFailure(executor, result, newGroupName);
@@ -245,13 +247,7 @@ public class IslandGuiEvents {
         event.getHolder().close();
 
         event.getTarget().sendMessage(
-                new TextComponent(
-                        SkyBlockAddonLanguage.getLocalizedString("island.member.group.set")
-                                .formatted(
-                                        playerName,
-                                        event.getIsland().getGroup(groupUUID).getName()
-                                )
-                ).withStyle(ChatFormatting.GREEN),
+                IslandActionService.groupAssignedMessage(result, playerName, event.getIsland().getGroup(groupUUID).getName()),
                 event.getTarget().getUUID());
     }
 
@@ -270,7 +266,7 @@ public class IslandGuiEvents {
             denyWithMessage(event, IslandActionResult.GROUP_NOT_FOUND, "");
             return;
         }
-        final String groupName = group.getItem().getDisplayName().getString().trim();
+        final String groupName = group.getName();
 
         final IslandActionResult result = IslandActionService.removeGroup(event.getTarget(), event.getIsland(), groupUUID);
         if(result.succeeded()) {

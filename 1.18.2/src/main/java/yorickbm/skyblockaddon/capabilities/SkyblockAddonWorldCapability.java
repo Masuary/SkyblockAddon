@@ -18,7 +18,6 @@ import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.islands.IslandSlot;
 import yorickbm.skyblockaddon.core.islands.IslandSlotAllocator;
 import yorickbm.skyblockaddon.core.util.IslandFileWriteTracker;
-import yorickbm.skyblockaddon.core.util.exceptions.NBTNotFoundException;
 import yorickbm.skyblockaddon.core.util.geometry.Vec3i;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
 import yorickbm.skyblockaddon.legacy.LegacyFormatter;
@@ -33,7 +32,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -191,8 +189,8 @@ public class SkyblockAddonWorldCapability {
     }
 
     /**
-     * Parsed structure data ready for placement.
-     * Pure data - safe to construct on any thread; consumed only on the server thread.
+     * Parsed structure data ready for placement, built once per server start and shared by every island creation.
+     * Immutable: the block list cannot change and its positions and block states are immutable.
      */
     public static final class ParsedIslandStructure {
         public final List<BuildingBlock> blocks;
@@ -201,52 +199,57 @@ public class SkyblockAddonWorldCapability {
         public final long parseMillis;
 
         public ParsedIslandStructure(final List<BuildingBlock> blocks, final int biggestX, final int biggestZ, final long parseMillis) {
-            this.blocks = blocks;
+            this.blocks = List.copyOf(blocks);
             this.biggestX = biggestX;
             this.biggestZ = biggestZ;
             this.parseMillis = parseMillis;
         }
+
+        /**
+         * Convert structure NBT into placement-ready data.
+         * @throws IllegalStateException - When the structure has no blocks or palette, or a block has a broken position or palette index
+         */
+        public static ParsedIslandStructure parse(final CompoundTag nbt) {
+            final long parseStartNanos = System.nanoTime();
+            final ListTag paletteNbt = nbt.getList("palette", Tag.TAG_COMPOUND);
+            final ListTag blocksNbt = nbt.getList("blocks", Tag.TAG_COMPOUND);
+            if (paletteNbt.isEmpty()) throw new IllegalStateException("the structure has no palette");
+            if (blocksNbt.isEmpty()) throw new IllegalStateException("the structure has no blocks");
+
+            final List<BlockState> palette = new ArrayList<>();
+            for (int i = 0; i < paletteNbt.size(); i++) palette.add(NbtUtils.readBlockState(paletteNbt.getCompound(i)));
+
+            final List<BuildingBlock> blocks = new ArrayList<>();
+            int biggestX = 0, biggestZ = 0;
+            for (int i = 0; i < blocksNbt.size(); i++) {
+                final BuildingBlock block = parseBlock(blocksNbt.getCompound(i), i, palette);
+                biggestX = Math.max(biggestX, block.getPos().getX());
+                biggestZ = Math.max(biggestZ, block.getPos().getZ());
+                blocks.add(block);
+            }
+
+            final long parseMillis = (System.nanoTime() - parseStartNanos) / 1_000_000L;
+            return new ParsedIslandStructure(blocks, biggestX, biggestZ, parseMillis);
+        }
+
+        private static BuildingBlock parseBlock(final CompoundTag blockNbt, final int blockIndex, final List<BlockState> palette) {
+            final ListTag blockPosNbt = blockNbt.getList("pos", Tag.TAG_INT);
+            if (blockPosNbt.size() != 3) {
+                throw new IllegalStateException("block " + blockIndex + " has a position with " + blockPosNbt.size() + " coordinates instead of 3");
+            }
+            final int paletteIndex = blockNbt.getInt("state");
+            if (paletteIndex < 0 || paletteIndex >= palette.size()) {
+                throw new IllegalStateException("block " + blockIndex + " uses palette entry " + paletteIndex + ", but the palette has " + palette.size() + " entries");
+            }
+            return new BuildingBlock(new BlockPos(blockPosNbt.getInt(0), blockPosNbt.getInt(1), blockPosNbt.getInt(2)), palette.get(paletteIndex));
+        }
     }
 
     /**
-     * Parse the island structure NBT into placement-ready data.
-     * Thread-safe: only reads the structure NBT and builds POJOs - touches no world or singleton state.
+     * The island structure parsed when the server started.
      */
     public ParsedIslandStructure parseIslandStructure() {
-        final long parseStartNanos = System.nanoTime();
-        final CompoundTag nbt = Objects.requireNonNull(SkyBlockAddon.getIslandNBT(serverInstance), "island.nbt could not be read from the config folder or the mod jar");
-
-        final ListTag paletteNbt = nbt.getList("palette", 10);
-        final ListTag blocksNbt = nbt.getList("blocks", 10);
-
-        final ArrayList<BuildingBlock> blocks = new ArrayList<>();
-        final ArrayList<BlockState> palette = new ArrayList<>();
-        int biggestX = 0, biggestZ = 0;
-
-        for (int i = 0; i < paletteNbt.size(); i++) palette.add(NbtUtils.readBlockState(paletteNbt.getCompound(i)));
-        for (int i = 0; i < blocksNbt.size(); i++) {
-            final CompoundTag blockNbt = blocksNbt.getCompound(i);
-            final ListTag blockPosNbt = blockNbt.getList("pos", 3);
-
-            if (blockPosNbt.getInt(0) > biggestX) biggestX = blockPosNbt.getInt(0);
-            if (blockPosNbt.getInt(2) > biggestZ) biggestZ = blockPosNbt.getInt(2);
-
-            blocks.add(new BuildingBlock(
-                    new BlockPos(
-                            blockPosNbt.getInt(0),
-                            blockPosNbt.getInt(1),
-                            blockPosNbt.getInt(2)
-                    ),
-                    palette.get(blockNbt.getInt("state"))
-            ));
-        }
-
-        if (blocks.isEmpty()) {
-            throw new NBTNotFoundException();
-        }
-
-        final long parseMillis = (System.nanoTime() - parseStartNanos) / 1_000_000L;
-        return new ParsedIslandStructure(blocks, biggestX, biggestZ, parseMillis);
+        return SkyBlockAddon.getIslandStructure();
     }
 
     /**
@@ -305,7 +308,7 @@ public class SkyblockAddonWorldCapability {
 
     public List<UUID> getPurgableIslands() {
         return IslandManager.getInstance().getEntrySet().entrySet().stream() // Create a stream of map entries
-                .filter(entry -> entry.getValue().isAbandoned() && !((ForgeIsland)entry.getValue()).getModifiedChunks().isEmpty()) // Filter entries where island is abandoned
+                .filter(entry -> ((ForgeIsland) entry.getValue()).purgeEligibility().purgeable())
                 .map(Map.Entry::getKey) // Map to the UUID (key) of the entry
                 .collect(Collectors.toList()); // Collect into a List<UUID>
     }

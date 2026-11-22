@@ -3,10 +3,8 @@ package yorickbm.skyblockaddon;
 import com.mojang.logging.LogUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.packs.resources.Resource;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -23,6 +21,7 @@ import net.minecraftforge.fml.loading.FileUtils;
 import org.slf4j.Logger;
 import yorickbm.guilibrary.GUILibraryRegistry;
 import yorickbm.guilibrary.events.DefaultEventHandler;
+import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldCapability.ParsedIslandStructure;
 import yorickbm.skyblockaddon.chunk.ChunkTaskScheduler;
 import yorickbm.skyblockaddon.commands.IslandBanCommand;
 import yorickbm.skyblockaddon.configs.SkyblockAddonConfig;
@@ -45,9 +44,9 @@ import yorickbm.skyblockaddon.events.Gui.IslandGuiEvents;
 import yorickbm.skyblockaddon.events.Gui.RegistryGuiEvents;
 import yorickbm.skyblockaddon.islands.IslandCreationQueue;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -100,17 +99,7 @@ public class SkyBlockAddon {
      * Run Common config setup.
      */
     public void onCommonSetup(final FMLCommonSetupEvent event) {
-        //Register Resources
-        RegistrySelector selector = new RegistrySelector(Map.of(
-                "PermissionRegistry", () -> {
-                    if (ModList.get().isLoaded("the_vault")) {
-                        return "registries/permissions/vaulthunters.json";
-                    } else {
-                        return "registries/permissions/default.json";
-                    }
-                }
-        ));
-        ResourceManager.commonSetup(FMLPaths.CONFIGDIR.get(), selector);
+        generateMissingConfigFiles();
 
         //Register username cache
         UsernameCache.initCache(500);
@@ -125,6 +114,23 @@ public class SkyBlockAddon {
     }
 
     /**
+     * Generate every missing config file from the bundled copy (at startup and on /island admin reload). A generated
+     * island.nbt is worth a warning: a server with a custom island would otherwise build the bundled one unnoticed.
+     */
+    public static void generateMissingConfigFiles() {
+        final RegistrySelector selector = new RegistrySelector(Map.of(
+                "PermissionRegistry", () -> ModList.get().isLoaded("the_vault")
+                        ? "registries/permissions/vaulthunters.json"
+                        : "registries/permissions/default.json"
+        ));
+        final List<String> generatedFiles = ResourceManager.commonSetup(FMLPaths.CONFIGDIR.get(), selector);
+        if (generatedFiles.contains(ResourceManager.ISLAND_TEMPLATE_FILE)) {
+            LOGGER.warn("'{}' was missing and has been generated from the bundled island; new islands use the bundled island",
+                    islandTemplatePath());
+        }
+    }
+
+    /**
      * Load the server's permission registry and report each known trigger it leaves unprotected.
      */
     public static void loadIslandPermissions() {
@@ -133,6 +139,16 @@ public class SkyBlockAddon {
         LOGGER.info("Loaded {} island permissions.", permissionCount);
         PermissionManager.getInstance().findUnreferencedTriggers().forEach(trigger ->
                 LOGGER.error("No island permission in '{}' lists trigger '{}', so every action on it is allowed for everyone on every island", registryPath, trigger));
+    }
+
+    /**
+     * The island template is loaded for each dedicated or integrated server start, not at mod setup, so a client with a
+     * broken island.nbt still reaches the title screen. A throw here fails the server start: Forge's event bus rethrows
+     * it and MinecraftServer.runServer logs it, writes a crash report and stops the server.
+     */
+    @SubscribeEvent
+    public void onServerAboutToStart(final ServerAboutToStartEvent event) {
+        loadIslandTemplate();
     }
 
     /**
@@ -163,22 +179,42 @@ public class SkyBlockAddon {
         }
     }
 
-    private static CompoundTag IslandNBTData = null;
-    public static CompoundTag getIslandNBT(final MinecraftServer server) {
-        if (IslandNBTData == null) {
-            try {
-                final File islandFile = new File(FMLPaths.CONFIGDIR.get().resolve(SkyblockAddonCore.MOD_ID) + "/island.nbt");
-                IslandNBTData = NbtIo.readCompressed(islandFile);
-            } catch (final IOException e) {
-                LOGGER.error("Could not load external island.nbt file, using mod's internal island.nbt file.");
-                try {
-                    final Resource rs = server.getResourceManager().getResource(ResourceLocation.fromNamespaceAndPath(SkyblockAddonCore.MOD_ID, "structures/island.nbt"));
-                    IslandNBTData = NbtIo.readCompressed(rs.getInputStream());
-                } catch (final IOException ex) {
-                    LOGGER.error("Could not load mod's internal island.nbt file!!!");
-                }
-            }
+    private static volatile ParsedIslandStructure islandStructure;
+
+    /**
+     * Read and parse the server's island.nbt (generated from the bundled island when missing). An unreadable, corrupt
+     * or structurally broken file stops the server start instead of failing every island creation later.
+     */
+    public static void loadIslandTemplate() {
+        final Path templatePath = islandTemplatePath();
+        final ParsedIslandStructure structure = parseIslandTemplate(templatePath, readIslandTemplate(templatePath));
+        islandStructure = structure;
+        LOGGER.info("Loaded the island template with {} blocks from '{}' in {} ms.", structure.blocks.size(), templatePath, structure.parseMillis);
+    }
+
+    private static ParsedIslandStructure parseIslandTemplate(final Path templatePath, final CompoundTag template) {
+        try {
+            return ParsedIslandStructure.parse(template);
+        } catch (final RuntimeException parseFailure) {
+            throw new IllegalStateException("'" + templatePath.toAbsolutePath() + "' is not a usable island structure: " + parseFailure.getMessage(), parseFailure);
         }
-        return IslandNBTData;
+    }
+
+    private static Path islandTemplatePath() {
+        return FMLPaths.CONFIGDIR.get().resolve(SkyblockAddonCore.MOD_ID).resolve(ResourceManager.ISLAND_TEMPLATE_FILE);
+    }
+
+    private static CompoundTag readIslandTemplate(final Path templatePath) {
+        try {
+            return NbtIo.readCompressed(templatePath.toFile());
+        } catch (final IOException | RuntimeException readFailure) {
+            throw new IllegalStateException("Failed to load the island template from '" + templatePath.toAbsolutePath() + "': " + readFailure, readFailure);
+        }
+    }
+
+    public static ParsedIslandStructure getIslandStructure() {
+        final ParsedIslandStructure structure = islandStructure;
+        if (structure == null) throw new IllegalStateException("The island template was not loaded when the server started");
+        return structure;
     }
 }

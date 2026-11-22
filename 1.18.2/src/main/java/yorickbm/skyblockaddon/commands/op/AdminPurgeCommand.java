@@ -22,6 +22,7 @@ import yorickbm.skyblockaddon.commands.interfaces.Cmds;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
+import yorickbm.skyblockaddon.core.islands.PurgeEligibility;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
 import yorickbm.skyblockaddon.util.FunctionRegistry;
 import yorickbm.skyblockaddon.util.ProgressBar;
@@ -81,8 +82,16 @@ public class AdminPurgeCommand {
         final UUID islandId = UuidArgument.getUuid(ctx, "target");
         final SkyblockAddonWorldCapability capability = overworldCapability(source);
 
-        if (!capability.getPurgableIslands().contains(islandId)) {
-            source.sendFailure(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.admin.purge.notallowed")));
+        final ForgeIsland island = (ForgeIsland) IslandManager.getInstance().getIslandByUUID(islandId);
+        if (island == null) {
+            source.sendFailure(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.admin.island.not.found.uuid")
+                    .formatted(islandId.toString())));
+            return 0;
+        }
+        final PurgeEligibility eligibility = island.purgeEligibility();
+        if (!eligibility.purgeable()) {
+            source.sendFailure(new TextComponent(SkyBlockAddonLanguage.getLocalizedString(eligibility.languageKey())
+                    .formatted(islandId.toString())));
             return 0;
         }
 

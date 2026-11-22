@@ -63,7 +63,7 @@ class IslandOwnershipTransferTest {
         island.addMember(NEW_OWNER, SkyblockAddonCore.MEMBERS_GROUP_ID);
         IslandActions.transferOwnership(island, OWNER_ACTOR, NEW_OWNER);
 
-        island.removeMember(TestIsland.OWNER, SkyblockAddonCore.MEMBERS_GROUP_ID);
+        island.removeFromIsland(TestIsland.OWNER);
 
         assertFalse(island.isPartOf(TestIsland.OWNER));
         assertEquals(NEW_OWNER, island.getOwner());

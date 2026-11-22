@@ -19,6 +19,7 @@ import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandActionResult;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
+import yorickbm.skyblockaddon.islands.ForgeIsland;
 import yorickbm.skyblockaddon.islands.IslandActionService;
 
 import java.util.Optional;
@@ -81,16 +82,16 @@ public class IslandAddGroupMemberCommand extends OverWorldCommandStack {
 
         final Optional<UUID> groupId = island.getGroupByName(groupName);
         if(groupId.isEmpty() || !island.hasGroup(groupId.get())) {
-            command.sendFailure(new TextComponent(String.format(SkyBlockAddonLanguage.getLocalizedString("commands.group.not.found"), groupId)));
+            command.sendFailure(new TextComponent(String.format(SkyBlockAddonLanguage.getLocalizedString("commands.group.not.found"), groupName)));
             return Command.SINGLE_SUCCESS;
         }
 
         final IslandGroup group = island.getGroup(groupId.get());
         if(group.getId().equals(SkyblockAddonCore.MEMBERS_GROUP_ID) || group.getId().equals(SkyblockAddonCore.VISITORS_GROUP_ID)) {
-            command.sendFailure(new TextComponent(String.format(SkyBlockAddonLanguage.getLocalizedString("commands.group.not.found"), groupId)));
+            command.sendFailure(new TextComponent(String.format(SkyBlockAddonLanguage.getLocalizedString("commands.group.not.found"), groupName)));
             return Command.SINGLE_SUCCESS;
         }
-        final IslandActionResult result = IslandActionService.assignGroup(executor, island, target.getUUID(), group.getId());
+        final IslandActionResult result = IslandActionService.assignGroup(executor, (ForgeIsland) island, target.getUUID(), group.getId());
         if(!result.succeeded()) {
             command.sendFailure(IslandActionService.failureMessage(result, target.getDisplayName().getString().trim()));
             return Command.SINGLE_SUCCESS;

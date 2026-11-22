@@ -26,11 +26,14 @@ import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.lang3.mutable.MutableInt;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
+import yorickbm.skyblockaddon.core.islands.PurgeEligibility;
 import yorickbm.skyblockaddon.util.BiomeUtil;
 import yorickbm.skyblockaddon.util.ForgeConverter;
 import yorickbm.skyblockaddon.util.NBTSerializable;
@@ -45,6 +48,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class ForgeIsland extends Island implements NBTSerializable {
+    private static final Logger LOGGER = LogManager.getLogger();
     private static final String BANNED_PLAYERS_TAG = "bannedPlayers";
     private static final String LAST_ACTIVE_TAG = "lastActive";
     private final List<ChunkPos> playerLoadedChunks = new ArrayList<>();
@@ -100,11 +104,7 @@ public class ForgeIsland extends Island implements NBTSerializable {
         if(isOwner(entity)) {
             handOverOwnershipToNextMember();
         } else {
-            final Optional<IslandGroup> group = getGroupForEntityUUID(entity);
-            group.ifPresentOrElse(
-                    g -> super.removeMember(entity, g.getId()),
-                    () -> super.removeMember(entity, SkyblockAddonCore.MEMBERS_GROUP_ID)
-            );
+            removeFromIsland(entity);
         }
 
         //CLear player from cache
@@ -252,9 +252,8 @@ public class ForgeIsland extends Island implements NBTSerializable {
         return playerLoadedChunks.remove(pos);
     }
 
-    @Override
-    public Optional<UUID> getGroupByName(String groupName) {
-        return getGroups().stream().filter(g -> g.getName().equalsIgnoreCase(groupName)).map(IslandGroup::getId).findFirst();
+    public PurgeEligibility purgeEligibility() {
+        return PurgeEligibility.of(this, playerLoadedChunks.size());
     }
 
     @Override
@@ -337,6 +336,8 @@ public class ForgeIsland extends Island implements NBTSerializable {
         for(final String key : members.getAllKeys()) {
             super.members.add(members.getUUID(key));
         }
+        removeMembersInVisitorsGroup().forEach(demotedMember ->
+                LOGGER.info("Island {}: removed member {}, who was in the Visitors group (moved to Visitors before 10.0)", getId(), demotedMember));
 
         final CompoundTag bannedPlayers = tag.getCompound(BANNED_PLAYERS_TAG);
         for(final String key : bannedPlayers.getAllKeys()) {

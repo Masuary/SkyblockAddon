@@ -15,7 +15,8 @@ public enum IslandActionResult {
     DEFAULT_GROUP_PROTECTED("island.action.group.default"),
     GROUP_NAME_EXISTS("commands.group.name.exists"),
     HELD_ITEM_MISSING("commands.group.failure"),
-    NO_CHANGE("island.action.no.change");
+    NO_CHANGE("island.action.no.change"),
+    MEMBER_REMOVED("island.member.demoted");
 
     private final String languageKey;
 
@@ -27,7 +28,10 @@ public enum IslandActionResult {
         return languageKey;
     }
 
+    /**
+     * MEMBER_REMOVED is the success of moving a member to Visitors; its language key is the actor's success message.
+     */
     public boolean succeeded() {
-        return this == SUCCESS;
+        return this == SUCCESS || this == MEMBER_REMOVED;
     }
 }
