@@ -5,6 +5,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.Tag;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -107,7 +108,6 @@ public class SkyBlockAddon {
         GUILibraryRegistry.registerFolder(SkyblockAddonCore.MOD_ID, FMLPaths.CONFIGDIR.get().resolve(SkyblockAddonCore.MOD_ID + "/guis/"));
 
         loadIslandPermissions();
-        loadIslandTemplate();
 
         //Init Version Checker
         VersionChecker.startVersionCheck();
@@ -142,6 +142,16 @@ public class SkyBlockAddon {
     }
 
     /**
+     * The island template is loaded for each dedicated or integrated server start, not at mod setup, so a client with a
+     * broken island.nbt still reaches the title screen. A throw here fails the server start: Forge's event bus rethrows
+     * it and MinecraftServer.runServer logs it, writes a crash report and stops the server.
+     */
+    @SubscribeEvent
+    public void onServerAboutToStart(final ServerAboutToStartEvent event) {
+        loadIslandTemplate();
+    }
+
+    /**
      * Runs upon server starting event.
      */
     @SubscribeEvent
@@ -172,8 +182,8 @@ public class SkyBlockAddon {
     private static volatile CompoundTag islandTemplate;
 
     /**
-     * Read the server's island.nbt (generated from the bundled island when missing) once at startup. An unreadable,
-     * corrupt or empty file stops the server instead of failing every island creation later.
+     * Read the server's island.nbt (generated from the bundled island when missing). An unreadable, corrupt or empty
+     * file stops the server start instead of failing every island creation later.
      */
     public static void loadIslandTemplate() {
         final Path templatePath = islandTemplatePath();
