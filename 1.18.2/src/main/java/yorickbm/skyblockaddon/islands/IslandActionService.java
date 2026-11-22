@@ -45,9 +45,6 @@ public final class IslandActionService {
         return island.isOwner(player.getUUID()) || player.hasPermissions(Commands.LEVEL_ADMINS);
     }
 
-    /**
-     * A member moved to Visitors is removed from the island like a kick and told so.
-     */
     public static SpawnPointPlacement checkSpawnPlacement(final ForgeIsland island, final ServerPlayer player) {
         final BlockPos blockUnderFeet = player.getOnPos();
         final boolean sturdyTopUnderFeet = player.getLevel().getBlockState(blockUnderFeet)
@@ -55,6 +52,9 @@ public final class IslandActionService {
         return SpawnPointPlacement.evaluate(island.isStandingOn(player), player.isOnGround(), sturdyTopUnderFeet);
     }
 
+    /**
+     * A member moved to Visitors is removed from the island like a kick and told so.
+     */
     public static IslandActionResult assignGroup(final ServerPlayer actor, final ForgeIsland island, final UUID target, final UUID groupId) {
         final IslandActionResult result = IslandActions.assignGroup(island, actorOf(actor), target, groupId);
         if (result != IslandActionResult.MEMBER_REMOVED) return result;

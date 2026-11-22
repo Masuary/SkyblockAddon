@@ -6,7 +6,7 @@ import java.util.UUID;
 
 /**
  * The island actions shared by both GUIs and the commands. Every action checks the actor's rights first and only
- * changes the island when it returns {@link IslandActionResult#SUCCESS}.
+ * changes the island when its result {@link IslandActionResult#succeeded() succeeded}.
  */
 public final class IslandActions {
     public static final String ADMIN_MENU_PERMISSION = "admin_menu";
