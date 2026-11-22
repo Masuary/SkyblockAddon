@@ -24,10 +24,10 @@
         "item": "minecraft:RED_DYE",
         "lore": [
           [
-            "{\"text\":\"» Moving a member to Visitors removes them from the island.\",\"color\":\"dark_gray\"}"
+            "{\"text\":\"\u00bb Moving a member to Visitors removes them from the island.\",\"color\":\"dark_gray\"}"
           ],
           [
-            "{\"text\":\"» They need a new invite to come back.\",\"color\":\"dark_gray\"}"
+            "{\"text\":\"\u00bb They need a new invite to come back.\",\"color\":\"dark_gray\"}"
           ]
         ],
         "data": {}
@@ -45,7 +45,7 @@
         "item": "minecraft:BARRIER",
         "lore": [
           [
-            "{\"text\":\"» Keep them in their group.\",\"color\":\"dark_gray\"}"
+            "{\"text\":\"\u00bb Keep them in their group.\",\"color\":\"dark_gray\"}"
           ]
         ],
         "data": {}

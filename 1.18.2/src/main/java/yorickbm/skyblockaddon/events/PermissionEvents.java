@@ -150,7 +150,7 @@ public class PermissionEvents {
         if (!InteractionHandler.isBreakDenied(player, level, event.getPos())) return;
 
         event.setCanceled(true);
-        if (InteractionHandler.isFirstDenialThisTick(player)) InteractionHandler.sendDeniedMessage(player);
+        if (InteractionHandler.isFirstDenialMessageThisTick(player)) InteractionHandler.sendDeniedMessage(player);
         InteractionHandler.resendBlockToPlayer(player, level, event.getPos());
     }
 
@@ -212,10 +212,8 @@ public class PermissionEvents {
 
         event.setCancellationResult(InteractionResult.FAIL);
         event.setCanceled(true);
-        if (InteractionHandler.isFirstDenialThisTick(player)) {
-            InteractionHandler.sendDeniedMessage(player);
-            player.inventoryMenu.sendAllDataToRemote();
-        }
+        if (InteractionHandler.isFirstDenialMessageThisTick(player)) InteractionHandler.sendDeniedMessage(player);
+        if (InteractionHandler.isFirstInventoryResyncThisTick(player)) player.inventoryMenu.sendAllDataToRemote();
     }
 
     private static void denyNetherPortalIgnition(final Event event, final Entity entity, final LevelAccessor world, final BlockPos position, final Function<ServerPlayer, ItemStack> heldItem) {

@@ -34,6 +34,10 @@ import java.util.UUID;
 final class PlayerListGui {
 
     private static final int OWNER_COLOR = 0xFFAA00;
+    private static final String SELECTED_LIST_KEY = "player_list_selected_from";
+    private static final String MEMBERS = "members";
+    private static final String VISITORS = "visitors";
+    private static final String BANS = "bans";
 
     private PlayerListGui() {}
 
@@ -44,7 +48,7 @@ final class PlayerListGui {
         List<UUID> players = new ArrayList<>();
         if (!island.getOwner().equals(SkyblockAddonCore.NO_OWNER_ID)) players.add(island.getOwner());
         players.addAll(island.getMembers());
-        int selected = selectedIndex(players, data);
+        int selected = selectedIndex(players, data, MEMBERS);
         boolean canManage = IslandActionService.canManage(island, player);
         boolean viewerIsOwner = island.isOwner(player.getUUID());
 
@@ -63,7 +67,7 @@ final class PlayerListGui {
         DetailListScreen.table(gui, DetailListScreen.PLAYERS, "players", "Player", rows,
                         List.of(ListColumn.of("Group", 60), ListColumn.of("Status", 8)), selected)
                 .emptyText(new TextComponent("No members yet"))
-                .onClick((p, index, click) -> select(p, data, players, index, PlayerListGui::openMembers));
+                .onClick((p, index, click) -> select(p, data, players, index, MEMBERS, PlayerListGui::openMembers));
         DetailListScreen.detail(gui, DetailListScreen.PLAYERS,
                 selected < 0 ? null : memberDetail(server, island, data, players.get(selected), canManage, viewerIsOwner), "No member selected");
         gui.openFor(player);
@@ -78,7 +82,7 @@ final class PlayerListGui {
         facts.add(KeyValueRow.of("Status", EnhancedGuiHelper.onlineText(online), EnhancedGuiHelper.onlineColor(online)));
         facts.add(KeyValueRow.of("Role", isOwner ? "Owner" : "Member", EnhancedDialog.VALUE_WHITE));
 
-        CompoundTag memberData = withPlayer(data, memberId);
+        CompoundTag memberData = withPlayer(data, memberId, MEMBERS);
         List<List<DetailListScreen.DetailButton>> secondary = new ArrayList<>();
         if (viewerIsOwner && !isOwner) {
             secondary.add(List.of(DetailListScreen.DetailButton.of("make_owner", "Make owner", ButtonStyle.SECONDARY,
@@ -101,7 +105,7 @@ final class PlayerListGui {
         MinecraftServer server = Objects.requireNonNull(player.getServer());
         List<ServerPlayer> visitors = island.visitorsStandingOn(server);
         List<UUID> visitorIds = visitors.stream().map(ServerPlayer::getUUID).toList();
-        int selected = selectedIndex(visitorIds, data);
+        int selected = selectedIndex(visitorIds, data, VISITORS);
 
         List<ListRow> rows = new ArrayList<>();
         for (ServerPlayer visitor : visitors) {
@@ -116,7 +120,7 @@ final class PlayerListGui {
         DetailListScreen.table(gui, DetailListScreen.PLAYERS, "players", "Player", rows,
                         List.of(ListColumn.of("Distance", 8)), selected)
                 .emptyText(new TextComponent("No visitors on the island"))
-                .onClick((p, index, click) -> select(p, data, visitorIds, index, PlayerListGui::openVisitors));
+                .onClick((p, index, click) -> select(p, data, visitorIds, index, VISITORS, PlayerListGui::openVisitors));
         DetailListScreen.detail(gui, DetailListScreen.PLAYERS,
                 selected < 0 ? null : visitorDetail(player, island, data, visitors.get(selected)), "No visitor selected");
         gui.openFor(player);
@@ -125,7 +129,7 @@ final class PlayerListGui {
     private static DetailListScreen.Detail visitorDetail(ServerPlayer viewer, ForgeIsland island, CompoundTag data, ServerPlayer visitor) {
         UUID visitorId = visitor.getUUID();
         String visitorName = visitor.getGameProfile().getName();
-        CompoundTag visitorData = withPlayer(data, visitorId);
+        CompoundTag visitorData = withPlayer(data, visitorId, VISITORS);
         List<KeyValueRow> facts = List.of(
                 KeyValueRow.of("Distance", distanceText(viewer, visitor), EnhancedDialog.VALUE_WHITE),
                 KeyValueRow.of("Group", groupName(island, visitorId), EnhancedDialog.VALUE_AQUA));
@@ -147,7 +151,7 @@ final class PlayerListGui {
         if (island == null) return;
         MinecraftServer server = Objects.requireNonNull(player.getServer());
         List<UUID> banned = List.copyOf(island.getBannedPlayers());
-        int selected = selectedIndex(banned, data);
+        int selected = selectedIndex(banned, data, BANS);
 
         List<ListRow> rows = new ArrayList<>();
         for (UUID playerId : banned) {
@@ -163,7 +167,7 @@ final class PlayerListGui {
         DetailListScreen.table(gui, DetailListScreen.PLAYERS, "players", "Player", rows,
                         List.of(ListColumn.of("Status", 8)), selected)
                 .emptyText(new TextComponent("Nobody is banned"))
-                .onClick((p, index, click) -> select(p, data, banned, index, PlayerListGui::openBans));
+                .onClick((p, index, click) -> select(p, data, banned, index, BANS, PlayerListGui::openBans));
         DetailListScreen.detail(gui, DetailListScreen.PLAYERS,
                 selected < 0 ? null : bannedDetail(server, island, data, banned.get(selected)), "No player selected");
         gui.openFor(player);
@@ -171,7 +175,7 @@ final class PlayerListGui {
 
     private static DetailListScreen.Detail bannedDetail(MinecraftServer server, ForgeIsland island, CompoundTag data, UUID bannedId) {
         boolean online = EnhancedGuiHelper.isOnline(server, bannedId);
-        CompoundTag bannedData = withPlayer(data, bannedId);
+        CompoundTag bannedData = withPlayer(data, bannedId, BANS);
         return new DetailListScreen.Detail(EnhancedGuiHelper.getPlayerHead(bannedId), List.of(), PlayerNames.nameOf(server, bannedId),
                 List.of(KeyValueRow.of("Status", EnhancedGuiHelper.onlineText(online), EnhancedGuiHelper.onlineColor(online))),
                 List.of(), DetailListScreen.DetailButton.of("lift_ban", "Lift ban", ButtonStyle.PRIMARY,
@@ -187,20 +191,22 @@ final class PlayerListGui {
         return island.getGroupForEntityUUID(playerId).map(IslandGroup::getName).orElse("Visitors");
     }
 
-    private static int selectedIndex(List<UUID> players, CompoundTag data) {
+    private static int selectedIndex(List<UUID> players, CompoundTag data, String list) {
+        boolean selectedInThisList = data.hasUUID(GuiDataKeys.PLAYER_ID) && list.equals(data.getString(SELECTED_LIST_KEY));
         return DetailListScreen.selectedIndexWithoutFallback(players,
-                playerId -> data.hasUUID(GuiDataKeys.PLAYER_ID) && playerId.equals(data.getUUID(GuiDataKeys.PLAYER_ID)),
-                data.hasUUID(GuiDataKeys.PLAYER_ID));
+                playerId -> selectedInThisList && playerId.equals(data.getUUID(GuiDataKeys.PLAYER_ID)),
+                selectedInThisList);
     }
 
-    private static CompoundTag withPlayer(CompoundTag data, UUID playerId) {
+    private static CompoundTag withPlayer(CompoundTag data, UUID playerId, String list) {
         CompoundTag withPlayer = data.copy();
         withPlayer.putUUID(GuiDataKeys.PLAYER_ID, playerId);
+        withPlayer.putString(SELECTED_LIST_KEY, list);
         return withPlayer;
     }
 
-    private static void select(ServerPlayer player, CompoundTag data, List<UUID> players, int index, EnhancedGuiHandler screen) {
+    private static void select(ServerPlayer player, CompoundTag data, List<UUID> players, int index, String list, EnhancedGuiHandler screen) {
         if (index < 0 || index >= players.size()) return;
-        screen.open(player, withPlayer(data, players.get(index)));
+        screen.open(player, withPlayer(data, players.get(index), list));
     }
 }

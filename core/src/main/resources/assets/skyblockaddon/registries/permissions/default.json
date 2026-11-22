@@ -369,13 +369,13 @@
         "item": "minecraft:chest",
         "lore": [
           [
-            "{\"text\": \"Open chests and chest carts and take\", \"color\": \"gray\"}"
+            "{\"text\": \"Open chests, chest carts and the storage\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\": \"or put items.\", \"color\": \"gray\"}"
+            "{\"text\": \"of ships and aircraft, and ride those.\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\": \"Examples: chests, trapped chests, strongboxes, chest minecarts\", \"color\": \"dark_gray\"}"
+            "{\"text\": \"Examples: chests, strongboxes, chest minecarts, cogs, biplanes\", \"color\": \"dark_gray\"}"
           ],
           [
             "{\"text\": \" \", \"color\": \"dark_gray\"}"
@@ -404,7 +404,10 @@
         "entities": [
           "minecraft:chest_minecart",
           "minecraft:hopper_minecart",
-          "wildbackport:chest_boat"
+          ".*:(.*_)?chest_boat",
+          "immersive_aircraft:(airship|biplane|gyrodyne|quadrocopter)",
+          "immersivepetroleum:speedboat",
+          "smallships:.*"
         ]
       }
     },
@@ -737,16 +740,16 @@
           "!farmingforblockheads:merchant",
           "!minecraft:chest_minecart",
           "!minecraft:hopper_minecart",
-          "!wildbackport:chest_boat",
+          "!.*:(.*_)?chest_boat",
+          "!immersive_aircraft:(airship|biplane|gyrodyne|quadrocopter)",
+          "!immersivepetroleum:speedboat",
+          "!smallships:.*",
           "!minecraft:boat",
           "!minecraft:minecart",
           "!.*:.*_boat",
           "!.*:boat",
-          "!immersive_aircraft:(airship|biplane|gyrodyne|quadrocopter)",
-          "!immersivepetroleum:speedboat",
           "!littlelogistics:seater_(barge|car)",
           "!alexsmobs:straddleboard",
-          "!smallships:.*",
           "!.*:seat",
           "!luphieclutteredmod:.*seat.*",
           "!taterzens:npc",

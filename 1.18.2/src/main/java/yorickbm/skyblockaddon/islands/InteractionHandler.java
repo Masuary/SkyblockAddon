@@ -58,7 +58,8 @@ import java.util.function.Predicate;
 
 public class InteractionHandler {
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final Map<ServerPlayer, Long> LAST_DENIAL_FEEDBACK_TICK = new WeakHashMap<>();
+    private static final Map<ServerPlayer, Long> LAST_DENIAL_MESSAGE_TICK = new WeakHashMap<>();
+    private static final Map<ServerPlayer, Long> LAST_INVENTORY_RESYNC_TICK = new WeakHashMap<>();
 
     public static void deny(final Event event, final Player player) {
         if (event.isCancelable()) event.setCanceled(true);
@@ -71,13 +72,21 @@ public class InteractionHandler {
     }
 
     /**
-     * True the first time it is asked for a player in a game tick. Area tools and held clicks deny many actions per tick;
-     * the message and the inventory resync only need to go out once. Server thread only.
+     * Area tools and held clicks deny many actions per tick; the denial message and the inventory resync each only need
+     * to go out once per player and tick. Server thread only.
      */
-    public static boolean isFirstDenialThisTick(final ServerPlayer player) {
+    public static boolean isFirstDenialMessageThisTick(final ServerPlayer player) {
+        return isFirstThisTick(LAST_DENIAL_MESSAGE_TICK, player);
+    }
+
+    public static boolean isFirstInventoryResyncThisTick(final ServerPlayer player) {
+        return isFirstThisTick(LAST_INVENTORY_RESYNC_TICK, player);
+    }
+
+    private static boolean isFirstThisTick(final Map<ServerPlayer, Long> lastTickByPlayer, final ServerPlayer player) {
         final long gameTime = player.getLevel().getGameTime();
-        final Long lastFeedbackTick = LAST_DENIAL_FEEDBACK_TICK.put(player, gameTime);
-        return lastFeedbackTick == null || lastFeedbackTick != gameTime;
+        final Long lastTick = lastTickByPlayer.put(player, gameTime);
+        return lastTick == null || lastTick != gameTime;
     }
 
     public static void pushPlayerBack(final ServerPlayer player) {

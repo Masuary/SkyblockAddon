@@ -1,5 +1,6 @@
 package yorickbm.skyblockaddon.core.permissions;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -73,9 +74,29 @@ class BundledRegistryCoverageTest {
         assertTrue(entityDenial(manager, VISITOR, "the_vault:spirit").isEmpty());
         assertTrue(entityDenial(manager, VISITOR, "minecraft:boat").isEmpty());
         assertTrue(entityDenial(manager, VISITOR, "minecraft:minecart").isEmpty());
-        assertTrue(entityDenial(manager, VISITOR, "immersive_aircraft:biplane").isEmpty());
         assertEquals(Optional.of("open_chests"), entityDenial(manager, VISITOR, "wildbackport:chest_boat"));
         assertTrue(entityDenial(manager, "open_chests"::equals, "minecraft:hopper_minecart").isEmpty());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"vaulthunters", "woldsvaults", "default"})
+    void vehiclesWithAnInventoryNeedTheChestToggle(final String pack) {
+        final PermissionManager manager = bundled(pack);
+        assertEquals(Optional.of("open_chests"), entityDenial(manager, VISITOR, "immersive_aircraft:biplane"));
+        assertEquals(Optional.of("open_chests"), entityDenial(manager, VISITOR, "smallships:oak_cog"));
+        assertEquals(Optional.of("open_chests"), entityDenial(manager, VISITOR, "immersivepetroleum:speedboat"));
+        assertEquals(Optional.of("open_chests"), entityDenial(manager, VISITOR, "somemod:oak_chest_boat"));
+        assertTrue(entityDenial(manager, "open_chests"::equals, "smallships:oak_cog").isEmpty());
+    }
+
+    @Test
+    void plainChestsOfModsWithTheirOwnToggleStayUnderChests() {
+        final PermissionManager manager = bundled("woldsvaults");
+        assertEquals(Optional.of("open_chests"), blockClickDenial(manager, "use_shops"::equals, "lightmanscurrency:coin_chest"));
+        assertTrue(blockClickDenial(manager, "open_chests"::equals, "lightmanscurrency:coin_chest").isEmpty());
+        assertEquals(Optional.of("use_shops"), blockClickDenial(manager, "open_chests"::equals, "lightmanscurrency:display_case"));
+        assertTrue(blockClickDenial(manager, "open_chests"::equals, "pneumaticcraft:reinforced_chest").isEmpty());
+        assertEquals(Optional.of("mod_pneumaticcraft"), blockClickDenial(manager, "open_chests"::equals, "pneumaticcraft:air_compressor"));
     }
 
     @ParameterizedTest

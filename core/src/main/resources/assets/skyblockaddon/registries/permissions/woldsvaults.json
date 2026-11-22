@@ -430,13 +430,13 @@
         "item": "minecraft:chest",
         "lore": [
           [
-            "{\"text\": \"Open chests and chest carts and take\", \"color\": \"gray\"}"
+            "{\"text\": \"Open chests, chest carts and the storage\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\": \"or put items.\", \"color\": \"gray\"}"
+            "{\"text\": \"of ships and aircraft, and ride those.\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\": \"Examples: chests, trapped chests, strongboxes, chest minecarts\", \"color\": \"dark_gray\"}"
+            "{\"text\": \"Examples: chests, strongboxes, chest minecarts, cogs, biplanes\", \"color\": \"dark_gray\"}"
           ],
           [
             "{\"text\": \" \", \"color\": \"dark_gray\"}"
@@ -464,7 +464,6 @@
           ".*:.*_chest_placeable",
           "!the_vault:enigma_chest",
           "the_vault:.*_strongbox",
-          "!lightmanscurrency:.*",
           "!colossalchests:.*",
           "!ae2:.*",
           "!ae2things:.*",
@@ -502,7 +501,7 @@
           "!botanicalmachinery:.*",
           "!botanicalextramachinery:.*",
           "!incorporeal:.*",
-          "!pneumaticcraft:.*",
+          "!pneumaticcraft:(?!(reinforced|smart)_chest$).*",
           "!immersiveengineering:.*",
           "!immersivepetroleum:.*",
           "!more_immersive_wires:.*",
@@ -511,18 +510,24 @@
           "!rftoolspower:.*",
           "!sfm:.*",
           "!occultism:.*",
-          "!ars_nouveau:.*",
+          "!ars_nouveau:(?!archwood_chest$).*",
           "!mysticalagriculture:.*",
           "!mysticalagradditions:.*",
           "!davespotioneering:.*",
           "!powah:.*",
+          "!lightmanscurrency:(?!coin_chest$).*",
+          "!lctech:.*",
+          "!casinocraft:.*",
           "!rftoolsutility:.*",
           "!the_vault:vault_crate_.*"
         ],
         "entities": [
           "minecraft:chest_minecart",
           "minecraft:hopper_minecart",
-          "wildbackport:chest_boat"
+          ".*:(.*_)?chest_boat",
+          "immersive_aircraft:(airship|biplane|gyrodyne|quadrocopter)",
+          "immersivepetroleum:speedboat",
+          "smallships:.*"
         ]
       }
     },
@@ -562,7 +567,6 @@
         "blocks": [
           "minecraft:barrel",
           ".*:.*_barrel",
-          "!createdieselgenerators:.*",
           "!colossalchests:.*",
           "!ae2:.*",
           "!ae2things:.*",
@@ -590,6 +594,7 @@
           "!thermal:.*",
           "!create:.*",
           "!createaddition:.*",
+          "!createdieselgenerators:.*",
           "!create_enchantment_industry:.*",
           "!create_mechanical_extruder:.*",
           "!createoreexcavation:.*",
@@ -613,6 +618,9 @@
           "!mysticalagradditions:.*",
           "!davespotioneering:.*",
           "!powah:.*",
+          "!lightmanscurrency:.*",
+          "!lctech:.*",
+          "!casinocraft:.*",
           "!rftoolsutility:.*",
           "!the_vault:vault_crate_.*"
         ],
@@ -706,6 +714,9 @@
           "!mysticalagradditions:.*",
           "!davespotioneering:.*",
           "!powah:.*",
+          "!lightmanscurrency:.*",
+          "!lctech:.*",
+          "!casinocraft:.*",
           "!rftoolsutility:.*",
           "!the_vault:vault_crate_.*"
         ],
@@ -1761,7 +1772,29 @@
           "farmingforblockheads:market",
           "the_vault:shop_pedestal",
           "woldsvaults:.*_shop_pedestal",
-          "casinocraft:.*"
+          "casinocraft:.*",
+          "!.*:.*_door",
+          "!.*:.*_trapdoor",
+          "!.*:.*_fence_gate",
+          "!.*:.*_(upgraded|pyramid|highley|picket|railing)_gate",
+          "!supplementaries:(iron|gold)_gate",
+          "!framedblocks:framed_gate",
+          "!minecraft:lever",
+          "!.*:.*_button",
+          "!.*:.*_button_.*",
+          "!.*:.*_lever",
+          "!minecraft:repeater",
+          "!minecraft:comparator",
+          "!create:pulse_repeater",
+          "!create:pulse_extender",
+          "!create:powered_latch",
+          "!create:powered_toggle_latch",
+          "!minecraft:daylight_detector",
+          "!minecraft:note_block",
+          "!blockcarpentry:frame_daylight_detector",
+          "!blockcarpentry:illusion_daylight_detector",
+          "!create:redstone_link",
+          "!lightmanscurrency:coin_chest"
         ],
         "entities": []
       }
@@ -1997,16 +2030,16 @@
           "!farmingforblockheads:merchant",
           "!minecraft:chest_minecart",
           "!minecraft:hopper_minecart",
-          "!wildbackport:chest_boat",
+          "!.*:(.*_)?chest_boat",
+          "!immersive_aircraft:(airship|biplane|gyrodyne|quadrocopter)",
+          "!immersivepetroleum:speedboat",
+          "!smallships:.*",
           "!minecraft:boat",
           "!minecraft:minecart",
           "!.*:.*_boat",
           "!.*:boat",
-          "!immersive_aircraft:(airship|biplane|gyrodyne|quadrocopter)",
-          "!immersivepetroleum:speedboat",
           "!littlelogistics:seater_(barge|car)",
           "!alexsmobs:straddleboard",
-          "!smallships:.*",
           "!.*:seat",
           "!luphieclutteredmod:.*seat.*",
           "!taterzens:npc",
@@ -3694,7 +3727,8 @@
           "!minecraft:note_block",
           "!blockcarpentry:frame_daylight_detector",
           "!blockcarpentry:illusion_daylight_detector",
-          "!create:redstone_link"
+          "!create:redstone_link",
+          "!pneumaticcraft:(reinforced|smart)_chest"
         ],
         "entities": []
       }
@@ -4095,7 +4129,8 @@
           "!minecraft:note_block",
           "!blockcarpentry:frame_daylight_detector",
           "!blockcarpentry:illusion_daylight_detector",
-          "!create:redstone_link"
+          "!create:redstone_link",
+          "!ars_nouveau:archwood_chest"
         ],
         "entities": []
       }

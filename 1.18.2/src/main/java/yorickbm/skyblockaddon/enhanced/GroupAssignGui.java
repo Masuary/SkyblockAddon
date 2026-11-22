@@ -89,7 +89,8 @@ final class GroupAssignGui {
                     if (index < 0 || index >= groups.size()) return;
                     UUID groupId = groups.get(index).getId();
                     if (groupId.equals(SkyblockAddonCore.VISITORS_GROUP_ID) && island.isDemotionToVisitors(targetId, groupId)) {
-                        if (EnhancedGuiHelper.closeWhenDenied(p, IslandActionService.canManage(island, p), IslandActionResult.NOT_ALLOWED)) return;
+                        IslandActionResult blocker = IslandActionService.checkMoveToVisitors(p, island, targetId);
+                        if (EnhancedGuiHelper.closeWhenDenied(p, blocker == IslandActionResult.SUCCESS, blocker)) return;
                         ConfirmMoveToVisitorsGui.open(p, data, island, targetId);
                         return;
                     }

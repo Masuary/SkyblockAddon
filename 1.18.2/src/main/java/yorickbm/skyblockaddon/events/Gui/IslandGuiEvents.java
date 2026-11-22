@@ -1,6 +1,7 @@
 package yorickbm.skyblockaddon.events.Gui;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.commands.Commands;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Style;
@@ -109,6 +110,11 @@ public class IslandGuiEvents {
         }
 
         event.getHolder().close();
+        if (!island.isVisible() && !island.isPartOf(event.getTarget().getUUID()) && !event.getTarget().hasPermissions(Commands.LEVEL_MODERATORS)) {
+            event.getTarget().sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("island.travel.private")).withStyle(ChatFormatting.RED), event.getTarget().getUUID());
+            event.setResult(Event.Result.DENY);
+            return;
+        }
         if (IslandActionService.isBannedFrom(island, event.getTarget())) {
             event.getTarget().sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("island.banned.travel")).withStyle(ChatFormatting.RED), event.getTarget().getUUID());
             event.setResult(Event.Result.DENY);
@@ -240,6 +246,11 @@ public class IslandGuiEvents {
         final UUID groupUUID = modData.getUUID(GuiDataKeys.GROUP_ID);
         final UUID playerUUID = guiData.getUUID(GuiDataKeys.PLAYER_ID);
         if (event.getIsland().isDemotionToVisitors(playerUUID, groupUUID)) {
+            final IslandActionResult blocker = IslandActionService.checkMoveToVisitors(event.getTarget(), event.getIsland(), playerUUID);
+            if (blocker != IslandActionResult.SUCCESS) {
+                denyWithMessage(event, blocker, UsernameCache.getBlocking(playerUUID));
+                return;
+            }
             askToConfirmMoveToVisitors(event, groupUUID);
             return;
         }
