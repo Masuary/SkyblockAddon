@@ -32,6 +32,26 @@ Branch `main` (created 2026-11-21 from `gui-redesign` at `5e191cd`; sir: this be
 - Wolds deploy timing (sir, 2026-11-22, after W2): 10.0 goes live on Wolds together with the next Wolds reset, date unknown. W3's testnet pass can run before that; the live deploy waits for the reset (fresh worlds, so the bundled Wolds defaults apply on first boot).
 - Permission coverage (sir, 2026-11-22, after W2): one session for both packs (Skyvault and Wolds) runs next as W2b, before W3, so W3 tests the final registries.
 
+## Decisions for W2b (sir, 2026-11-22)
+
+Coverage report, harness and mockups: `/mnt/data/AI/work/skyblockaddon-permission-coverage-2026-11-22/` (`coverage-report.md`, `coverage/classification-*.md`, `mockups/`).
+
+- T1 entity right-click (never denied today): judge the entity id (`EntityInteract` and `EntityInteractSpecific`); three toggles: `interact_item_frame` "Item frames and armor stands" (adds armor stands, glass frames, leash knots), new `interact_villagers` "Trade with villagers", new `interact_animals` "Animals and mobs" (everything else); `taterzens:npc` and corpses stay open.
+- T2: general `BlockEvent.BreakEvent` check for real players on islands, judged as `destroy_blocks` (FakePlayers unaffected).
+- T3: explosions: island blocks are removed from a blast whose player (thrower, igniter, projectile owner) lacks `destroy_blocks` there; no new toggle.
+- T4: in-air items as registry data: new `use_terraforming_tools` (block-changing items per pack, `onRightClickItem`), teleport items added to `transport_misc`.
+- T5: `permissions.entity_placer_items` default chosen per pack (Skyvault / Wolds / empty), like the bundled registries.
+- T6: `BlockInteractability` also catches `RuntimeException` (dist-cleaned classes), block treated as interactable, warn once per class.
+- R3 default: a permission missing from the Members group counts as allowed; Visitors and custom groups keep the registry default.
+- Wolds config at the reset: bundled Wolds defaults (live tweaks folded in: Create seats, mining-dimension teleporter, enigma chest) plus a per-server deploy registry (HUB shop carve-out, ZEST placement carve-outs); live registries moved aside at the reset.
+- Station groups: new `use_workstations` "Crafting stations" and `open_other_storage` "Other storage" on both packs; the catch-all becomes "Other usable blocks"; Wolds also gets shops, computers and turtles, `mod_rftoolsutility` (open to Visitors today), sibling mods folded into their `mod_*`.
+- Rule fixes (all four): fence gates join doors; whole waystone family; VH stations into `vh_*` (tool vise, magnet table, enhancement altar -> gear; vault stash, cryo chamber -> personal; terrarium -> companions; schematic terminal -> misc; strongboxes -> chests); framed/copycat/carpentry pressure plates back under the catch-all and dead rules removed.
+- NPCs: `taterzens:npc` exempt from `use_vehicles` and every entity toggle.
+- Categories: option A (General, Building, Storage, Stations, Animals and Mobs, Doors and Redstone, Travel, Vault Hunters, Mods on Wolds, Admin); permission ids unchanged.
+- Lore: L1 (1-2 gray description lines, dark-gray "Examples:" from that pack, click hint, status); the enhanced screen shows the same lore in its row tooltips now.
+- C4 screens (sir, 2026-11-22, from the current-vs-proposed sheets `mockups/c4/sheet-1..6-*.png`, rendered by MasuGUI `art/gui_mockup.py`; layouts in `mockups/c4/<screen>/Enhanced.json`), all as proposed: hub 400x214 = island card (owner head, Biome/Visibility/Members/Visitors here/Groups rows, Teleport primary, Transfer + Leave) + "Manage island" cards (Members, Visitors, Permissions, Bans, Biome, Set spawn) + visibility SWITCH; every list in the shop-list pattern (table card + detail card, row click selects, button acts): travel 438x234 with search + Sort (Recently active / Most members / Name) and Teleport; members (Group, Status columns; Change group primary, Make owner with confirm; the separate Transfer list is dropped); visitors (Distance; Expel primary, Ban with confirm; the visitor_action popup is dropped); bans (Lift ban); groups = one table (Group, Type, Players) + group card (Permissions primary, Players, Remove for custom groups) + "+ Create group" toolbar with hint; "Group for <player>" marks the current group, the Visitors row warns and opens the F8 confirm; biomes follow the same table + card pattern (Apply), by analogy, not mocked; permission screen 440x234 (wider category list, Allow all / Deny all / Players toolbar, rule icons from the registry, lore tooltips); all confirms (leave, set spawn, create group, remove group, unban, transfer, F8 Move to Visitors) in the approved shop confirm style. Only data SkyblockAddon stores is shown (no join, last-seen or ban dates).
+- Scope extension (sir, 2026-11-22): this session also does MasuGUI consumer redesign C4 (every SkyblockAddon MasuGUI screen, incl. deferred F8); mock C4 first, decide everything, then implement W2b and C4 in one build and one QA pass; main only (the old Wolds line gets no GUI work).
+
 ## Phases
 
 | Phase | Contents | Status |
