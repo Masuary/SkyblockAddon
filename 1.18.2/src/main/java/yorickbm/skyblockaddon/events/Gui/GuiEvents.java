@@ -18,6 +18,7 @@ import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.util.UsernameCache;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
 import yorickbm.skyblockaddon.islands.IslandActionService;
+import yorickbm.skyblockaddon.core.permissions.PermissionCategories;
 
 import java.util.HashMap;
 import java.util.List;
@@ -129,8 +130,7 @@ public class GuiEvents {
             replacements.put("%group_member_count%", group.getMembers().size()+"");
 
             if(event.getData().getCompound(GUILibraryRegistry.MOD_ID).contains("category_id")) {
-                final String category = event.getData().getCompound(GUILibraryRegistry.MOD_ID).getString("category_id").replace("_", " ");
-                replacements.put("%group_category%", Character.toUpperCase(category.charAt(0)) + category.substring(1));
+                replacements.put("%group_category%", PermissionCategories.labelFor(event.getData().getCompound(GUILibraryRegistry.MOD_ID).getString("category_id")));
             }
 
         }
@@ -178,8 +178,7 @@ public class GuiEvents {
             replacements.put("%group_member_count%", group.getMembers().size()+"");
 
             if(event.getHolder().getData().getCompound(GUILibraryRegistry.MOD_ID).contains("category_id")) {
-                final String category = event.getHolder().getData().getCompound(GUILibraryRegistry.MOD_ID).getString("category_id").replace("_", " ");
-                replacements.put("%group_category%", Character.toUpperCase(category.charAt(0)) + category.substring(1));
+                replacements.put("%group_category%", PermissionCategories.labelFor(event.getHolder().getData().getCompound(GUILibraryRegistry.MOD_ID).getString("category_id")));
             }
 
         }

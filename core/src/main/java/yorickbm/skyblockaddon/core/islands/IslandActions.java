@@ -39,6 +39,18 @@ public final class IslandActions {
     }
 
     /**
+     * What would stop the actor from moving the target member to Visitors, checked before asking to confirm it;
+     * {@link IslandActionResult#SUCCESS} when nothing would.
+     */
+    public static IslandActionResult checkMoveToVisitors(final Island island, final IslandActor actor, final UUID target) {
+        if (!canManage(island, actor)) return IslandActionResult.NOT_ALLOWED;
+        if (island.isOwner(target)) return IslandActionResult.TARGET_IS_OWNER;
+        if (island.isBanned(target)) return IslandActionResult.TARGET_IS_BANNED;
+        if (target.equals(actor.playerId())) return IslandActionResult.TARGET_IS_SELF;
+        return IslandActionResult.SUCCESS;
+    }
+
+    /**
      * Moving a member to Visitors removes them from the island like a kick, so a manager cannot do it to themselves
      * (they leave with /island leave, which can be undone).
      */

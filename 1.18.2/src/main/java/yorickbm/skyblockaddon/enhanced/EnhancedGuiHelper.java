@@ -4,10 +4,7 @@ import com.masuary.masugui.api.MasuGui;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
-import net.minecraft.nbt.StringTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.GameProfileCache;
@@ -19,11 +16,12 @@ import org.apache.logging.log4j.Logger;
 import yorickbm.skyblockaddon.core.islands.IslandActionResult;
 import yorickbm.skyblockaddon.islands.IslandActionService;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public final class EnhancedGuiHelper {
 
@@ -43,25 +41,26 @@ public final class EnhancedGuiHelper {
         return true;
     }
 
-    public static void addLore(ItemStack item, Component... lines) {
-        CompoundTag display = item.getOrCreateTagElement("display");
-        ListTag lore = display.contains("Lore") ? display.getList("Lore", 8) : new ListTag();
-        for (Component line : lines) {
-            lore.add(StringTag.valueOf(Component.Serializer.toJson(line)));
-        }
-        display.put("Lore", lore);
+    /** "minecraft:dark_forest" becomes "Dark Forest"; a missing biome is "Unknown". */
+    static String biomeName(String biomeId) {
+        if (biomeId == null || biomeId.isBlank()) return "Unknown";
+        String path = biomeId.contains(":") ? biomeId.substring(biomeId.indexOf(':') + 1) : biomeId;
+        return Arrays.stream(path.replace('/', ' ').replace('_', ' ').split(" "))
+                .filter(word -> !word.isEmpty())
+                .map(word -> word.substring(0, 1).toUpperCase(Locale.ROOT) + word.substring(1))
+                .collect(Collectors.joining(" "));
     }
 
-    public static List<Component> lore(ItemStack item) {
-        CompoundTag display = item.getTagElement("display");
-        if (display == null || !display.contains("Lore")) return List.of();
-        List<Component> lines = new ArrayList<>();
-        ListTag lore = display.getList("Lore", 8);
-        for (int i = 0; i < lore.size(); i++) {
-            Component line = Component.Serializer.fromJson(lore.getString(i));
-            if (line != null) lines.add(line);
-        }
-        return lines;
+    static boolean isOnline(MinecraftServer server, UUID playerId) {
+        return server.getPlayerList().getPlayer(playerId) != null;
+    }
+
+    static String onlineText(boolean online) {
+        return online ? "Online" : "Offline";
+    }
+
+    static int onlineColor(boolean online) {
+        return online ? EnhancedDialog.VALUE_GREEN : EnhancedDialog.VALUE_GRAY;
     }
 
     public static ItemStack getPlayerHead(UUID playerUuid) {
@@ -112,5 +111,9 @@ public final class EnhancedGuiHelper {
         }
 
         return profile;
+    }
+
+    public static String countOf(int count, String singular, String plural) {
+        return count + " " + (count == 1 ? singular : plural);
     }
 }

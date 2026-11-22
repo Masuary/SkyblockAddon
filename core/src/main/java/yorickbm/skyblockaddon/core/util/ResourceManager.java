@@ -17,7 +17,7 @@ public class ResourceManager {
     public static final String ISLAND_TEMPLATE_FILE = "island.nbt";
     private static final List<String> BUNDLED_GUI_FILES = List.of(
             "overview.json", "settings.json", "biomes.json", "travel.json", "members.json", "groups.json",
-            "set_group.json", "permissions.json", "set_permission.json", "members_group.json", "confirm_setspawn.json",
+            "set_group.json", "permissions.json", "set_permission.json", "members_group.json", "confirm_setspawn.json", "confirm_move_to_visitors.json",
             "visitors.json", "bans.json", "transfer.json");
 
     /**

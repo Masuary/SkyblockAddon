@@ -1,6 +1,5 @@
 package yorickbm.skyblockaddon.islands;
 
-import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -16,11 +15,9 @@ import net.minecraftforge.common.util.FakePlayer;
 import yorickbm.skyblockaddon.core.JSON.PermissionDataJson;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
-import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.permissions.EntityVerification;
 import yorickbm.skyblockaddon.core.permissions.InteractionSubject;
 import yorickbm.skyblockaddon.core.permissions.PermissionTriggers;
-import yorickbm.skyblockaddon.util.ForgeConverter;
 
 import java.util.List;
 import java.util.Map;
@@ -111,7 +108,7 @@ public final class MixinPermissionChecks {
      */
     public static boolean denyRangedPlacement(final Player player, final Level level, final BlockPos position, final ItemStack placingStack, final BlockState placedState) {
         if (!(level instanceof final ServerLevel serverLevel)) return false;
-        final Optional<Island> guardingIsland = islandGuardingRangedBuild(player, serverLevel, position);
+        final Optional<Island> guardingIsland = InteractionHandler.islandGuardingPosition(player, serverLevel, position);
         if (guardingIsland.isEmpty()) return false;
 
         final BlockState replacedState = serverLevel.getBlockState(position);
@@ -129,7 +126,7 @@ public final class MixinPermissionChecks {
      */
     public static boolean denyRangedBreak(final Player player, final Level level, final BlockPos position) {
         if (!(level instanceof final ServerLevel serverLevel)) return false;
-        final Optional<Island> guardingIsland = islandGuardingRangedBuild(player, serverLevel, position);
+        final Optional<Island> guardingIsland = InteractionHandler.islandGuardingPosition(player, serverLevel, position);
         if (guardingIsland.isEmpty()) return false;
 
         final boolean denied = isDeniedOn(guardingIsland.get(), player, PermissionTriggers.ON_LEFT_CLICK_BLOCK,
@@ -147,7 +144,7 @@ public final class MixinPermissionChecks {
         if (!(player.getLevel() instanceof final ServerLevel level)) return false;
         final ItemStack placingStack = InteractionHandler.placingStack(player);
         return positions.stream().anyMatch(position -> {
-            final Optional<Island> guardingIsland = islandGuardingRangedBuild(player, level, position);
+            final Optional<Island> guardingIsland = InteractionHandler.islandGuardingPosition(player, level, position);
             if (guardingIsland.isEmpty()) return false;
             if (!isDeniedOn(guardingIsland.get(), player, PermissionTriggers.ON_PLACE_BLOCK, InteractionHandler.subjectOfClick(level, position, placingStack))) return false;
             InteractionHandler.sendDeniedMessage(player);
@@ -161,20 +158,6 @@ public final class MixinPermissionChecks {
 
     private static boolean isDeniedOn(final Island island, final Player player, final String trigger, final InteractionSubject subject) {
         return InteractionHandler.isInteractionDenied(new AtomicReference<>(island), (ServerPlayer) player, trigger, subject);
-    }
-
-    /**
-     * The island whose permissions judge a build at the position, or empty when nothing is checked: not a real player on
-     * the server, outside the overworld, a server admin, no island there, or the player owns it.
-     */
-    private static Optional<Island> islandGuardingRangedBuild(final Player player, final ServerLevel level, final BlockPos position) {
-        if (!(player instanceof final ServerPlayer serverPlayer) || player instanceof FakePlayer) return Optional.empty();
-        if (level.dimension() != Level.OVERWORLD) return Optional.empty();
-        if (serverPlayer.hasPermissions(Commands.LEVEL_ADMINS)) return Optional.empty();
-
-        final Island island = IslandManager.getInstance().getIslandByPos(ForgeConverter.forgeToInternalVec3i(position));
-        if (island == null || island.isOwner(serverPlayer.getUUID())) return Optional.empty();
-        return Optional.of(island);
     }
 
     private static void sendRateLimitedPortalMessage(final ServerPlayer player, final long gameTime) {

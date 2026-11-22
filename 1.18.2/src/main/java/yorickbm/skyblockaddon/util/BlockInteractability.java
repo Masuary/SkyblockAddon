@@ -97,7 +97,7 @@ public final class BlockInteractability {
         final Method[] declaredMethods;
         try {
             declaredMethods = type.getDeclaredMethods();
-        } catch (final LinkageError unresolvableSignature) {
+        } catch (final LinkageError | RuntimeException unresolvableSignature) {
             LOGGER.warn("Cannot inspect block class {} ({}); treating its blocks as interactable", type.getName(), unresolvableSignature.toString());
             return true;
         }

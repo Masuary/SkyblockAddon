@@ -1,26 +1,193 @@
 {
   "permissions": [
     {
-      "id": "place_blocks",
+      "id": "admin_menu",
       "item": {
         "display_name": [
-          "{\"text\": \"Place blocks\", \"color\":\"blue\", \"bold\":\"true\"}"
+          "{\"text\": \"Island admin\", \"color\": \"gold\", \"bold\": \"true\"}"
         ],
-        "item": "minecraft:BRICKS",
+        "item": "minecraft:anvil",
         "lore": [
           [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+            "{\"text\": \"Manage the island: members, visitors, bans,\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+            "{\"text\": \"groups, permissions, biome and spawn.\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+            "{\"text\": \"Examples: invite players, change permissions\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
           ]
         ]
       },
-      "category": "General",
+      "category": "general",
+      "triggers": [
+        "onGui"
+      ],
+      "data": {
+        "skyblockaddon": [
+          "gui:members",
+          "gui:settings"
+        ],
+        "items": [],
+        "blocks": [],
+        "entities": []
+      }
+    },
+    {
+      "id": "interact_items",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Pick up and drop items\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "minecraft:hopper_minecart",
+        "lore": [
+          [
+            "{\"text\": \"Pick up items from the ground and drop\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"items on this island.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"Examples: dropped loot, thrown items\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "general",
+      "triggers": [
+        "onPickup",
+        "onDrop"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [],
+        "entities": []
+      }
+    },
+    {
+      "id": "interact_XP",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Collect XP\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "minecraft:experience_bottle",
+        "lore": [
+          [
+            "{\"text\": \"Collect experience orbs on this island.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"Examples: orbs from mobs, furnaces, mining\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "general",
+      "triggers": [
+        "onXp"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [],
+        "entities": []
+      }
+    },
+    {
+      "id": "interact_bed",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Sleep in beds\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "minecraft:red_bed",
+        "lore": [
+          [
+            "{\"text\": \"Sleep in beds on this island.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"Examples: any bed or hammock\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "general",
+      "triggers": [
+        "onSleepInBed"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [],
+        "entities": []
+      }
+    },
+    {
+      "id": "place_blocks",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Place blocks\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "minecraft:bricks",
+        "lore": [
+          [
+            "{\"text\": \"Place blocks and use tools on blocks:\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"building, tilling, lighting fires.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"Examples: bricks, torches, crops, rails, hoes\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "building",
       "triggers": [
         "onPlaceBlock"
       ],
@@ -37,23 +204,32 @@
       "id": "destroy_blocks",
       "item": {
         "display_name": [
-          "{\"text\": \"Destroy Blocks\", \"color\":\"blue\", \"bold\":\"true\"}"
+          "{\"text\": \"Break blocks\", \"color\": \"blue\", \"bold\": \"true\"}"
         ],
-        "item": "minecraft:IRON_PICKAXE",
+        "item": "minecraft:iron_pickaxe",
         "lore": [
           [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+            "{\"text\": \"Break blocks by hand, with area tools,\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+            "{\"text\": \"spells or explosions, and hit frames and carts.\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+            "{\"text\": \"Examples: mining, lasers, bombs, armor stands\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
           ]
         ]
       },
-      "category": "General",
+      "category": "building",
       "triggers": [
         "onLeftClickBlock",
         "onAttack",
@@ -77,23 +253,29 @@
       "id": "interact_fluids",
       "item": {
         "display_name": [
-          "{\"text\": \"Place/Pickup fluids\", \"color\":\"blue\", \"bold\":\"true\"}"
+          "{\"text\": \"Use buckets\", \"color\": \"blue\", \"bold\": \"true\"}"
         ],
-        "item": "minecraft:BUCKET",
+        "item": "minecraft:bucket",
         "lore": [
           [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+            "{\"text\": \"Fill and empty buckets on this island.\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+            "{\"text\": \"Examples: water, lava, milk, fish buckets\", \"color\": \"dark_gray\"}"
           ],
           [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
           ]
         ]
       },
-      "category": "General",
+      "category": "building",
       "triggers": [
         "onBucket"
       ],
@@ -105,26 +287,242 @@
       }
     },
     {
-      "id": "interact_generic",
+      "id": "trample_framland",
       "item": {
         "display_name": [
-          "{\"text\": \"Interact with stations\", \"color\":\"blue\", \"bold\":\"true\"}"
+          "{\"text\": \"Trample crops\", \"color\": \"blue\", \"bold\": \"true\"}"
         ],
-        "item": "minecraft:crafting_table",
+        "item": "minecraft:farmland",
         "lore": [
           [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+            "{\"text\": \"Turn farmland back to dirt by jumping on it.\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+            "{\"text\": \"Examples: wheat, carrot and potato fields\", \"color\": \"dark_gray\"}"
           ],
           [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
           ]
         ]
       },
-      "category": "Interactables",
+      "category": "building",
+      "triggers": [
+        "onTrample"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [],
+        "entities": []
+      }
+    },
+    {
+      "id": "interact_misc",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Use bone meal\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "minecraft:bone_meal",
+        "lore": [
+          [
+            "{\"text\": \"Use bone meal on plants and crops.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"Examples: crops, saplings, grass\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "building",
+      "triggers": [
+        "onBonemeal"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [],
+        "entities": []
+      }
+    },
+    {
+      "id": "open_chests",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Chests\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "minecraft:chest",
+        "lore": [
+          [
+            "{\"text\": \"Open chests, chest carts and the storage\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"of ships and aircraft, and ride those.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"Examples: chests, strongboxes, chest minecarts, cogs, biplanes\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "storage",
+      "triggers": [
+        "onRightClickBlock",
+        "onRightClickEntity"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          ".*:chest",
+          ".*:.*_chest"
+        ],
+        "entities": [
+          "minecraft:chest_minecart",
+          "minecraft:hopper_minecart",
+          ".*:(.*_)?chest_boat",
+          "quark:chest_passenger",
+          "immersive_aircraft:.*",
+          "immersivepetroleum:speedboat",
+          "smallships:.*",
+          "immersiveengineering:cart_.*",
+          "littlelogistics:(?!seater_).*"
+        ]
+      }
+    },
+    {
+      "id": "open_barrels",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Barrels\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "minecraft:barrel",
+        "lore": [
+          [
+            "{\"text\": \"Open barrels.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"Examples: barrels\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "storage",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "minecraft:barrel",
+          ".*:.*_barrel"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "open_shulker_box",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Shulker boxes\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "minecraft:shulker_box",
+        "lore": [
+          [
+            "{\"text\": \"Open shulker boxes.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"Examples: every colour of shulker box\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "storage",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "minecraft:shulker_box"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "interact_generic",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Other usable blocks\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "minecraft:lectern",
+        "lore": [
+          [
+            "{\"text\": \"Every right-clickable block that no other\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"permission names: machines, furniture, signs.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"Examples: furniture, machines, signs, lecterns\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "stations",
       "triggers": [
         "onRightClickBlock"
       ],
@@ -147,388 +545,17 @@
           "!.*:.*_button_.*",
           "!.*:.*_lever",
           "!.*:.*_lever_.*",
-          "!.*:.*_pressure_plate",
           "!minecraft:hopper",
           "!minecraft:dispenser",
-          "!minecraft:dropper"
+          "!minecraft:dropper",
+          "!minecraft:barrel",
+          "!.*:.*_barrel",
+          "!.*:.*_fence_gate",
+          "!.*:.*_(upgraded|pyramid|highley|picket|railing)_gate",
+          "!supplementaries:(iron|gold)_gate",
+          "!framedblocks:framed_gate",
+          "!.*:.*_pressure_plate"
         ],
-        "entities": []
-      }
-    },
-    {
-      "id": "trample_framland",
-      "item": {
-        "display_name": [
-          "{\"text\": \"Trample Crops\", \"color\":\"blue\", \"bold\":\"true\"}"
-        ],
-        "item": "minecraft:FARMLAND",
-        "lore": [
-          [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
-          ]
-        ]
-      },
-      "category": "General",
-      "triggers": [
-        "onTrample"
-      ],
-      "data": {
-        "skyblockaddon": [],
-        "items": [],
-        "blocks": [],
-        "entities": []
-      }
-    },
-    {
-      "id": "admin_menu",
-      "item": {
-        "display_name": [
-          "{\"text\": \"Island Admin\", \"color\":\"blue\", \"bold\":\"true\"}"
-        ],
-        "item": "minecraft:ANVIL",
-        "lore": [
-          [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
-          ]
-        ]
-      },
-      "category": "General",
-      "triggers": [
-        "onGui"
-      ],
-      "data": {
-        "skyblockaddon": [
-          "gui:members","gui:settings"
-        ],
-        "items": [],
-        "blocks": [],
-        "entities": []
-      }
-    },
-    {
-      "id": "travel_nether",
-      "item": {
-        "display_name": [
-          "{\"text\": \"Use Nether Portal\", \"color\":\"blue\", \"bold\":\"true\"}"
-        ],
-        "item": "minecraft:OBSIDIAN",
-        "lore": [
-          [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
-          ]
-        ]
-      },
-      "category": "Transport",
-      "triggers": [
-        "onPortalIgnition",
-        "onPlayerChangedDimension",
-        "onEnterNetherPortal"
-      ],
-      "data": {
-        "skyblockaddon": [
-          "dimension:minecraft:the_nether",
-          "dimension:minecraft:overworld"
-        ],
-        "items": [],
-        "blocks": [],
-        "entities": []
-      }
-    },
-    {
-      "id": "use_vehicles",
-      "item": {
-        "display_name": [
-          "{\"text\": \"Use Vehicles\", \"color\":\"blue\", \"bold\":\"true\"}"
-        ],
-        "item": "minecraft:OAK_BOAT",
-        "lore": [
-          [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Contains: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"Minecarts\",\"color\":\"white\"}",
-            "{\"text\":\", \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"Boats\",\"color\":\"white\"}",
-            "{\"text\":\", \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"Saddled Entities\",\"color\":\"white\"}",
-            "{\"text\":\".\",\"color\":\"dark_gray\"}"
-          ]
-        ]
-      },
-      "category": "Transport",
-      "triggers": [
-        "onMount"
-      ],
-      "data": {
-        "skyblockaddon": [],
-        "items": [],
-        "blocks": [],
-        "entities": []
-      }
-    },
-    {
-      "id": "transport_misc",
-      "item": {
-        "display_name": [
-          "{\"text\": \"Miscellaneous\", \"color\":\"blue\", \"bold\":\"true\"}"
-        ],
-        "item": "minecraft:ender_pearl",
-        "lore": [
-          [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Contains: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"Ender Pearls\",\"color\":\"white\"}",
-            "{\"text\":\", \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"Chorus fruit\",\"color\":\"white\"}",
-            "{\"text\":\".\",\"color\":\"dark_gray\"}"
-          ]
-        ]
-      },
-      "category": "Transport",
-      "triggers": [
-        "onEnderPearl",
-        "onChorusFruit"
-      ],
-      "data": {
-        "skyblockaddon": [],
-        "items": [],
-        "blocks": [],
-        "entities": []
-      }
-    },
-    {
-      "id": "open_chests",
-      "item": {
-        "display_name": [
-          "{\"text\": \"Interact with Chests\", \"color\":\"blue\", \"bold\":\"true\"}"
-        ],
-        "item": "minecraft:CHEST",
-        "lore": [
-          [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
-          ]
-        ]
-      },
-      "category": "Storage",
-      "triggers": [
-        "onRightClickBlock"
-      ],
-      "data": {
-        "skyblockaddon": [],
-        "items": [],
-        "blocks": [
-          ".*:chest",
-          ".*:.*_chest"
-        ],
-        "entities": []
-      }
-    },
-    {
-      "id": "open_shulker_box",
-      "item": {
-        "display_name": [
-          "{\"text\": \"Interact with Shulker boxes\", \"color\":\"blue\", \"bold\":\"true\"}"
-        ],
-        "item": "minecraft:SHULKER_BOX",
-        "lore": [
-          [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
-          ]
-        ]
-      },
-      "category": "Storage",
-      "triggers": [
-        "onRightClickBlock"
-      ],
-      "data": {
-        "skyblockaddon": [],
-        "items": [],
-        "blocks": [
-          "minecraft:shulker_box"
-        ],
-        "entities": []
-      }
-    },
-    {
-      "id": "open_barrels",
-      "item": {
-        "display_name": [
-          "{\"text\": \"Interact with Barrels\", \"color\":\"blue\", \"bold\":\"true\"}"
-        ],
-        "item": "minecraft:barrel",
-        "lore": [
-          [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
-          ]
-        ]
-      },
-      "category": "Storage",
-      "triggers": [
-        "onRightClickBlock"
-      ],
-      "data": {
-        "skyblockaddon": [],
-        "items": [],
-        "blocks": [
-          "minecraft:barrel",
-          ".*:.*_barrel"
-        ],
-        "entities": []
-      }
-    },
-    {
-      "id": "interact_doors",
-      "item": {
-        "display_name": [
-          "{\"text\": \"Interact with Doors/Trapdoors\", \"color\":\"blue\", \"bold\":\"true\"}"
-        ],
-        "item": "minecraft:oak_door",
-        "lore": [
-          [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
-          ]
-        ]
-      },
-      "category": "Interactables",
-      "triggers": [
-        "onRightClickBlock"
-      ],
-      "data": {
-        "skyblockaddon": [],
-        "items": [],
-        "blocks": [
-          ".*:.*_door",
-          ".*:.*_trapdoor"
-        ],
-        "entities": []
-      }
-    },
-    {
-      "id": "interact_XP",
-      "item": {
-        "display_name": [
-          "{\"text\": \"Collect XP Orbs\", \"color\":\"blue\", \"bold\":\"true\"}"
-        ],
-        "item": "minecraft:experience_bottle",
-        "lore": [
-          [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
-          ]
-        ]
-      },
-      "category": "Interactables",
-      "triggers": [
-        "onXp"
-      ],
-      "data": {
-        "skyblockaddon": [],
-        "items": [],
-        "blocks": [],
-        "entities": []
-      }
-    },
-    {
-      "id": "interact_items",
-      "item": {
-        "display_name": [
-          "{\"text\": \"Pickup/Drop Items\", \"color\":\"blue\", \"bold\":\"true\"}"
-        ],
-        "item": "minecraft:CANDLE",
-        "lore": [
-          [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
-          ]
-        ]
-      },
-      "category": "General",
-      "triggers": [
-        "onPickup",
-        "onDrop"
-      ],
-      "data": {
-        "skyblockaddon": [],
-        "items": [],
-        "blocks": [],
         "entities": []
       }
     },
@@ -536,23 +563,29 @@
       "id": "interact_entities",
       "item": {
         "display_name": [
-          "{\"text\": \"Attack entities\", \"color\":\"blue\", \"bold\":\"true\"}"
+          "{\"text\": \"Attack mobs\", \"color\": \"blue\", \"bold\": \"true\"}"
         ],
-        "item": "minecraft:IRON_SWORD",
+        "item": "minecraft:iron_sword",
         "lore": [
           [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+            "{\"text\": \"Hit animals and other mobs on this island.\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+            "{\"text\": \"Examples: cows, horses, villagers, pets\", \"color\": \"dark_gray\"}"
           ],
           [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
           ]
         ]
       },
-      "category": "Interactables",
+      "category": "animals",
       "triggers": [
         "onAttack"
       ],
@@ -571,26 +604,199 @@
       }
     },
     {
-      "id": "interact_spawn",
+      "id": "interact_item_frame",
       "item": {
         "display_name": [
-          "{\"text\": \"Spawn entities\", \"color\":\"blue\", \"bold\":\"true\"}"
+          "{\"text\": \"Item frames and armor stands\", \"color\": \"blue\", \"bold\": \"true\"}"
         ],
-        "item": "minecraft:ZOMBIE_SPAWN_EGG",
+        "item": "minecraft:item_frame",
         "lore": [
           [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+            "{\"text\": \"Put in, take out or turn items in frames,\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+            "{\"text\": \"and swap armor on armor stands.\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+            "{\"text\": \"Examples: item frames, glow frames, glass frames\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
           ]
         ]
       },
-      "category": "Interactables",
+      "category": "animals",
+      "triggers": [
+        "onRightClickEntity"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [],
+        "entities": [
+          ".*:.*item_frame",
+          "quark:(glowing_)?glass_frame",
+          "minecraft:armor_stand",
+          "minecraft:leash_knot"
+        ]
+      }
+    },
+    {
+      "id": "interact_villagers",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Trade with villagers\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "minecraft:emerald",
+        "lore": [
+          [
+            "{\"text\": \"Trade with villagers and travelling traders.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"Examples: villagers, wandering traders\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "animals",
+      "triggers": [
+        "onRightClickEntity"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [],
+        "entities": [
+          "minecraft:villager",
+          "minecraft:wandering_trader",
+          "minecraft:zombie_villager",
+          "supplementaries:red_merchant",
+          "buildscape:(festive_)?wandering_homemaker",
+          "farmingforblockheads:merchant"
+        ]
+      }
+    },
+    {
+      "id": "interact_animals",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Animals and mobs\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "minecraft:lead",
+        "lore": [
+          [
+            "{\"text\": \"Feed, breed, shear, milk, leash, name or\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"saddle animals and other mobs.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"Examples: cows, sheep, horses, axolotls, foxes\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "animals",
+      "triggers": [
+        "onRightClickEntity"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [],
+        "entities": [
+          ".*:.*",
+          "!.*:.*item_frame",
+          "!quark:(glowing_)?glass_frame",
+          "!minecraft:armor_stand",
+          "!minecraft:leash_knot",
+          "!minecraft:villager",
+          "!minecraft:wandering_trader",
+          "!minecraft:zombie_villager",
+          "!supplementaries:red_merchant",
+          "!buildscape:(festive_)?wandering_homemaker",
+          "!farmingforblockheads:merchant",
+          "!minecraft:chest_minecart",
+          "!minecraft:hopper_minecart",
+          "!.*:(.*_)?chest_boat",
+          "!quark:chest_passenger",
+          "!immersive_aircraft:.*",
+          "!immersivepetroleum:speedboat",
+          "!smallships:.*",
+          "!immersiveengineering:cart_.*",
+          "!littlelogistics:(?!seater_).*",
+          "!minecraft:boat",
+          "!minecraft:minecart",
+          "!.*:.*_boat",
+          "!.*:boat",
+          "!littlelogistics:seater_(barge|car)",
+          "!alexsmobs:straddleboard",
+          "!.*:seat",
+          "!luphieclutteredmod:.*seat.*",
+          "!taterzens:npc",
+          "!corpse:corpse",
+          "!flashnpcs:.*",
+          "!masuplots:.*",
+          "!minecraft:player",
+          "!the_vault:spirit",
+          "!the_vault:doll_mini_me",
+          "!the_vault:pet",
+          "!the_vault:releasing_companion"
+        ]
+      }
+    },
+    {
+      "id": "interact_spawn",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Spawn eggs\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "minecraft:zombie_spawn_egg",
+        "lore": [
+          [
+            "{\"text\": \"Use spawn eggs and thrown eggs.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"Examples: spawn eggs, eggs, parrot eggs\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "animals",
       "triggers": [
         "onRightClickBlock",
         "onRightClickItem"
@@ -606,127 +812,35 @@
       }
     },
     {
-      "id": "interact_bed",
+      "id": "interact_doors",
       "item": {
         "display_name": [
-          "{\"text\": \"Sleep in beds\", \"color\":\"blue\", \"bold\":\"true\"}"
+          "{\"text\": \"Doors, trapdoors and gates\", \"color\": \"blue\", \"bold\": \"true\"}"
         ],
-        "item": "minecraft:RED_BED",
+        "item": "minecraft:oak_door",
         "lore": [
           [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+            "{\"text\": \"Open and close doors, trapdoors and\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+            "{\"text\": \"fence gates.\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+            "{\"text\": \"Examples: wooden and modded doors, fence gates\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
           ]
         ]
       },
-      "category": "Interactables",
-      "triggers": [
-        "onSleepInBed"
-      ],
-      "data": {
-        "skyblockaddon": [],
-        "items": [],
-        "blocks": [],
-        "entities": []
-      }
-    },
-    {
-      "id": "interact_item_frame",
-      "item": {
-        "display_name": [
-          "{\"text\": \"Interact with Item Frames\", \"color\":\"blue\", \"bold\":\"true\"}"
-        ],
-        "item": "minecraft:ITEM_FRAME",
-        "lore": [
-          [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
-          ]
-        ]
-      },
-      "category": "Interactables",
-      "triggers": [
-        "onRightClickEntity"
-      ],
-      "data": {
-        "skyblockaddon": [],
-        "items": [],
-        "blocks": [
-          ".*:item_frame",
-          ".*:.*_item_frame"
-        ],
-        "entities": []
-      }
-    },
-    {
-      "id": "interact_misc",
-      "item": {
-        "display_name": [
-          "{\"text\": \"Miscellaneous\", \"color\":\"blue\", \"bold\":\"true\"}"
-        ],
-        "item": "minecraft:BONE_MEAL",
-        "lore": [
-          [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Contains: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"Bone Meal\",\"color\":\"white\"}",
-            "{\"text\":\".\",\"color\":\"dark_gray\"}"
-          ]
-        ]
-      },
-      "category": "Interactables",
-      "triggers": [
-        "onBonemeal"
-      ],
-      "data": {
-        "skyblockaddon": [],
-        "items": [],
-        "blocks": [],
-        "entities": []
-      }
-    },
-    {
-      "id": "redstone_delays",
-      "item": {
-        "display_name": [
-          "{\"text\": \"Delays\", \"color\":\"blue\", \"bold\":\"true\"}"
-        ],
-        "item": "minecraft:repeater",
-        "lore": [
-          [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
-          ]
-        ]
-      },
-      "category": "Redstone",
+      "category": "redstone",
       "triggers": [
         "onRightClickBlock"
       ],
@@ -734,49 +848,12 @@
         "skyblockaddon": [],
         "items": [],
         "blocks": [
-          "minecraft:repeater",
-          "minecraft:comparator"
-        ],
-        "entities": []
-      }
-    },
-    {
-      "id": "redstone_detectors",
-      "item": {
-        "display_name": [
-          "{\"text\": \"Detectors\", \"color\":\"blue\", \"bold\":\"true\"}"
-        ],
-        "item": "minecraft:daylight_detector",
-        "lore": [
-          [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
-          ],
-          [
-            "{\"text\":\"\u2666 Contains: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"Daylight Detector\",\"color\":\"white\"}",
-            "{\"text\":\", \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"Note Block\",\"color\":\"white\"}",
-            "{\"text\":\".\",\"color\":\"dark_gray\"}"
-          ]
-        ]
-      },
-      "category": "Redstone",
-      "triggers": [
-        "onRightClickBlock"
-      ],
-      "data": {
-        "skyblockaddon": [],
-        "items": [],
-        "blocks": [
-          "minecraft:daylight_detector",
-          "minecraft:note_block"
+          ".*:.*_door",
+          ".*:.*_trapdoor",
+          ".*:.*_fence_gate",
+          ".*:.*_(upgraded|pyramid|highley|picket|railing)_gate",
+          "supplementaries:(iron|gold)_gate",
+          "framedblocks:framed_gate"
         ],
         "entities": []
       }
@@ -785,23 +862,29 @@
       "id": "redstone_buttons_and_levers",
       "item": {
         "display_name": [
-          "{\"text\": \"Buttons & Levers\", \"color\":\"blue\", \"bold\":\"true\"}"
+          "{\"text\": \"Buttons and levers\", \"color\": \"blue\", \"bold\": \"true\"}"
         ],
         "item": "minecraft:lever",
         "lore": [
           [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+            "{\"text\": \"Press buttons and flip levers.\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+            "{\"text\": \"Examples: buttons, levers\", \"color\": \"dark_gray\"}"
           ],
           [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
           ]
         ]
       },
-      "category": "Redstone",
+      "category": "redstone",
       "triggers": [
         "onRightClickBlock"
       ],
@@ -819,26 +902,118 @@
       }
     },
     {
+      "id": "redstone_delays",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Repeaters and comparators\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "minecraft:repeater",
+        "lore": [
+          [
+            "{\"text\": \"Change repeater delays, comparator modes\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"and Create latches.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"Examples: repeaters, comparators, pulse repeaters\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "redstone",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "minecraft:repeater",
+          "minecraft:comparator"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "redstone_detectors",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Detectors and note blocks\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "minecraft:daylight_detector",
+        "lore": [
+          [
+            "{\"text\": \"Switch daylight detectors and tune\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"note blocks.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"Examples: daylight detectors, note blocks\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "redstone",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "minecraft:daylight_detector",
+          "minecraft:note_block"
+        ],
+        "entities": []
+      }
+    },
+    {
       "id": "redstone_pressure_plates",
       "item": {
         "display_name": [
-          "{\"text\": \"Pressure Plates\", \"color\":\"blue\", \"bold\":\"true\"}"
+          "{\"text\": \"Pressure plates\", \"color\": \"blue\", \"bold\": \"true\"}"
         ],
         "item": "minecraft:stone_pressure_plate",
         "lore": [
           [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+            "{\"text\": \"Use pressure plates that react to clicks.\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+            "{\"text\": \"Examples: framed and copycat pressure plates\", \"color\": \"dark_gray\"}"
           ],
           [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
           ]
         ]
       },
-      "category": "Redstone",
+      "category": "redstone",
       "triggers": [
         "onRightClickBlock"
       ],
@@ -855,23 +1030,29 @@
       "id": "redstone_hoppers",
       "item": {
         "display_name": [
-          "{\"text\": \"Interact with Hoppers\", \"color\":\"blue\", \"bold\":\"true\"}"
+          "{\"text\": \"Hoppers\", \"color\": \"blue\", \"bold\": \"true\"}"
         ],
         "item": "minecraft:hopper",
         "lore": [
           [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+            "{\"text\": \"Open hoppers.\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+            "{\"text\": \"Examples: hoppers\", \"color\": \"dark_gray\"}"
           ],
           [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
           ]
         ]
       },
-      "category": "Redstone",
+      "category": "redstone",
       "triggers": [
         "onRightClickBlock"
       ],
@@ -888,30 +1069,29 @@
       "id": "redstone_containers",
       "item": {
         "display_name": [
-          "{\"text\": \"Interact with Containers\", \"color\":\"blue\", \"bold\":\"true\"}"
+          "{\"text\": \"Dispensers and droppers\", \"color\": \"blue\", \"bold\": \"true\"}"
         ],
         "item": "minecraft:dispenser",
         "lore": [
           [
-            "{\"text\":\"\u00bb Click to toggle the status of this permission for %data_group_name%.\",\"color\":\"dark_gray\"}"
+            "{\"text\": \"Open dispensers and droppers.\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\":\" \",\"color\":\"dark_gray\"}"
+            "{\"text\": \"Examples: dispensers, droppers\", \"color\": \"dark_gray\"}"
           ],
           [
-            "{\"text\":\"\u2666 Status: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"%data_status% \",\"color\":\"white\"}"
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
           ],
           [
-            "{\"text\":\"\u2666 Contains: \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"Dispenser\",\"color\":\"white\"}",
-            "{\"text\":\", \",\"color\":\"dark_gray\"}",
-            "{\"text\":\"Dropper\",\"color\":\"white\"}",
-            "{\"text\":\".\",\"color\":\"dark_gray\"}"
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
           ]
         ]
       },
-      "category": "Redstone",
+      "category": "redstone",
       "triggers": [
         "onRightClickBlock"
       ],
@@ -922,6 +1102,134 @@
           "minecraft:dispenser",
           "minecraft:dropper"
         ],
+        "entities": []
+      }
+    },
+    {
+      "id": "use_vehicles",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Ride vehicles and mounts\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "minecraft:oak_boat",
+        "lore": [
+          [
+            "{\"text\": \"Get into boats and minecarts and ride\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"animals. Ships, aircraft and storage carts\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"need Chests as well.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"Examples: boats, minecarts, horses, striders\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "transport",
+      "triggers": [
+        "onMount"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [],
+        "entities": [
+          "!taterzens:npc"
+        ]
+      }
+    },
+    {
+      "id": "travel_nether",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Nether portals\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "minecraft:obsidian",
+        "lore": [
+          [
+            "{\"text\": \"Light and enter nether portals.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"Examples: nether portals\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "transport",
+      "triggers": [
+        "onPortalIgnition",
+        "onPlayerChangedDimension",
+        "onEnterNetherPortal"
+      ],
+      "data": {
+        "skyblockaddon": [
+          "dimension:minecraft:the_nether",
+          "dimension:minecraft:overworld"
+        ],
+        "items": [],
+        "blocks": [],
+        "entities": []
+      }
+    },
+    {
+      "id": "transport_misc",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Ender pearls and teleport items\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "minecraft:ender_pearl",
+        "lore": [
+          [
+            "{\"text\": \"Teleport with ender pearls, chorus fruit\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"and teleport items.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"Examples: ender pearls, chorus fruit, warp scrolls\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "transport",
+      "triggers": [
+        "onEnderPearl",
+        "onChorusFruit"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [],
         "entities": []
       }
     }

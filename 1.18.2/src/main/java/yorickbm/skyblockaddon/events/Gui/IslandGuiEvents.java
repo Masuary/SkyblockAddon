@@ -1,6 +1,7 @@
 package yorickbm.skyblockaddon.events.Gui;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.commands.Commands;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Style;
@@ -12,6 +13,7 @@ import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import yorickbm.skyblockaddon.core.GuiDataKeys;
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
+import yorickbm.guilibrary.GUILibraryRegistry;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.IslandActionResult;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
@@ -108,6 +110,11 @@ public class IslandGuiEvents {
         }
 
         event.getHolder().close();
+        if (!island.isVisible() && !island.isPartOf(event.getTarget().getUUID()) && !event.getTarget().hasPermissions(Commands.LEVEL_MODERATORS)) {
+            event.getTarget().sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("island.travel.private")).withStyle(ChatFormatting.RED), event.getTarget().getUUID());
+            event.setResult(Event.Result.DENY);
+            return;
+        }
         if (IslandActionService.isBannedFrom(island, event.getTarget())) {
             event.getTarget().sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("island.banned.travel")).withStyle(ChatFormatting.RED), event.getTarget().getUUID());
             event.setResult(Event.Result.DENY);
@@ -238,6 +245,40 @@ public class IslandGuiEvents {
 
         final UUID groupUUID = modData.getUUID(GuiDataKeys.GROUP_ID);
         final UUID playerUUID = guiData.getUUID(GuiDataKeys.PLAYER_ID);
+        if (event.getIsland().isDemotionToVisitors(playerUUID, groupUUID)) {
+            final IslandActionResult blocker = IslandActionService.checkMoveToVisitors(event.getTarget(), event.getIsland(), playerUUID);
+            if (blocker != IslandActionResult.SUCCESS) {
+                denyWithMessage(event, blocker, UsernameCache.getBlocking(playerUUID));
+                return;
+            }
+            askToConfirmMoveToVisitors(event, groupUUID);
+            return;
+        }
+        assignGroupFromGui(event, playerUUID, groupUUID);
+    }
+
+    /**
+     * Moving a member to Visitors removes them from the island, so the chest GUI asks first, like the enhanced screen.
+     */
+    private static void askToConfirmMoveToVisitors(final IslandEvents.SetPlayerGroup event, final UUID visitorsGroupId) {
+        final CompoundTag confirmData = event.getHolder().getData().copy();
+        final CompoundTag modData = confirmData.getCompound(SkyblockAddonCore.MOD_ID);
+        modData.putUUID(GuiDataKeys.GROUP_ID, visitorsGroupId);
+        confirmData.put(SkyblockAddonCore.MOD_ID, modData);
+        GUILibraryRegistry.openGUIForPlayer(event.getTarget(), "skyblockaddon:confirm_move_to_visitors", confirmData);
+    }
+
+    @SubscribeEvent
+    public void onConfirmMoveToVisitors(final IslandEvents.ConfirmMoveToVisitors event) {
+        final CompoundTag guiData = event.getHolder().getData().getCompound(SkyblockAddonCore.MOD_ID);
+        if (event.getIsland() == null || !guiData.contains(GuiDataKeys.PLAYER_ID) || !guiData.contains(GuiDataKeys.GROUP_ID)) {
+            event.setResult(Event.Result.DENY);
+            return;
+        }
+        assignGroupFromGui(event, guiData.getUUID(GuiDataKeys.PLAYER_ID), guiData.getUUID(GuiDataKeys.GROUP_ID));
+    }
+
+    private static void assignGroupFromGui(final IslandEvents event, final UUID playerUUID, final UUID groupUUID) {
         final String playerName = UsernameCache.getBlocking(playerUUID);
         final IslandActionResult result = IslandActionService.assignGroup(event.getTarget(), event.getIsland(), playerUUID, groupUUID);
         if(!result.succeeded()) {

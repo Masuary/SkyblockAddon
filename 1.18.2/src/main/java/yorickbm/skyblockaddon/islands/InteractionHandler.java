@@ -11,6 +11,7 @@ import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -45,14 +46,20 @@ import yorickbm.skyblockaddon.util.EntityPlacerItems;
 import yorickbm.skyblockaddon.util.ForgeConverter;
 import yorickbm.skyblockaddon.util.ServerHelper;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class InteractionHandler {
     private static final Logger LOGGER = LogManager.getLogger();
+    private static final Map<ServerPlayer, Long> LAST_DENIAL_MESSAGE_TICK = new WeakHashMap<>();
+    private static final Map<ServerPlayer, Long> LAST_INVENTORY_RESYNC_TICK = new WeakHashMap<>();
 
     public static void deny(final Event event, final Player player) {
         if (event.isCancelable()) event.setCanceled(true);
@@ -62,6 +69,24 @@ public class InteractionHandler {
 
     public static void sendDeniedMessage(final Player player) {
         player.displayClientMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("toolbar.overlay.nothere")).withStyle(ChatFormatting.DARK_RED), true);
+    }
+
+    /**
+     * Area tools and held clicks deny many actions per tick; the denial message and the inventory resync each only need
+     * to go out once per player and tick. Server thread only.
+     */
+    public static boolean isFirstDenialMessageThisTick(final ServerPlayer player) {
+        return isFirstThisTick(LAST_DENIAL_MESSAGE_TICK, player);
+    }
+
+    public static boolean isFirstInventoryResyncThisTick(final ServerPlayer player) {
+        return isFirstThisTick(LAST_INVENTORY_RESYNC_TICK, player);
+    }
+
+    private static boolean isFirstThisTick(final Map<ServerPlayer, Long> lastTickByPlayer, final ServerPlayer player) {
+        final long gameTime = player.getLevel().getGameTime();
+        final Long lastTick = lastTickByPlayer.put(player, gameTime);
+        return lastTick == null || lastTick != gameTime;
     }
 
     public static void pushPlayerBack(final ServerPlayer player) {
@@ -225,6 +250,68 @@ public class InteractionHandler {
                 trigger, PermissionManager.getInstance().getPermissionsForTrigger(trigger), group.get()::canDo, subject);
         denyingPermission.ifPresent(permission -> SkyBlockAddon.logPermissionDebug(LOGGER, subject + " is BLOCKED on " + permission.getId() + " in group " + group.get().getName()));
         return denyingPermission.isPresent();
+    }
+
+    /**
+     * The island whose permissions judge an action at the position, or empty when nothing is checked: not a real player
+     * on the server, outside the overworld, a server admin, no island there, or the player owns it.
+     */
+    public static Optional<Island> islandGuardingPosition(final Player player, final ServerLevel level, final BlockPos position) {
+        if (!(player instanceof final ServerPlayer serverPlayer) || player instanceof FakePlayer) return Optional.empty();
+        if (level.dimension() != Level.OVERWORLD) return Optional.empty();
+        if (serverPlayer.hasPermissions(Commands.LEVEL_ADMINS)) return Optional.empty();
+
+        final Island island = IslandManager.getInstance().getIslandByPos(ForgeConverter.forgeToInternalVec3i(position));
+        if (island == null || island.isOwner(serverPlayer.getUUID())) return Optional.empty();
+        return Optional.of(island);
+    }
+
+    /**
+     * A right click on an entity, judged by the island the entity is on: the entity's type id against the entity rules
+     * of the onRightClickEntity permissions, and the hand item against their item rules.
+     */
+    public static boolean isEntityInteractionDenied(final ServerPlayer player, final Entity target, final ItemStack handItem) {
+        if (!(target.getLevel() instanceof final ServerLevel level)) return false;
+        final Optional<Island> guardingIsland = islandGuardingPosition(player, level, target.blockPosition());
+        if (guardingIsland.isEmpty()) return false;
+
+        final Optional<IslandGroup> group = guardingIsland.get().getGroupForEntityUUID(player.getUUID());
+        if (group.isEmpty()) return true;
+
+        final String entityTypeId = Objects.requireNonNull(EntityType.getKey(target.getType())).toString();
+        final Optional<Permission> denyingPermission = InteractionPermissionDecision.findDenyingEntityInteraction(
+                PermissionManager.getInstance().getPermissionsForTrigger(PermissionTriggers.ON_RIGHT_CLICK_ENTITY), group.get()::canDo, entityTypeId, itemId(handItem));
+        denyingPermission.ifPresent(permission -> SkyBlockAddon.logPermissionDebug(LOGGER, entityTypeId + " (entity click) is BLOCKED on " + permission.getId() + " in group " + group.get().getName()));
+        return denyingPermission.isPresent();
+    }
+
+    /**
+     * Any block break by a player, whatever caused it (a left click, an area tool, a spell, an explosion they started),
+     * judged by the island at the position as an onBreakBlock without a target: no block carve-out lets it through, so
+     * only a group with the break permission may break blocks there.
+     */
+    public static boolean isBreakDenied(final Player player, final ServerLevel level, final BlockPos position) {
+        return player instanceof final ServerPlayer serverPlayer && breakDenialPerIsland(serverPlayer, level).test(position);
+    }
+
+    /**
+     * {@link #isBreakDenied} for many positions at once (an explosion): the answer is the same everywhere on one island,
+     * so each island is looked up and judged once.
+     */
+    public static Predicate<BlockPos> breakDenialPerIsland(final ServerPlayer player, final ServerLevel level) {
+        if (player instanceof FakePlayer || level.dimension() != Level.OVERWORLD || player.hasPermissions(Commands.LEVEL_ADMINS)) return position -> false;
+
+        final Map<Island, Boolean> denialByIsland = new HashMap<>();
+        return position -> {
+            final yorickbm.skyblockaddon.core.util.geometry.Vec3i islandPosition = ForgeConverter.forgeToInternalVec3i(position);
+            final Island island = denialByIsland.keySet().stream()
+                    .filter(judged -> judged.getIslandBoundingBox().isInside(islandPosition))
+                    .findFirst()
+                    .orElseGet(() -> IslandManager.getInstance().getIslandByPos(islandPosition));
+            if (island == null) return false;
+            return denialByIsland.computeIfAbsent(island, guarding -> !guarding.isOwner(player.getUUID())
+                    && isInteractionDenied(new AtomicReference<>(guarding), player, PermissionTriggers.ON_BREAK_BLOCK, subjectOfUntargetedBreak(player.getMainHandItem())));
+        };
     }
 
     /**

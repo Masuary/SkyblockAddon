@@ -109,6 +109,17 @@ class IslandActionsTest {
     }
 
     @Test
+    void theMoveToVisitorsCheckRefusesWhatTheMoveWouldRefuseAndChangesNothing() {
+        final TestIsland island = islandWithAdminAndPlainMember();
+
+        assertEquals(IslandActionResult.SUCCESS, IslandActions.checkMoveToVisitors(island, ADMIN_MEMBER_ACTOR, PLAIN_MEMBER));
+        assertEquals(IslandActionResult.TARGET_IS_SELF, IslandActions.checkMoveToVisitors(island, ADMIN_MEMBER_ACTOR, ADMIN_MEMBER));
+        assertEquals(IslandActionResult.TARGET_IS_OWNER, IslandActions.checkMoveToVisitors(island, ADMIN_MEMBER_ACTOR, TestIsland.OWNER));
+        assertEquals(IslandActionResult.NOT_ALLOWED, IslandActions.checkMoveToVisitors(island, PLAIN_MEMBER_ACTOR, ADMIN_MEMBER));
+        assertTrue(island.isPartOf(PLAIN_MEMBER));
+    }
+
+    @Test
     void ownerCannotBeDemotedToVisitors() {
         final TestIsland island = islandWithAdminAndPlainMember();
 

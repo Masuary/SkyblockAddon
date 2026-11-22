@@ -49,6 +49,32 @@ public final class InteractionPermissionDecision {
     }
 
     /**
+     * A right click on an entity, judged on the entity's type id and the hand item. A lacked permission denies when its
+     * entity rules match the entity (registries written before entity rules existed listed entity ids under
+     * {@code blocks}, so those are used when a permission has no entity rules), when its item rules match the hand item,
+     * or outright when it has neither.
+     */
+    public static Optional<Permission> findDenyingEntityInteraction(final List<Permission> triggerPermissions, final Predicate<String> groupHasPermission,
+                                                                    final String entityTypeId, final Optional<String> handItemId) {
+        for (final Permission permission : triggerPermissions) {
+            if (groupHasPermission.test(permission.getId())) continue;
+
+            final List<String> entityRules = permission.getData().getEntitiesData().isEmpty()
+                    ? permission.getData().getBlocksData()
+                    : permission.getData().getEntitiesData();
+            final List<String> itemRules = permission.getData().getItemsData();
+            if (entityRules.isEmpty() && itemRules.isEmpty()) return Optional.of(permission);
+
+            final boolean entityDenied = !entityRules.isEmpty() && PermissionManager.checkMatch(entityRules, entityTypeId) == MatchResult.BLOCK;
+            final boolean itemDenied = !itemRules.isEmpty() && handItemId
+                    .map(itemId -> PermissionManager.checkMatch(itemRules, itemId) == MatchResult.BLOCK)
+                    .orElse(false);
+            if (entityDenied || itemDenied) return Optional.of(permission);
+        }
+        return Optional.empty();
+    }
+
+    /**
      * An item that puts an entity into the world (spawn egg, armor stand, frame, painting, boat, minecart, end crystal)
      * is judged as a placement of that item with no target block, wherever it is used: block carve-outs and the clicked
      * block never let it through, and without a block subject any lacked placement permission with block rules denies it.

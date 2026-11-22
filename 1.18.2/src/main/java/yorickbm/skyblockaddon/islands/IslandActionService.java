@@ -65,6 +65,10 @@ public final class IslandActionService {
         return result;
     }
 
+    public static IslandActionResult checkMoveToVisitors(final ServerPlayer actor, final Island island, final UUID target) {
+        return IslandActions.checkMoveToVisitors(island, actorOf(actor), target);
+    }
+
     /**
      * The actor's message after a successful group assignment: the group set, or the member removed by a move to Visitors.
      */

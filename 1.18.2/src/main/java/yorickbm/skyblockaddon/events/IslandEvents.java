@@ -92,6 +92,13 @@ public class IslandEvents extends GuiClickItemEvent {
     }
 
     @Cancelable
+    public static class ConfirmMoveToVisitors extends IslandEvents {
+        public ConfirmMoveToVisitors(final ServerInterface instance, final ServerPlayer player, final Slot slot, final GUIItem item) {
+            super(instance, player, slot, item);
+        }
+    }
+
+    @Cancelable
     public static class SetPlayerGroup extends IslandEvents {
         public SetPlayerGroup(final ServerInterface instance, final ServerPlayer player, final Slot slot, final GUIItem item) {
             super(instance, player, slot, item);

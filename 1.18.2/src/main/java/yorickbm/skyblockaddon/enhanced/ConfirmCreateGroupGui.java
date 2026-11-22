@@ -1,9 +1,10 @@
 package yorickbm.skyblockaddon.enhanced;
 
 import com.masuary.masugui.element.ButtonStyle;
+import com.masuary.masugui.element.GuiElement;
+import com.masuary.masugui.element.data.KeyValueRow;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -29,16 +30,15 @@ public final class ConfirmCreateGroupGui {
 
         ItemStack heldItem = player.getMainHandItem();
         boolean hasItem = !heldItem.isEmpty() && heldItem.getItem() != Items.AIR;
-        List<Component> lines = hasItem
-                ? List.of(new TextComponent("New group: ").append(new TextComponent(ForgeIslandGroup.nameOf(heldItem))
-                                .withStyle(ChatFormatting.AQUA)),
-                        new TextComponent("The held item is the icon and its").withStyle(ChatFormatting.GRAY),
-                        new TextComponent("name is the group name.").withStyle(ChatFormatting.GRAY))
-                : List.of(new TextComponent("Hold an item first.").withStyle(ChatFormatting.RED),
-                        new TextComponent("The held item becomes the group's").withStyle(ChatFormatting.GRAY),
-                        new TextComponent("icon and name.").withStyle(ChatFormatting.GRAY));
+        String question = hasItem ? "Create group " + ForgeIslandGroup.nameOf(heldItem) + "?" : "Create a group?";
+        List<KeyValueRow> terms = hasItem
+                ? List.of(KeyValueRow.of("Name", ForgeIslandGroup.nameOf(heldItem), EnhancedDialog.VALUE_AQUA),
+                        KeyValueRow.of("Icon", GuiElement.prettifyItemName(new ItemStack(heldItem.getItem())), EnhancedDialog.VALUE_WHITE),
+                        KeyValueRow.of("Rules", "server defaults", EnhancedDialog.VALUE_WHITE))
+                : List.of(KeyValueRow.of("Held item", "hold an item first", EnhancedDialog.VALUE_RED),
+                        KeyValueRow.of("Icon and name", "from the held item", EnhancedDialog.VALUE_WHITE));
         EnhancedDialog.open(player, "confirm_create_group", "Create group", hasItem ? heldItem.copy() : new ItemStack(Items.OAK_SAPLING),
-                lines, "Create", ButtonStyle.PRIMARY, hasItem ? p -> createGroup(p, data) : null,
+                question, terms, "Create", ButtonStyle.PRIMARY, hasItem ? p -> createGroup(p, data) : null,
                 p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:groups", data));
     }
 

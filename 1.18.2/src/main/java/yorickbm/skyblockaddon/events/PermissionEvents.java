@@ -3,6 +3,7 @@ package yorickbm.skyblockaddon.events;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -27,6 +28,7 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.entity.player.PlayerSleepInBedEvent;
 import net.minecraftforge.event.entity.player.PlayerXpEvent;
 import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.event.world.ExplosionEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -51,6 +53,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class PermissionEvents {
@@ -82,7 +85,6 @@ public class PermissionEvents {
                     event -> event.getDimension().location().toString(), PermissionEvents::dimensionRules)
                     .withDenialEffect((event, player) -> InteractionHandler.pushPlayerBack(player)),
 
-            TriggerRule.playerInteraction(PlayerInteractEvent.EntityInteract.class, PermissionTriggers.ON_RIGHT_CLICK_ENTITY),
             TriggerRule.itemUse(PermissionTriggers.ON_RIGHT_CLICK_ITEM),
             TriggerRule.playerInteraction(PlayerInteractEvent.LeftClickBlock.class, PermissionTriggers.ON_LEFT_CLICK_BLOCK)
     );
@@ -129,6 +131,44 @@ public class PermissionEvents {
         }
     }
 
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onRightClickEntity(final PlayerInteractEvent.EntityInteract event) {
+        denyEntityClick(event, event.getTarget());
+    }
+
+    /**
+     * Armor stands take and give gear through the click at a point of the entity, which is its own event.
+     */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onRightClickEntityAtPoint(final PlayerInteractEvent.EntityInteractSpecific event) {
+        denyEntityClick(event, event.getTarget());
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public void onBreakBlock(final BlockEvent.BreakEvent event) {
+        if (!(event.getWorld() instanceof final ServerLevel level) || !(event.getPlayer() instanceof final ServerPlayer player)) return;
+        if (!InteractionHandler.isBreakDenied(player, level, event.getPos())) return;
+
+        event.setCanceled(true);
+        if (InteractionHandler.isFirstDenialMessageThisTick(player)) InteractionHandler.sendDeniedMessage(player);
+        InteractionHandler.resendBlockToPlayer(player, level, event.getPos());
+    }
+
+    /**
+     * An explosion a player started (lit TNT, a thrown bomb or grenade, a projectile they own) leaves the blocks and
+     * the non-player entities of every island where that player may not break blocks.
+     */
+    @SubscribeEvent
+    public void onExplosion(final ExplosionEvent.Detonate event) {
+        if (!(event.getWorld() instanceof final ServerLevel level)) return;
+        if (!(event.getExplosion().getSourceMob() instanceof final ServerPlayer player)) return;
+
+        final Predicate<BlockPos> breakDenied = InteractionHandler.breakDenialPerIsland(player, level);
+        final boolean blocksSpared = event.getAffectedBlocks().removeIf(breakDenied);
+        final boolean entitiesSpared = event.getAffectedEntities().removeIf(entity -> !(entity instanceof Player) && breakDenied.test(entity.blockPosition()));
+        if (blocksSpared || entitiesSpared) InteractionHandler.sendDeniedMessage(player);
+    }
+
     @SubscribeEvent
     public void onPlaceBlock(final BlockEvent.EntityPlaceEvent event) {
         final AtomicReference<Island> standingOn = new AtomicReference<>();
@@ -164,6 +204,16 @@ public class PermissionEvents {
             event.setResult(Event.Result.DENY);
             if (event.isCancelable()) event.setCanceled(true);
         }
+    }
+
+    private static void denyEntityClick(final PlayerInteractEvent event, final Entity target) {
+        if (!(event.getPlayer() instanceof final ServerPlayer player)) return;
+        if (!InteractionHandler.isEntityInteractionDenied(player, target, event.getItemStack())) return;
+
+        event.setCancellationResult(InteractionResult.FAIL);
+        event.setCanceled(true);
+        if (InteractionHandler.isFirstDenialMessageThisTick(player)) InteractionHandler.sendDeniedMessage(player);
+        if (InteractionHandler.isFirstInventoryResyncThisTick(player)) player.inventoryMenu.sendAllDataToRemote();
     }
 
     private static void denyNetherPortalIgnition(final Event event, final Entity entity, final LevelAccessor world, final BlockPos position, final Function<ServerPlayer, ItemStack> heldItem) {

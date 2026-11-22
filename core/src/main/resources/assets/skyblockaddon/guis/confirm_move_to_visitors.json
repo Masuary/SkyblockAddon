@@ -1,0 +1,62 @@
+{
+  "title": [
+    "{\"text\": \"Remove from the island?\"}"
+  ],
+  "rows": 1,
+  "key": "confirm_move_to_visitors",
+  "fillers": [
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"\"}"
+        ],
+        "item": "minecraft:GRAY_STAINED_GLASS_PANE"
+      },
+      "pattern": "EMPTY"
+    }
+  ],
+  "items": [
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"Remove\",\"bold\": true,\"color\": \"red\"}"
+        ],
+        "item": "minecraft:RED_DYE",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Moving a member to Visitors removes them from the island.\",\"color\":\"dark_gray\"}"
+          ],
+          [
+            "{\"text\":\"\u00bb They need a new invite to come back.\",\"color\":\"dark_gray\"}"
+          ]
+        ],
+        "data": {}
+      },
+      "slot": 3,
+      "action": {
+        "onClick": "yorickbm.skyblockaddon.events.IslandEvents$ConfirmMoveToVisitors"
+      }
+    },
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"Cancel\",\"bold\": true,\"color\": \"red\"}"
+        ],
+        "item": "minecraft:BARRIER",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Keep them in their group.\",\"color\":\"dark_gray\"}"
+          ]
+        ],
+        "data": {}
+      },
+      "slot": 5,
+      "action": {
+        "onClick": "yorickbm.guilibrary.events.ItemOpenMenuEvent",
+        "data": {
+          "gui": "skyblockaddon:set_group"
+        }
+      }
+    }
+  ]
+}
