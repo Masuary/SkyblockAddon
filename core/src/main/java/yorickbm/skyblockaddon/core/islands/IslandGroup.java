@@ -1,5 +1,6 @@
 package yorickbm.skyblockaddon.core.islands;
 
+import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.permissions.Permission;
 import yorickbm.skyblockaddon.core.permissions.PermissionManager;
 
@@ -32,7 +33,9 @@ public abstract class IslandGroup {
     }
 
     /**
-     * Determine if group may execute permission
+     * Determine if group may execute permission. A permission the group has no entry for (added to the registry after the
+     * group was saved) is allowed for the Members group and takes the registry default for every other group, so members
+     * never lose an action when the registry grows.
      * @param id Permission ID
      * @return If permission can be done by group
      */
@@ -41,9 +44,9 @@ public abstract class IslandGroup {
             Optional<Permission> perm = PermissionManager.getInstance().getPermissions().stream().filter(p -> p.getId().equalsIgnoreCase(id)).findFirst();
             if(perm.isEmpty()) return false;
 
-            //Add permission into list for session with default.
-            this.permissions.put(id, perm.get().getData().getDefault());
-            return perm.get().getData().getDefault();
+            final boolean allowed = perm.get().getData().getDefault() || SkyblockAddonCore.MEMBERS_GROUP_ID.equals(this.uuid);
+            this.permissions.put(id, allowed);
+            return allowed;
         }
         return this.permissions.get(id);
     }

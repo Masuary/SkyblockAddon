@@ -38,6 +38,14 @@ public enum BundledDefaultsPack {
     }
 
     /**
+     * Item ids (one per line) of the pack's modded items that put an entity into the world: the default of the config
+     * key {@code permissions.entity_placer_items}. Packs without the file default to no extra items.
+     */
+    public String entityPlacerItemsAsset() {
+        return "packs/" + id + "/entity_placer_items.txt";
+    }
+
+    /**
      * The bundled asset to copy for a shared asset path: the pack's own copy when it bundles one, else the shared one.
      */
     public String assetFor(final String sharedAsset) {

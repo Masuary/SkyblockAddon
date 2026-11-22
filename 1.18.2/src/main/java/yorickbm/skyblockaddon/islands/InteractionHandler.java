@@ -11,6 +11,7 @@ import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -225,6 +226,51 @@ public class InteractionHandler {
                 trigger, PermissionManager.getInstance().getPermissionsForTrigger(trigger), group.get()::canDo, subject);
         denyingPermission.ifPresent(permission -> SkyBlockAddon.logPermissionDebug(LOGGER, subject + " is BLOCKED on " + permission.getId() + " in group " + group.get().getName()));
         return denyingPermission.isPresent();
+    }
+
+    /**
+     * The island whose permissions judge an action at the position, or empty when nothing is checked: not a real player
+     * on the server, outside the overworld, a server admin, no island there, or the player owns it.
+     */
+    public static Optional<Island> islandGuardingPosition(final Player player, final ServerLevel level, final BlockPos position) {
+        if (!(player instanceof final ServerPlayer serverPlayer) || player instanceof FakePlayer) return Optional.empty();
+        if (level.dimension() != Level.OVERWORLD) return Optional.empty();
+        if (serverPlayer.hasPermissions(Commands.LEVEL_ADMINS)) return Optional.empty();
+
+        final Island island = IslandManager.getInstance().getIslandByPos(ForgeConverter.forgeToInternalVec3i(position));
+        if (island == null || island.isOwner(serverPlayer.getUUID())) return Optional.empty();
+        return Optional.of(island);
+    }
+
+    /**
+     * A right click on an entity, judged by the island the entity is on: the entity's type id against the entity rules
+     * of the onRightClickEntity permissions, and the hand item against their item rules.
+     */
+    public static boolean isEntityInteractionDenied(final ServerPlayer player, final Entity target, final ItemStack handItem) {
+        if (!(target.getLevel() instanceof final ServerLevel level)) return false;
+        final Optional<Island> guardingIsland = islandGuardingPosition(player, level, target.blockPosition());
+        if (guardingIsland.isEmpty()) return false;
+
+        final Optional<IslandGroup> group = guardingIsland.get().getGroupForEntityUUID(player.getUUID());
+        if (group.isEmpty()) return true;
+
+        final String entityTypeId = Objects.requireNonNull(EntityType.getKey(target.getType())).toString();
+        final Optional<Permission> denyingPermission = InteractionPermissionDecision.findDenyingEntityInteraction(
+                PermissionManager.getInstance().getPermissionsForTrigger(PermissionTriggers.ON_RIGHT_CLICK_ENTITY), group.get()::canDo, entityTypeId, itemId(handItem));
+        denyingPermission.ifPresent(permission -> SkyBlockAddon.logPermissionDebug(LOGGER, entityTypeId + " (entity click) is BLOCKED on " + permission.getId() + " in group " + group.get().getName()));
+        return denyingPermission.isPresent();
+    }
+
+    /**
+     * Any block break by a player, whatever caused it (a left click, an area tool, a spell, an explosion they started),
+     * judged by the island at the position as an onBreakBlock without a target: no block carve-out lets it through, so
+     * only a group with the break permission may break blocks there.
+     */
+    public static boolean isBreakDenied(final Player player, final ServerLevel level, final BlockPos position) {
+        final Optional<Island> guardingIsland = islandGuardingPosition(player, level, position);
+        if (guardingIsland.isEmpty()) return false;
+        return isInteractionDenied(new AtomicReference<>(guardingIsland.get()), (ServerPlayer) player, PermissionTriggers.ON_BREAK_BLOCK,
+                subjectOfUntargetedBreak(player.getMainHandItem()));
     }
 
     /**

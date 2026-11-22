@@ -1,10 +1,16 @@
 package yorickbm.skyblockaddon.configs;
 
 import net.minecraftforge.common.ForgeConfigSpec;
+import net.minecraftforge.fml.ModList;
+import yorickbm.skyblockaddon.core.SkyblockAddonCore;
+import yorickbm.skyblockaddon.core.util.BundledDefaultsPack;
 import yorickbm.skyblockaddon.core.islands.IslandSlot;
 import yorickbm.skyblockaddon.util.BlockInteractability;
 import yorickbm.skyblockaddon.util.EntityPlacerItems;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -34,7 +40,7 @@ public class SkyblockAddonConfig {
         register("permissions.debug", "FALSE", "Print debug messages on island permission events into console. This helps verifying and adding new permissions into your configuration.");
         register(BlockInteractability.INTERACTABLE_BLOCKS_CONFIG_KEY, "", "Comma-separated block ids (for example minecraft:jukebox) whose right-clicks are always checked as onRightClickBlock (interaction). Wins over non_interactable_blocks.");
         register(BlockInteractability.NON_INTERACTABLE_BLOCKS_CONFIG_KEY, "", "Comma-separated block ids whose right-clicks are always checked as onPlaceBlock (placing against the block).");
-        register(EntityPlacerItems.EXTRA_ENTITY_PLACER_ITEMS_CONFIG_KEY, "", "Comma-separated item ids of modded items that put an entity into the world when used. Like spawn eggs, armor stands, frames, paintings, boats, minecarts and end crystals they are judged as an onPlaceBlock placement with no target block, wherever they are used.");
+        register(EntityPlacerItems.EXTRA_ENTITY_PLACER_ITEMS_CONFIG_KEY, bundledEntityPlacerItems(), "Comma-separated item ids of modded items that put an entity into the world when used. Like spawn eggs, armor stands, frames, paintings, boats, minecarts and end crystals they are judged as an onPlaceBlock placement with no target block, wherever they are used. The default is the loaded pack's list (Vault Hunters or Wold's Vaults).");
 
         register("purge.batch_time", "15", "Amount of ticks (20 ticks +- 1 second) in between filling batch buffer.");
         register("purge.concurrent", "1", "Amount of chunks allowed to be processed concurrent.");
@@ -43,6 +49,18 @@ public class SkyblockAddonConfig {
 
         BUILDER.pop();
         SPEC = BUILDER.build();
+    }
+
+    private static String bundledEntityPlacerItems() {
+        final BundledDefaultsPack pack = BundledDefaultsPack.select(ModList.get()::isLoaded);
+        final String asset = "/assets/" + SkyblockAddonCore.MOD_ID + "/" + pack.entityPlacerItemsAsset();
+        try (InputStream stream = SkyblockAddonCore.class.getResourceAsStream(asset)) {
+            if (stream == null) return "";
+            return new String(stream.readAllBytes(), StandardCharsets.UTF_8).lines()
+                    .map(String::trim).filter(line -> !line.isEmpty()).collect(Collectors.joining(","));
+        } catch (final IOException exception) {
+            throw new IllegalStateException("Cannot read the bundled entity placer list " + asset, exception);
+        }
     }
 
     private static void register(final String key, final String value, final String comment) {
