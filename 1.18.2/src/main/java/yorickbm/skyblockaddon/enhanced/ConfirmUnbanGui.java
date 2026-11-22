@@ -1,9 +1,8 @@
 package yorickbm.skyblockaddon.enhanced;
 
 import com.masuary.masugui.element.ButtonStyle;
-import net.minecraft.ChatFormatting;
+import com.masuary.masugui.element.data.KeyValueRow;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
 import yorickbm.guilibrary.GUILibraryRegistry;
 import yorickbm.skyblockaddon.core.islands.Island;
@@ -20,11 +19,12 @@ public final class ConfirmUnbanGui {
 
     public static void open(ServerPlayer player, CompoundTag data, Island island, UUID bannedPlayerId) {
         String bannedPlayerName = PlayerNames.nameOf(Objects.requireNonNull(player.getServer()), bannedPlayerId);
-        EnhancedDialog.open(player, "confirm_unban", "Lift ban?", EnhancedGuiHelper.getPlayerHead(bannedPlayerId),
-                List.of(new TextComponent("Let " + bannedPlayerName + " visit again?"),
-                        new TextComponent("They can travel to the island again").withStyle(ChatFormatting.GRAY),
-                        new TextComponent("while it is public.").withStyle(ChatFormatting.GRAY)),
-                "Unban", ButtonStyle.PRIMARY,
+        EnhancedDialog.open(player, "confirm_unban", "Lift ban", EnhancedGuiHelper.getPlayerHead(bannedPlayerId),
+                "Let " + bannedPlayerName + " visit again?",
+                List.of(KeyValueRow.of("Player", bannedPlayerName, EnhancedDialog.VALUE_WHITE),
+                        KeyValueRow.of("After", "can visit again", EnhancedDialog.VALUE_GREEN),
+                        KeyValueRow.of("Travel list", "only while public", EnhancedDialog.VALUE_WHITE)),
+                "Lift ban", ButtonStyle.PRIMARY,
                 p -> {
                     VisitorActionGui.report(p, IslandActionService.unbanPlayer(p, island, bannedPlayerId), "commands.unban.success", bannedPlayerName);
                     GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:bans", data);

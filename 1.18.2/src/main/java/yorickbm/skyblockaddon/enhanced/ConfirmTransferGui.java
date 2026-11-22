@@ -1,12 +1,9 @@
 package yorickbm.skyblockaddon.enhanced;
 
 import com.masuary.masugui.element.ButtonStyle;
-import net.minecraft.ChatFormatting;
+import com.masuary.masugui.element.data.KeyValueRow;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import yorickbm.guilibrary.GUILibraryRegistry;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
 import yorickbm.skyblockaddon.islands.OwnershipTransferConfirmation;
@@ -22,16 +19,16 @@ public final class ConfirmTransferGui {
 
     public static void open(ServerPlayer player, CompoundTag data, ForgeIsland island, UUID newOwner) {
         String newOwnerName = PlayerNames.nameOf(Objects.requireNonNull(player.getServer()), newOwner);
-        EnhancedDialog.open(player, "confirm_transfer", "Transfer island?", new ItemStack(Items.GOLDEN_HELMET),
-                List.of(new TextComponent("Make ").append(new TextComponent(newOwnerName).withStyle(ChatFormatting.AQUA))
-                                .append(new TextComponent(" the owner?")),
-                        new TextComponent("You stay on the island as a member").withStyle(ChatFormatting.GRAY),
-                        new TextComponent("in the Members group.").withStyle(ChatFormatting.GRAY)),
+        EnhancedDialog.open(player, "confirm_transfer", "Transfer island", EnhancedGuiHelper.getPlayerHead(newOwner),
+                "Make " + newOwnerName + " the owner?",
+                List.of(KeyValueRow.of("New owner", newOwnerName, EnhancedDialog.VALUE_WHITE),
+                        KeyValueRow.of("You become", "Member", EnhancedDialog.VALUE_AQUA),
+                        KeyValueRow.of("Undo", "only by the new owner", EnhancedDialog.VALUE_RED)),
                 "Transfer", ButtonStyle.DANGER,
                 p -> {
                     OwnershipTransferConfirmation.confirm(p, island, newOwner, newOwnerName);
                     GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:overview", data);
                 },
-                p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:transfer", data));
+                p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:members", data));
     }
 }

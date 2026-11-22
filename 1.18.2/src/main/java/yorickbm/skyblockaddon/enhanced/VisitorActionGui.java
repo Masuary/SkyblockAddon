@@ -1,6 +1,7 @@
 package yorickbm.skyblockaddon.enhanced;
 
 import com.masuary.masugui.element.ButtonStyle;
+import com.masuary.masugui.element.data.KeyValueRow;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.TextComponent;
@@ -16,23 +17,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-/** A visitor on the island: send them to spawn, or ban them (which also sends them to spawn). */
-public final class VisitorActionGui {
+/** The visitor card's actions: expel sends the visitor to spawn, ban asks first and also keeps them off the island. */
+final class VisitorActionGui {
 
-    private VisitorActionGui() {}
-
-    public static void open(ServerPlayer player, CompoundTag data, ForgeIsland island, UUID visitorId) {
-        String visitorName = PlayerNames.nameOf(Objects.requireNonNull(player.getServer()), visitorId);
-        EnhancedDialog.openWithActions(player, "visitor_action", visitorName, EnhancedGuiHelper.getPlayerHead(visitorId),
-                List.of(new TextComponent(visitorName + " is visiting your island."),
-                        new TextComponent("Expel sends them to spawn.").withStyle(ChatFormatting.GRAY),
-                        new TextComponent("Ban also keeps them off the island.").withStyle(ChatFormatting.GRAY)),
-                List.of(new EnhancedDialog.Action("Expel", ButtonStyle.PRIMARY, p -> expel(p, data, island, visitorId, visitorName)),
-                        new EnhancedDialog.Action("Ban", ButtonStyle.DANGER, p -> ban(p, data, island, visitorId, visitorName))),
-                p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:visitors", data));
+    private VisitorActionGui() {
     }
 
-    private static void expel(ServerPlayer player, CompoundTag data, ForgeIsland island, UUID visitorId, String visitorName) {
+    static void expel(ServerPlayer player, CompoundTag data, ForgeIsland island, UUID visitorId, String visitorName) {
         ServerPlayer visitor = Objects.requireNonNull(player.getServer()).getPlayerList().getPlayer(visitorId);
         IslandActionResult result = visitor == null
                 ? IslandActionResult.TARGET_NOT_ON_ISLAND
@@ -41,9 +32,19 @@ public final class VisitorActionGui {
         GUILibraryRegistry.openGUIForPlayer(player, "skyblockaddon:visitors", data);
     }
 
-    private static void ban(ServerPlayer player, CompoundTag data, ForgeIsland island, UUID visitorId, String visitorName) {
-        report(player, IslandActionService.banPlayer(player, island, visitorId), "commands.ban.success", visitorName);
-        GUILibraryRegistry.openGUIForPlayer(player, "skyblockaddon:visitors", data);
+    static void openBanConfirm(ServerPlayer player, CompoundTag data, ForgeIsland island, UUID visitorId) {
+        String visitorName = PlayerNames.nameOf(Objects.requireNonNull(player.getServer()), visitorId);
+        EnhancedDialog.open(player, "confirm_ban", "Ban player", EnhancedGuiHelper.getPlayerHead(visitorId),
+                "Ban " + visitorName + " from the island?",
+                List.of(KeyValueRow.of("Now", "sent to spawn", EnhancedDialog.VALUE_WHITE),
+                        KeyValueRow.of("Travel here", "blocked", EnhancedDialog.VALUE_RED),
+                        KeyValueRow.of("Undo", "Lift ban in Bans", EnhancedDialog.VALUE_WHITE)),
+                "Ban", ButtonStyle.DANGER,
+                p -> {
+                    report(p, IslandActionService.banPlayer(p, island, visitorId), "commands.ban.success", visitorName);
+                    GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:visitors", data);
+                },
+                p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:visitors", data));
     }
 
     static void report(ServerPlayer player, IslandActionResult result, String successKey, String subject) {
