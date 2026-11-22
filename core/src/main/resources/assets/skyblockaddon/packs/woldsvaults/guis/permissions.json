@@ -1,0 +1,252 @@
+{
+  "title": [
+    "{\"text\": \"%group_name% - Permissions\"}"
+  ],
+  "rows": 3,
+  "key": "permissions",
+  "fillers": [
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"\"}"
+        ],
+        "item": "minecraft:GRAY_STAINED_GLASS_PANE",
+        "lore": [],
+        "data": {}
+      },
+      "pattern": "EMPTY",
+      "action": {}
+    }
+  ],
+  "items": [
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"General\", \"color\":\"blue\",\"bold\": true}"
+        ],
+        "item": "minecraft:GRASS_BLOCK",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Change general permissions.\",\"color\":\"dark_gray\"}"
+          ]
+        ],
+        "data": {
+          "category_id": "general"
+        }
+      },
+      "slot": 10,
+      "action": {
+        "onClick": "yorickbm.guilibrary.events.ItemOpenMenuEvent",
+        "data": {
+          "gui": "skyblockaddon:set_permission"
+        }
+      }
+    },{
+      "item": {
+        "display_name": [
+          "{\"text\": \"Transport\", \"color\":\"blue\",\"bold\": true}"
+        ],
+        "item": "minecraft:MINECART",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Change transport permissions.\",\"color\":\"dark_gray\"}"
+          ]
+        ],
+        "data": {
+          "category_id": "transport"
+        }
+      },
+      "slot": 11,
+      "action": {
+        "onClick": "yorickbm.guilibrary.events.ItemOpenMenuEvent",
+        "data": {
+          "gui": "skyblockaddon:set_permission"
+        }
+      }
+    },{
+      "item": {
+        "display_name": [
+          "{\"text\": \"Redstone\", \"color\":\"blue\",\"bold\": true}"
+        ],
+        "item": "minecraft:REDSTONE",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Change redstone permissions.\",\"color\":\"dark_gray\"}"
+          ]
+        ],
+        "data": {
+          "category_id": "redstone"
+        }
+      },
+      "slot": 12,
+      "action": {
+        "onClick": "yorickbm.guilibrary.events.ItemOpenMenuEvent",
+        "data": {
+          "gui": "skyblockaddon:set_permission"
+        }
+      }
+    },{
+      "item": {
+        "display_name": [
+          "{\"text\": \"Storage\", \"color\":\"blue\",\"bold\": true}"
+        ],
+        "item": "minecraft:chest",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Change storage permissions.\",\"color\":\"dark_gray\"}"
+          ]
+        ],
+        "data": {
+          "category_id": "storage"
+        }
+      },
+      "slot": 14,
+      "action": {
+        "onClick": "yorickbm.guilibrary.events.ItemOpenMenuEvent",
+        "data": {
+          "gui": "skyblockaddon:set_permission"
+        }
+      }
+    },{
+      "item": {
+        "display_name": [
+          "{\"text\": \"Interactables\", \"color\":\"blue\",\"bold\": true}"
+        ],
+        "item": "minecraft:crafting_table",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Change interactable permissions.\",\"color\":\"dark_gray\"}"
+          ]
+        ],
+        "data": {
+          "category_id": "interactables"
+        }
+      },
+      "slot": 15,
+      "action": {
+        "onClick": "yorickbm.guilibrary.events.ItemOpenMenuEvent",
+        "data": {
+          "gui": "skyblockaddon:set_permission"
+        }
+      }
+    },{
+      "item": {
+        "display_name": [
+          "{\"text\": \"Vault Hunters\", \"color\":\"blue\",\"bold\": true}"
+        ],
+        "item": "the_vault:vault_crystal",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Change vaulthunter related permissions.\",\"color\":\"dark_gray\"}"
+          ]
+        ],
+        "data": {
+          "category_id": "vaulthunters"
+        }
+      },
+      "slot": 16,
+      "action": {
+        "onClick": "yorickbm.guilibrary.events.ItemOpenMenuEvent",
+        "data": {
+          "gui": "skyblockaddon:set_permission"
+        }
+      }
+    },{
+      "item": {
+        "display_name": [
+          "{\"text\": \"Mods\", \"color\":\"blue\",\"bold\": true}"
+        ],
+        "item": "minecraft:piston",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Change mod-specific permissions.\",\"color\":\"dark_gray\"}"
+          ]
+        ],
+        "data": {
+          "category_id": "mods"
+        }
+      },
+      "slot": 13,
+      "action": {
+        "onClick": "yorickbm.guilibrary.events.ItemOpenMenuEvent",
+        "data": {
+          "gui": "skyblockaddon:set_permission"
+        }
+      }
+    },
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"Admin Controls\", \"color\":\"dark_red\", \"bold\":\"true\"}"
+        ],
+        "item": "minecraft:COMMAND_BLOCK",
+        "lore": [
+          [
+            "{\"text\":\"\u00bb Access special administrative controls.\",\"color\":\"dark_gray\"}"
+          ]
+        ],
+        "data": {
+          "category_id": "admin_controls"
+        }
+      },
+      "slot": 4,
+      "action": {
+        "onClick": "yorickbm.guilibrary.events.ItemOpenMenuEvent",
+        "data": {
+          "gui": "skyblockaddon:set_permission"
+        }
+      },
+      "conditions": [
+        "is_op"
+      ]
+    },
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"Back\",\"bold\": true,\"color\": \"red\"}"
+        ],
+        "item": "minecraft:ARROW",
+        "lore": [],
+        "data": {}
+      },
+      "slot": 26,
+      "action": {
+        "onClick": "yorickbm.guilibrary.events.ItemOpenMenuEvent",
+        "data": {
+          "gui": "skyblockaddon:groups"
+        }
+      }
+    },
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"Remove group\",\"bold\": true,\"color\": \"red\"}"
+        ],
+        "item": "minecraft:BARRIER",
+        "lore": [],
+        "data": {}
+      },
+      "slot": 18,
+      "action": {
+        "onClick": "yorickbm.skyblockaddon.events.IslandEvents$RemoveGroup"
+      }
+    },
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"Members\",\"bold\": true,\"color\": \"blue\"}"
+        ],
+        "item": "minecraft:OAK_BOAT",
+        "lore": [],
+        "data": {}
+      },
+      "slot": 22,
+      "action": {
+        "onClick": "yorickbm.guilibrary.events.ItemOpenMenuEvent",
+        "data": {
+          "gui": "skyblockaddon:members_group"
+        }
+      }
+    }
+  ]
+}

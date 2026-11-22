@@ -34,17 +34,19 @@ class PermissionTriggerCoverageTest {
     }
 
     @Test
-    void bundledVaultHuntersRegistryReferencesEveryKnownTrigger() throws URISyntaxException {
-        final Path registry = Path.of(Objects.requireNonNull(getClass().getResource("/assets/skyblockaddon/registries/permissions/vaulthunters.json")).toURI());
-        final PermissionManager manager = new PermissionManager();
-        manager.loadPermissions(registry);
+    void bundledVaultHuntersRegistriesReferenceEveryKnownTrigger() throws URISyntaxException {
+        for (final String registryName : List.of("vaulthunters.json", "woldsvaults.json")) {
+            final Path registry = Path.of(Objects.requireNonNull(getClass().getResource("/assets/skyblockaddon/registries/permissions/" + registryName)).toURI());
+            final PermissionManager manager = new PermissionManager();
+            manager.loadPermissions(registry);
 
-        assertEquals(Set.of(), new HashSet<>(manager.findUnreferencedTriggers()));
+            assertEquals(Set.of(), new HashSet<>(manager.findUnreferencedTriggers()), registryName);
+        }
     }
 
     @Test
     void bundledRegistriesLetDestroyBlocksGuardGadgetBreaking() throws URISyntaxException {
-        for (final String registryName : List.of("default.json", "vaulthunters.json")) {
+        for (final String registryName : List.of("default.json", "vaulthunters.json", "woldsvaults.json")) {
             final Path registry = Path.of(Objects.requireNonNull(getClass().getResource("/assets/skyblockaddon/registries/permissions/" + registryName)).toURI());
             final PermissionManager manager = new PermissionManager();
             manager.loadPermissions(registry);

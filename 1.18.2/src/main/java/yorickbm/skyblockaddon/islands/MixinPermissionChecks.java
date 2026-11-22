@@ -1,23 +1,31 @@
 package yorickbm.skyblockaddon.islands;
 
+import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.common.util.FakePlayer;
 import yorickbm.skyblockaddon.core.JSON.PermissionDataJson;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
+import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.permissions.EntityVerification;
+import yorickbm.skyblockaddon.core.permissions.InteractionSubject;
 import yorickbm.skyblockaddon.core.permissions.PermissionTriggers;
+import yorickbm.skyblockaddon.util.ForgeConverter;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 
 /**
  * Permission checks for mod and vanilla code reached through mixins, where no Forge event exists to cancel.
@@ -72,6 +80,72 @@ public final class MixinPermissionChecks {
 
         InteractionHandler.sendDeniedMessage(player);
         return true;
+    }
+
+    /**
+     * A block placed at range by a world write no Forge event sees (Effortless Building build modes, modifiers, undo and
+     * randomizer bag), judged by the island at the position like a placement by hand there.
+     */
+    public static boolean denyRangedPlacement(final Player player, final Level level, final BlockPos position, final InteractionSubject subject) {
+        return denyRangedBuild(player, level, position, PermissionTriggers.ON_PLACE_BLOCK, subject);
+    }
+
+    /**
+     * A block broken at range by a world write no Forge event sees, judged by the island at the position like a break by
+     * hand there (a left click with the main hand item).
+     */
+    public static boolean denyRangedBreak(final Player player, final Level level, final BlockPos position) {
+        if (!(level instanceof final ServerLevel serverLevel)) return false;
+        return denyRangedBuild(player, level, position, PermissionTriggers.ON_LEFT_CLICK_BLOCK,
+                InteractionHandler.subjectOfClick(serverLevel, position, player.getMainHandItem()));
+    }
+
+    /**
+     * A batch of ranged placements (an Effortless Building build mode's start positions) is denied as a whole when any
+     * position is denied; every position is resent so the client drops its predicted blocks.
+     */
+    public static boolean denyRangedPlacements(final Player player, final List<BlockPos> positions) {
+        if (!(player.getLevel() instanceof final ServerLevel level)) return false;
+        return denyBatch(player, level, positions, position -> denyRangedPlacement(player, level, position,
+                InteractionHandler.subjectOfClick(level, position, player.getMainHandItem())));
+    }
+
+    public static boolean denyRangedBreaks(final Player player, final List<BlockPos> positions) {
+        if (!(player.getLevel() instanceof final ServerLevel level)) return false;
+        return denyBatch(player, level, positions, position -> denyRangedBreak(player, level, position));
+    }
+
+    private static boolean denyBatch(final Player player, final ServerLevel level, final List<BlockPos> positions, final Predicate<BlockPos> isDenied) {
+        if (positions.stream().noneMatch(isDenied)) return false;
+
+        positions.forEach(position -> InteractionHandler.resendBlockToPlayer((ServerPlayer) player, level, position));
+        return true;
+    }
+
+    private static boolean denyRangedBuild(final Player player, final Level level, final BlockPos position, final String trigger, final InteractionSubject subject) {
+        final Optional<Island> guardingIsland = islandGuardingRangedBuild(player, level, position);
+        if (guardingIsland.isEmpty()) return false;
+
+        final ServerPlayer serverPlayer = (ServerPlayer) player;
+        if (!InteractionHandler.isInteractionDenied(new AtomicReference<>(guardingIsland.get()), serverPlayer, trigger, subject)) return false;
+
+        InteractionHandler.resendBlockToPlayer(serverPlayer, (ServerLevel) level, position);
+        InteractionHandler.sendDeniedMessage(serverPlayer);
+        return true;
+    }
+
+    /**
+     * The island whose permissions judge a build at the position, or empty when nothing is checked: not a real player on
+     * the server, outside the overworld, a server admin, no island there, or the player owns it.
+     */
+    private static Optional<Island> islandGuardingRangedBuild(final Player player, final Level level, final BlockPos position) {
+        if (!(player instanceof final ServerPlayer serverPlayer) || player instanceof FakePlayer) return Optional.empty();
+        if (!(level instanceof ServerLevel) || level.dimension() != Level.OVERWORLD) return Optional.empty();
+        if (serverPlayer.hasPermissions(Commands.LEVEL_ADMINS)) return Optional.empty();
+
+        final Island island = IslandManager.getInstance().getIslandByPos(ForgeConverter.forgeToInternalVec3i(position));
+        if (island == null || island.isOwner(serverPlayer.getUUID())) return Optional.empty();
+        return Optional.of(island);
     }
 
     private static void sendRateLimitedPortalMessage(final ServerPlayer player, final long gameTime) {

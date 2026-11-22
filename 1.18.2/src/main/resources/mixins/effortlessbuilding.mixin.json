@@ -1,0 +1,15 @@
+{
+  "required": false,
+  "package": "yorickbm.skyblockaddon.mixins",
+  "plugin": "yorickbm.skyblockaddon.util.EffortlessBuildingMixinPlugin",
+  "compatibilityLevel": "JAVA_11",
+  "minVersion": "0.8",
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "server": [
+    "EffortlessBuildingBlockMixinConfig",
+    "EffortlessBuildingBatchMixinConfig"
+  ],
+  "refmap": "skyblockaddon.refmap.json"
+}
