@@ -38,6 +38,7 @@ import yorickbm.skyblockaddon.core.islands.IslandActionResult;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.permissions.Permission;
+import yorickbm.skyblockaddon.core.permissions.PermissionCategories;
 import yorickbm.skyblockaddon.core.permissions.PermissionManager;
 import yorickbm.skyblockaddon.islands.IslandActionService;
 
@@ -63,20 +64,23 @@ public final class PermissionTogglesGui {
     private static final String ADMIN_CATEGORY_ID = "admin_controls";
     private static final Set<String> MALFORMED_TEXT_WARNED = ConcurrentHashMap.newKeySet();
 
-    record Category(String id, String label, Supplier<ItemStack> icon) {
+    record Category(String id, Supplier<ItemStack> icon) {
+        String label() {
+            return PermissionCategories.labelFor(id);
+        }
     }
 
     private static final List<Category> KNOWN_CATEGORIES = List.of(
-            new Category("general", "General", () -> new ItemStack(Items.GRASS_BLOCK)),
-            new Category("building", "Building", () -> new ItemStack(Items.BRICKS)),
-            new Category("storage", "Storage", () -> new ItemStack(Items.CHEST)),
-            new Category("stations", "Stations", () -> new ItemStack(Items.CRAFTING_TABLE)),
-            new Category("animals", "Animals and Mobs", () -> new ItemStack(Items.LEAD)),
-            new Category("redstone", "Doors and Redstone", () -> new ItemStack(Items.REDSTONE)),
-            new Category("transport", "Travel", () -> new ItemStack(Items.MINECART)),
-            new Category("vaulthunters", "Vault Hunters", () -> new ItemStack(itemOrFallback("the_vault:vault_crystal", Items.ENDER_EYE))),
-            new Category("mods", "Mods", () -> new ItemStack(Items.PISTON)));
-    private static final Category ADMIN_CATEGORY = new Category(ADMIN_CATEGORY_ID, "Admin", () -> new ItemStack(Items.COMMAND_BLOCK));
+            new Category("general", () -> new ItemStack(Items.GRASS_BLOCK)),
+            new Category("building", () -> new ItemStack(Items.BRICKS)),
+            new Category("storage", () -> new ItemStack(Items.CHEST)),
+            new Category("stations", () -> new ItemStack(Items.CRAFTING_TABLE)),
+            new Category("animals", () -> new ItemStack(Items.LEAD)),
+            new Category("redstone", () -> new ItemStack(Items.REDSTONE)),
+            new Category("transport", () -> new ItemStack(Items.MINECART)),
+            new Category("vaulthunters", () -> new ItemStack(itemOrFallback("the_vault:vault_crystal", Items.ENDER_EYE))),
+            new Category("mods", () -> new ItemStack(Items.PISTON)));
+    private static final Category ADMIN_CATEGORY = new Category(ADMIN_CATEGORY_ID, () -> new ItemStack(Items.COMMAND_BLOCK));
 
     private PermissionTogglesGui() {}
 
@@ -106,7 +110,7 @@ public final class PermissionTogglesGui {
         }
         boolean hasAdminRules = registryCategories.remove(ADMIN_CATEGORY_ID);
         for (String unknownCategory : registryCategories) {
-            categories.add(new Category(unknownCategory, prettify(unknownCategory), () -> new ItemStack(Items.WRITABLE_BOOK)));
+            categories.add(new Category(unknownCategory, () -> new ItemStack(Items.WRITABLE_BOOK)));
         }
         if (hasAdminRules && player.hasPermissions(Commands.LEVEL_GAMEMASTERS)) categories.add(ADMIN_CATEGORY);
         return categories;
