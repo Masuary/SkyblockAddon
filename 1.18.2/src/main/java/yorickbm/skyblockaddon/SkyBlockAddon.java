@@ -3,9 +3,7 @@ package yorickbm.skyblockaddon;
 import com.mojang.logging.LogUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.nbt.Tag;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
@@ -45,7 +43,6 @@ import yorickbm.skyblockaddon.events.Gui.IslandGuiEvents;
 import yorickbm.skyblockaddon.events.Gui.RegistryGuiEvents;
 import yorickbm.skyblockaddon.islands.IslandCreationQueue;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
@@ -119,6 +116,7 @@ public class SkyBlockAddon {
         GUILibraryRegistry.registerFolder(SkyblockAddonCore.MOD_ID, FMLPaths.CONFIGDIR.get().resolve(SkyblockAddonCore.MOD_ID + "/guis/"));
 
         loadIslandPermissions();
+        loadIslandTemplate();
 
         //Init Version Checker
         VersionChecker.startVersionCheck();
@@ -163,22 +161,34 @@ public class SkyBlockAddon {
         }
     }
 
-    private static CompoundTag IslandNBTData = null;
-    public static CompoundTag getIslandNBT(final MinecraftServer server) {
-        if (IslandNBTData == null) {
-            try {
-                final File islandFile = new File(FMLPaths.CONFIGDIR.get().resolve(SkyblockAddonCore.MOD_ID) + "/island.nbt");
-                IslandNBTData = NbtIo.readCompressed(islandFile);
-            } catch (final IOException e) {
-                LOGGER.error("Could not load external island.nbt file, using mod's internal island.nbt file.");
-                try {
-                    final Resource rs = server.getResourceManager().getResource(ResourceLocation.fromNamespaceAndPath(SkyblockAddonCore.MOD_ID, "structures/island.nbt"));
-                    IslandNBTData = NbtIo.readCompressed(rs.getInputStream());
-                } catch (final IOException ex) {
-                    LOGGER.error("Could not load mod's internal island.nbt file!!!");
-                }
-            }
+    private static volatile CompoundTag islandTemplate;
+
+    /**
+     * Read the server's island.nbt (generated from the bundled island when missing) once at startup. An unreadable,
+     * corrupt or empty file stops the server instead of failing every island creation later.
+     */
+    public static void loadIslandTemplate() {
+        final Path templatePath = FMLPaths.CONFIGDIR.get().resolve(SkyblockAddonCore.MOD_ID + "/island.nbt");
+        final CompoundTag template = readIslandTemplate(templatePath);
+        final int blockCount = template.getList("blocks", Tag.TAG_COMPOUND).size();
+        if (blockCount == 0 || template.getList("palette", Tag.TAG_COMPOUND).isEmpty()) {
+            throw new IllegalStateException("'" + templatePath.toAbsolutePath() + "' is not a structure file with blocks and a palette; refusing to create islands from it");
         }
-        return IslandNBTData;
+        islandTemplate = template;
+        LOGGER.info("Loaded the island template with {} blocks from '{}'.", blockCount, templatePath);
+    }
+
+    private static CompoundTag readIslandTemplate(final Path templatePath) {
+        try {
+            return NbtIo.readCompressed(templatePath.toFile());
+        } catch (final IOException | RuntimeException readFailure) {
+            throw new IllegalStateException("Failed to load the island template from '" + templatePath.toAbsolutePath() + "': " + readFailure, readFailure);
+        }
+    }
+
+    public static CompoundTag getIslandNBT() {
+        final CompoundTag template = islandTemplate;
+        if (template == null) throw new IllegalStateException("The island template was not loaded at startup");
+        return template;
     }
 }

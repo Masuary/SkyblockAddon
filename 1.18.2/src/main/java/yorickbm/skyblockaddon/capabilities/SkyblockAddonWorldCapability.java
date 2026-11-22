@@ -33,7 +33,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -214,7 +213,7 @@ public class SkyblockAddonWorldCapability {
      */
     public ParsedIslandStructure parseIslandStructure() {
         final long parseStartNanos = System.nanoTime();
-        final CompoundTag nbt = Objects.requireNonNull(SkyBlockAddon.getIslandNBT(serverInstance), "island.nbt could not be read from the config folder or the mod jar");
+        final CompoundTag nbt = SkyBlockAddon.getIslandNBT();
 
         final ListTag paletteNbt = nbt.getList("palette", 10);
         final ListTag blocksNbt = nbt.getList("blocks", 10);
