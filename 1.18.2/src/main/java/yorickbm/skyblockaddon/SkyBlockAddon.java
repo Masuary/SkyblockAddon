@@ -3,7 +3,6 @@ package yorickbm.skyblockaddon;
 import com.mojang.logging.LogUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.nbt.Tag;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
@@ -22,6 +21,7 @@ import net.minecraftforge.fml.loading.FileUtils;
 import org.slf4j.Logger;
 import yorickbm.guilibrary.GUILibraryRegistry;
 import yorickbm.guilibrary.events.DefaultEventHandler;
+import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldCapability.ParsedIslandStructure;
 import yorickbm.skyblockaddon.chunk.ChunkTaskScheduler;
 import yorickbm.skyblockaddon.commands.IslandBanCommand;
 import yorickbm.skyblockaddon.configs.SkyblockAddonConfig;
@@ -179,21 +179,25 @@ public class SkyBlockAddon {
         }
     }
 
-    private static volatile CompoundTag islandTemplate;
+    private static volatile ParsedIslandStructure islandStructure;
 
     /**
-     * Read the server's island.nbt (generated from the bundled island when missing). An unreadable, corrupt or empty
-     * file stops the server start instead of failing every island creation later.
+     * Read and parse the server's island.nbt (generated from the bundled island when missing). An unreadable, corrupt
+     * or structurally broken file stops the server start instead of failing every island creation later.
      */
     public static void loadIslandTemplate() {
         final Path templatePath = islandTemplatePath();
-        final CompoundTag template = readIslandTemplate(templatePath);
-        final int blockCount = template.getList("blocks", Tag.TAG_COMPOUND).size();
-        if (blockCount == 0 || template.getList("palette", Tag.TAG_COMPOUND).isEmpty()) {
-            throw new IllegalStateException("'" + templatePath.toAbsolutePath() + "' is not a structure file with blocks and a palette; refusing to create islands from it");
+        final ParsedIslandStructure structure = parseIslandTemplate(templatePath, readIslandTemplate(templatePath));
+        islandStructure = structure;
+        LOGGER.info("Loaded the island template with {} blocks from '{}' in {} ms.", structure.blocks.size(), templatePath, structure.parseMillis);
+    }
+
+    private static ParsedIslandStructure parseIslandTemplate(final Path templatePath, final CompoundTag template) {
+        try {
+            return ParsedIslandStructure.parse(template);
+        } catch (final RuntimeException parseFailure) {
+            throw new IllegalStateException("'" + templatePath.toAbsolutePath() + "' is not a usable island structure: " + parseFailure.getMessage(), parseFailure);
         }
-        islandTemplate = template;
-        LOGGER.info("Loaded the island template with {} blocks from '{}'.", blockCount, templatePath);
     }
 
     private static Path islandTemplatePath() {
@@ -208,9 +212,9 @@ public class SkyBlockAddon {
         }
     }
 
-    public static CompoundTag getIslandNBT() {
-        final CompoundTag template = islandTemplate;
-        if (template == null) throw new IllegalStateException("The island template was not loaded at startup");
-        return template;
+    public static ParsedIslandStructure getIslandStructure() {
+        final ParsedIslandStructure structure = islandStructure;
+        if (structure == null) throw new IllegalStateException("The island template was not loaded when the server started");
+        return structure;
     }
 }
