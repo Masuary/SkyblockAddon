@@ -12,6 +12,17 @@ Branch `main` (created 2026-11-21 from `gui-redesign` at `5e191cd`; sir: this be
 
 - One line for both servers (sir, 2026-11-21): after the U4 deploy, `gui-redesign` becomes the single branch for Skyvault (Remastered) and Wolds. Until then the Wolds line gets one R1-only hotfix (9.12) once the R1 fix here is tested; deploying it to the live Wolds servers still needs sir's per-action go.
 
+## Decisions after the testnet QA (sir, 2026-11-22)
+
+- W0: ship Wolds 9.12 as built (`hotfix-9.12-r1` `46afbaf`, R1 + S9 Quark mixin). Fable findings 3-7 on the Wolds line wait for 10.0 (W3). Before any deploy: Wolds testnet boot + visitor reacharound check (mixin applies, block and trowel denied); live deploy only with sir's per-action go.
+- Push `main` to `origin` and make it the GitHub default branch (push-check first).
+- Demotion to Visitors = removal: assigning the Visitors group to a member removes them from the island like a kick (they can then create or join another island).
+- Set spawn requires the player on ground with a solid block under them, inside the island bounds.
+- Group names: strip the `[...]` brackets on create and on island load; commands match a group name with or without brackets.
+- Purge of an abandoned island with an empty chunk list: wording fix only (says abandoned but no tracked chunks, stays refused; protects the carried spawn island).
+- `island.nbt`: an unreadable or corrupt config file stops the server at boot naming the file and cause (like B5); no silent fallback to the bundled island.
+- `/island ban` lookups: one pending Mojang lookup per player (any name); a second one while pending is refused.
+
 ## Phases
 
 | Phase | Contents | Status |
@@ -25,6 +36,8 @@ Branch `main` (created 2026-11-21 from `gui-redesign` at `5e191cd`; sir: this be
 | P6 Actions and GUI features | Cleanup stage 5 (one island-action service for both GUI stacks and commands) with B8 gating (owner / `admin_menu` / op), F3 expel + per-island ban list, F4 ownership transfer, F5 travel list polish; visual check in both GUI stacks; coordinate with the MasuGUI visual overhaul (phase R decision, lands before the deploy) | done 2026-11-21 (merge `9620d2f`): core `IslandActions` + `IslandActionService` for both GUI stacks and commands; B8 rights (owner, member with `admin_menu`, op level 2; transfer owner-only); `/island transfer`, `/island expel|ban|unban|bans` (NBT `bannedPlayers`, ops exempt from enforcement), travel list (NBT `lastActive`, sorting, owner search on modded clients). Server GUI files: replace `overview.json` and `travel.json`; `visitors.json`, `bans.json`, `transfer.json` are created when missing. The enhanced Set spawn gap is closed by S1 (owner or server admin in both GUI stacks) |
 | P6b Housekeeping | Cleanup stage 1 after the ports (so it does not churn code they replace): unused/wildcard imports, commented-out and dead code, typos, INFO debug lines to DEBUG, remaining javac warnings to zero, audit snapshot out of the repo root | done on branch `phaseR-housekeeping`: dead code removed (island border threads, `ThreadManager`, `ChunkTaskRegistry`, `Square`, `ForgeIsland(Island)`, unused helpers), commented-out code, typos and PascalCase methods renamed, "Destroy Blocks" label, zero javac warnings with `-Werror` in both builds, no wildcard/unused imports, audit snapshot in `docs/audits/`; no per-click INFO lines were left to demote |
 | P7 Review and testnet | Fable review of the full diff; testnet (lock `6-test-network/LOCK`): protection checklist, restarts with custom-group members, two-client create rush, vault biome, purge, B2 carried spawn island on a fresh TestA world; record the B2 deploy step (copy the live spawn island file `a753cd61-...` with its chunk list cleared into new MAIN `world/islanddata/` before players join) for the deploy runbook; tracker row in `9-mod-review/README.md` | done 2026-11-22: Fable reviews 1 and 2 fixed (R1-R5, S1-S11), P6b housekeeping; testnet QA on TestA: every checklist item PASS or explained (`/mnt/data/AI/work/skyblockaddon-qa-2026-11-22/testnet-results.md`, findings 4e). One fix from the run: `6d8ab3c` `/island ban` name lookup on offline-mode backends (S8; core `BanNameResolution` + `KnownPlayerNames`, 145 core tests, 4 Fable rounds). Deploy registry `p4-server-snippet/PermissionRegistry.merged-v2.json` label fixed (da2ea4ca...). Final jar `3fd5140a63d2b6b6...` (build of `6d8ab3c`). Open for sir: observations in the results file |
+
+| P8 QA follow-ups | sir's 2026-11-22 answers on the testnet observations: demotion to Visitors removes the member, set spawn on ground, bracket-free group names (create + load, tolerant command match), purge wording for empty chunk lists, `island.nbt` fail fast at boot, one pending ban lookup per player; push `main` and make it the GitHub default | open |
 
 P3, P4 and P5 run in parallel worktrees (`/mnt/data/AI/work/skyblockaddon-phaseR-impl-2026-11-21/wt-p3..p5`, branches `phaseR-p3..p5`), merged into `gui-redesign` after review.
 
