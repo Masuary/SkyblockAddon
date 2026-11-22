@@ -32,25 +32,23 @@ import yorickbm.skyblockaddon.core.util.BanNameResolution;
 import yorickbm.skyblockaddon.core.util.BanNameResolution.Decision;
 import yorickbm.skyblockaddon.core.util.BanNameResolution.RemoteLookup;
 import yorickbm.skyblockaddon.core.util.KnownPlayerNames;
+import yorickbm.skyblockaddon.core.util.PendingBanLookups;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
 import yorickbm.skyblockaddon.islands.IslandActionService;
 import yorickbm.skyblockaddon.util.PlayerNames;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * /island ban, unban and bans: the island's ban list.
  */
 public class IslandBanCommand extends OverWorldCommandStack {
-    private static final Set<String> PENDING_LOOKUPS = ConcurrentHashMap.newKeySet();
+    private static final PendingBanLookups PENDING_LOOKUPS = new PendingBanLookups();
     private static final Logger LOGGER = LogManager.getLogger();
 
     public IslandBanCommand(final CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -98,7 +96,7 @@ public class IslandBanCommand extends OverWorldCommandStack {
 
     /**
      * Online players and offline-mode players who have played on this server are banned at once. Any other name is
-     * looked up at Mojang off the server thread (a name already being looked up for this player is not asked twice) and the ban continues on the server
+     * looked up at Mojang off the server thread (one lookup per player at a time; another /island ban meanwhile is refused) and the ban continues on the server
      * thread. The server's own profile cache is not used: an offline-mode server invents a profile for every failed lookup.
      */
     public int executeBan(final CommandSourceStack command, final ServerPlayer executor, final String playerName) {
@@ -128,10 +126,14 @@ public class IslandBanCommand extends OverWorldCommandStack {
             return Command.SINGLE_SUCCESS;
         }
 
+        final UUID executorId = executor.getUUID();
+        final Optional<String> pendingName = PENDING_LOOKUPS.tryStart(executorId, playerName);
+        if (pendingName.isPresent()) {
+            command.sendFailure(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.ban.lookup.pending").formatted(pendingName.get())));
+            return Command.SINGLE_SUCCESS;
+        }
         command.sendSuccess(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.ban.lookup").formatted(playerName))
                 .withStyle(ChatFormatting.GRAY), false);
-        final String pendingKey = executor.getUUID() + ":" + playerName.toLowerCase(Locale.ROOT);
-        if (!PENDING_LOOKUPS.add(pendingKey)) return Command.SINGLE_SUCCESS;
         final MinecraftServer server = executor.server;
         Util.ioPool().execute(() -> {
             final AtomicReference<GameProfile> found = new AtomicReference<>();
@@ -154,7 +156,7 @@ public class IslandBanCommand extends OverWorldCommandStack {
                 failure.set(exception);
             } finally {
                 server.execute(() -> {
-                    PENDING_LOOKUPS.remove(pendingKey);
+                    PENDING_LOOKUPS.finish(executorId);
                     final GameProfile profile = found.get();
                     final RemoteLookup outcome = profile != null ? RemoteLookup.FOUND
                             : failure.get() == null || failure.get() instanceof ProfileNotFoundException ? RemoteLookup.NOT_FOUND
