@@ -46,14 +46,19 @@ import yorickbm.skyblockaddon.util.EntityPlacerItems;
 import yorickbm.skyblockaddon.util.ForgeConverter;
 import yorickbm.skyblockaddon.util.ServerHelper;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class InteractionHandler {
     private static final Logger LOGGER = LogManager.getLogger();
+    private static final Map<ServerPlayer, Long> LAST_DENIAL_FEEDBACK_TICK = new WeakHashMap<>();
 
     public static void deny(final Event event, final Player player) {
         if (event.isCancelable()) event.setCanceled(true);
@@ -63,6 +68,16 @@ public class InteractionHandler {
 
     public static void sendDeniedMessage(final Player player) {
         player.displayClientMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("toolbar.overlay.nothere")).withStyle(ChatFormatting.DARK_RED), true);
+    }
+
+    /**
+     * True the first time it is asked for a player in a game tick. Area tools and held clicks deny many actions per tick;
+     * the message and the inventory resync only need to go out once. Server thread only.
+     */
+    public static boolean isFirstDenialThisTick(final ServerPlayer player) {
+        final long gameTime = player.getLevel().getGameTime();
+        final Long lastFeedbackTick = LAST_DENIAL_FEEDBACK_TICK.put(player, gameTime);
+        return lastFeedbackTick == null || lastFeedbackTick != gameTime;
     }
 
     public static void pushPlayerBack(final ServerPlayer player) {
@@ -267,10 +282,27 @@ public class InteractionHandler {
      * only a group with the break permission may break blocks there.
      */
     public static boolean isBreakDenied(final Player player, final ServerLevel level, final BlockPos position) {
-        final Optional<Island> guardingIsland = islandGuardingPosition(player, level, position);
-        if (guardingIsland.isEmpty()) return false;
-        return isInteractionDenied(new AtomicReference<>(guardingIsland.get()), (ServerPlayer) player, PermissionTriggers.ON_BREAK_BLOCK,
-                subjectOfUntargetedBreak(player.getMainHandItem()));
+        return player instanceof final ServerPlayer serverPlayer && breakDenialPerIsland(serverPlayer, level).test(position);
+    }
+
+    /**
+     * {@link #isBreakDenied} for many positions at once (an explosion): the answer is the same everywhere on one island,
+     * so each island is looked up and judged once.
+     */
+    public static Predicate<BlockPos> breakDenialPerIsland(final ServerPlayer player, final ServerLevel level) {
+        if (player instanceof FakePlayer || level.dimension() != Level.OVERWORLD || player.hasPermissions(Commands.LEVEL_ADMINS)) return position -> false;
+
+        final Map<Island, Boolean> denialByIsland = new HashMap<>();
+        return position -> {
+            final yorickbm.skyblockaddon.core.util.geometry.Vec3i islandPosition = ForgeConverter.forgeToInternalVec3i(position);
+            final Island island = denialByIsland.keySet().stream()
+                    .filter(judged -> judged.getIslandBoundingBox().isInside(islandPosition))
+                    .findFirst()
+                    .orElseGet(() -> IslandManager.getInstance().getIslandByPos(islandPosition));
+            if (island == null) return false;
+            return denialByIsland.computeIfAbsent(island, guarding -> !guarding.isOwner(player.getUUID())
+                    && isInteractionDenied(new AtomicReference<>(guarding), player, PermissionTriggers.ON_BREAK_BLOCK, subjectOfUntargetedBreak(player.getMainHandItem())));
+        };
     }
 
     /**

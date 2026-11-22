@@ -143,4 +143,14 @@ final class DetailListScreen {
         }
         return entries.isEmpty() ? -1 : 0;
     }
+
+    /**
+     * Like {@link #selectedIndex}, but a stored selection that is no longer in the list selects nothing, so a repeated
+     * click on the detail card after its target left (expel, ban, unban) cannot act on the next entry.
+     */
+    static <T> int selectedIndexWithoutFallback(List<T> entries, Predicate<T> isSelected, boolean selectionStored) {
+        int index = selectedIndex(entries, isSelected);
+        if (selectionStored && index >= 0 && !isSelected.test(entries.get(index))) return -1;
+        return index;
+    }
 }

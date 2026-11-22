@@ -67,6 +67,26 @@ class BundledRegistryCoverageTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"vaulthunters", "woldsvaults"})
+    void playersVaultCompanionsAndVehiclesAreNotAnimals(final String pack) {
+        final PermissionManager manager = bundled(pack);
+        assertTrue(entityDenial(manager, VISITOR, "minecraft:player").isEmpty());
+        assertTrue(entityDenial(manager, VISITOR, "the_vault:spirit").isEmpty());
+        assertTrue(entityDenial(manager, VISITOR, "minecraft:boat").isEmpty());
+        assertTrue(entityDenial(manager, VISITOR, "minecraft:minecart").isEmpty());
+        assertTrue(entityDenial(manager, VISITOR, "immersive_aircraft:biplane").isEmpty());
+        assertEquals(Optional.of("open_chests"), entityDenial(manager, VISITOR, "wildbackport:chest_boat"));
+        assertTrue(entityDenial(manager, "open_chests"::equals, "minecraft:hopper_minecart").isEmpty());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"vaulthunters", "woldsvaults"})
+    void aModdedDoorNeedsOnlyTheDoorToggle(final String pack) {
+        assertTrue(blockClickDenial(bundled(pack), "interact_doors"::equals, "create:andesite_door").isEmpty());
+        assertEquals(Optional.of("interact_doors"), blockClickDenial(bundled(pack), "mod_create"::equals, "create:andesite_door"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"vaulthunters", "woldsvaults"})
     void npcMountsStayOpenAndOtherMountsNeedVehicles(final String pack) {
         final PermissionManager manager = bundled(pack);
         final List<String> rules = manager.getPermissionsForTrigger(PermissionTriggers.ON_MOUNT).get(0).getData().getEntitiesData();

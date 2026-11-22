@@ -188,8 +188,9 @@ final class PlayerListGui {
     }
 
     private static int selectedIndex(List<UUID> players, CompoundTag data) {
-        return DetailListScreen.selectedIndex(players,
-                playerId -> data.hasUUID(GuiDataKeys.PLAYER_ID) && playerId.equals(data.getUUID(GuiDataKeys.PLAYER_ID)));
+        return DetailListScreen.selectedIndexWithoutFallback(players,
+                playerId -> data.hasUUID(GuiDataKeys.PLAYER_ID) && playerId.equals(data.getUUID(GuiDataKeys.PLAYER_ID)),
+                data.hasUUID(GuiDataKeys.PLAYER_ID));
     }
 
     private static CompoundTag withPlayer(CompoundTag data, UUID playerId) {

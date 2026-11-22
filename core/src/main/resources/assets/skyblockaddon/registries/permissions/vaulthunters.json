@@ -460,11 +460,27 @@
           ".*:chest",
           ".*:.*_chest",
           ".*:.*_chest_placeable",
-          "the_vault:.*_strongbox"
+          "the_vault:.*_strongbox",
+          "!lightmanscurrency:.*",
+          "!ae2:.*",
+          "!refinedstorage:.*",
+          "!extrastorage:.*",
+          "!sophisticatedstorage:.*",
+          "!mekanism:.*",
+          "!mekanismgenerators:.*",
+          "!thermal:.*",
+          "!create:.*",
+          "!botania:.*",
+          "!pneumaticcraft:.*",
+          "!industrialforegoing:.*",
+          "!rftoolsbase:.*",
+          "!powah:.*",
+          "!the_vault:vault_crate_.*"
         ],
         "entities": [
           "minecraft:chest_minecart",
-          "minecraft:hopper_minecart"
+          "minecraft:hopper_minecart",
+          "wildbackport:chest_boat"
         ]
       }
     },
@@ -503,7 +519,22 @@
         "items": [],
         "blocks": [
           "minecraft:barrel",
-          ".*:.*_barrel"
+          ".*:.*_barrel",
+          "!createdieselgenerators:.*",
+          "!ae2:.*",
+          "!refinedstorage:.*",
+          "!extrastorage:.*",
+          "!sophisticatedstorage:.*",
+          "!mekanism:.*",
+          "!mekanismgenerators:.*",
+          "!thermal:.*",
+          "!create:.*",
+          "!botania:.*",
+          "!pneumaticcraft:.*",
+          "!industrialforegoing:.*",
+          "!rftoolsbase:.*",
+          "!powah:.*",
+          "!the_vault:vault_crate_.*"
         ],
         "entities": []
       }
@@ -543,7 +574,21 @@
         "items": [],
         "blocks": [
           "minecraft:shulker_box",
-          "minecraft:.*_shulker_box"
+          "minecraft:.*_shulker_box",
+          "!ae2:.*",
+          "!refinedstorage:.*",
+          "!extrastorage:.*",
+          "!sophisticatedstorage:.*",
+          "!mekanism:.*",
+          "!mekanismgenerators:.*",
+          "!thermal:.*",
+          "!create:.*",
+          "!botania:.*",
+          "!pneumaticcraft:.*",
+          "!industrialforegoing:.*",
+          "!rftoolsbase:.*",
+          "!powah:.*",
+          "!the_vault:vault_crate_.*"
         ],
         "entities": []
       }
@@ -625,7 +670,26 @@
         "skyblockaddon": [],
         "items": [],
         "blocks": [
-          "sophisticatedstorage:.*"
+          "sophisticatedstorage:.*",
+          "!.*:.*_door",
+          "!.*:.*_trapdoor",
+          "!.*:.*_fence_gate",
+          "!.*:.*_(upgraded|pyramid|highley|picket|railing)_gate",
+          "!supplementaries:(iron|gold)_gate",
+          "!framedblocks:framed_gate",
+          "!minecraft:lever",
+          "!.*:.*_button",
+          "!.*:.*_button_.*",
+          "!.*:.*_lever",
+          "!minecraft:repeater",
+          "!minecraft:comparator",
+          "!create:pulse_repeater",
+          "!create:pulse_extender",
+          "!create:powered_latch",
+          "!create:powered_toggle_latch",
+          "!minecraft:daylight_detector",
+          "!minecraft:note_block",
+          "!create:redstone_link"
         ],
         "entities": []
       }
@@ -667,7 +731,26 @@
         "skyblockaddon": [],
         "items": [],
         "blocks": [
-          "ae2:.*"
+          "ae2:.*",
+          "!.*:.*_door",
+          "!.*:.*_trapdoor",
+          "!.*:.*_fence_gate",
+          "!.*:.*_(upgraded|pyramid|highley|picket|railing)_gate",
+          "!supplementaries:(iron|gold)_gate",
+          "!framedblocks:framed_gate",
+          "!minecraft:lever",
+          "!.*:.*_button",
+          "!.*:.*_button_.*",
+          "!.*:.*_lever",
+          "!minecraft:repeater",
+          "!minecraft:comparator",
+          "!create:pulse_repeater",
+          "!create:pulse_extender",
+          "!create:powered_latch",
+          "!create:powered_toggle_latch",
+          "!minecraft:daylight_detector",
+          "!minecraft:note_block",
+          "!create:redstone_link"
         ],
         "entities": []
       }
@@ -710,7 +793,26 @@
         "items": [],
         "blocks": [
           "refinedstorage:.*",
-          "extrastorage:.*"
+          "extrastorage:.*",
+          "!.*:.*_door",
+          "!.*:.*_trapdoor",
+          "!.*:.*_fence_gate",
+          "!.*:.*_(upgraded|pyramid|highley|picket|railing)_gate",
+          "!supplementaries:(iron|gold)_gate",
+          "!framedblocks:framed_gate",
+          "!minecraft:lever",
+          "!.*:.*_button",
+          "!.*:.*_button_.*",
+          "!.*:.*_lever",
+          "!minecraft:repeater",
+          "!minecraft:comparator",
+          "!create:pulse_repeater",
+          "!create:pulse_extender",
+          "!create:powered_latch",
+          "!create:powered_toggle_latch",
+          "!minecraft:daylight_detector",
+          "!minecraft:note_block",
+          "!create:redstone_link"
         ],
         "entities": []
       }
@@ -1158,10 +1260,27 @@
           "!farmingforblockheads:merchant",
           "!minecraft:chest_minecart",
           "!minecraft:hopper_minecart",
+          "!wildbackport:chest_boat",
+          "!minecraft:boat",
+          "!minecraft:minecart",
+          "!.*:.*_boat",
+          "!.*:boat",
+          "!immersive_aircraft:(airship|biplane|gyrodyne|quadrocopter)",
+          "!immersivepetroleum:speedboat",
+          "!littlelogistics:seater_(barge|car)",
+          "!alexsmobs:straddleboard",
+          "!smallships:.*",
+          "!.*:seat",
+          "!luphieclutteredmod:.*seat.*",
           "!taterzens:npc",
           "!corpse:corpse",
           "!flashnpcs:.*",
-          "!masuplots:.*"
+          "!masuplots:.*",
+          "!minecraft:player",
+          "!the_vault:spirit",
+          "!the_vault:doll_mini_me",
+          "!the_vault:pet",
+          "!the_vault:releasing_companion"
         ]
       }
     },
@@ -2237,13 +2356,13 @@
         "display_name": [
           "{\"text\": \"Animals and farming\", \"color\": \"yellow\", \"bold\": \"true\"}"
         ],
-        "item": "the_vault:animal_pen",
+        "item": "the_vault:animatrix_block",
         "lore": [
           [
-            "{\"text\": \"Use VH animal pens and the animatrix.\", \"color\": \"gray\"}"
+            "{\"text\": \"Use the VH animatrix.\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\": \"Examples: animal pen, animatrix\", \"color\": \"dark_gray\"}"
+            "{\"text\": \"Examples: animatrix\", \"color\": \"dark_gray\"}"
           ],
           [
             "{\"text\": \" \", \"color\": \"dark_gray\"}"
@@ -2263,7 +2382,6 @@
       ],
       "data": {
         "blocks": [
-          "the_vault:animal_pen",
           "the_vault:animatrix_block"
         ],
         "items": [],
@@ -2437,7 +2555,6 @@
           "the_vault:spectator_terminal",
           "the_vault:identification_stand",
           "the_vault:treasure_pedestal",
-          "the_vault:artifact_projector_block",
           "the_vault:schematic_terminal"
         ],
         "items": [],
@@ -2476,7 +2593,26 @@
         "items": [],
         "blocks": [
           "mekanism:.*",
-          "mekanismgenerators:.*"
+          "mekanismgenerators:.*",
+          "!.*:.*_door",
+          "!.*:.*_trapdoor",
+          "!.*:.*_fence_gate",
+          "!.*:.*_(upgraded|pyramid|highley|picket|railing)_gate",
+          "!supplementaries:(iron|gold)_gate",
+          "!framedblocks:framed_gate",
+          "!minecraft:lever",
+          "!.*:.*_button",
+          "!.*:.*_button_.*",
+          "!.*:.*_lever",
+          "!minecraft:repeater",
+          "!minecraft:comparator",
+          "!create:pulse_repeater",
+          "!create:pulse_extender",
+          "!create:powered_latch",
+          "!create:powered_toggle_latch",
+          "!minecraft:daylight_detector",
+          "!minecraft:note_block",
+          "!create:redstone_link"
         ],
         "entities": []
       }
@@ -2512,7 +2648,26 @@
         "skyblockaddon": [],
         "items": [],
         "blocks": [
-          "thermal:.*"
+          "thermal:.*",
+          "!.*:.*_door",
+          "!.*:.*_trapdoor",
+          "!.*:.*_fence_gate",
+          "!.*:.*_(upgraded|pyramid|highley|picket|railing)_gate",
+          "!supplementaries:(iron|gold)_gate",
+          "!framedblocks:framed_gate",
+          "!minecraft:lever",
+          "!.*:.*_button",
+          "!.*:.*_button_.*",
+          "!.*:.*_lever",
+          "!minecraft:repeater",
+          "!minecraft:comparator",
+          "!create:pulse_repeater",
+          "!create:pulse_extender",
+          "!create:powered_latch",
+          "!create:powered_toggle_latch",
+          "!minecraft:daylight_detector",
+          "!minecraft:note_block",
+          "!create:redstone_link"
         ],
         "entities": []
       }
@@ -2549,7 +2704,26 @@
         "items": [],
         "blocks": [
           "create:.*",
-          "!create:.*seat"
+          "!create:.*seat",
+          "!.*:.*_door",
+          "!.*:.*_trapdoor",
+          "!.*:.*_fence_gate",
+          "!.*:.*_(upgraded|pyramid|highley|picket|railing)_gate",
+          "!supplementaries:(iron|gold)_gate",
+          "!framedblocks:framed_gate",
+          "!minecraft:lever",
+          "!.*:.*_button",
+          "!.*:.*_button_.*",
+          "!.*:.*_lever",
+          "!minecraft:repeater",
+          "!minecraft:comparator",
+          "!create:pulse_repeater",
+          "!create:pulse_extender",
+          "!create:powered_latch",
+          "!create:powered_toggle_latch",
+          "!minecraft:daylight_detector",
+          "!minecraft:note_block",
+          "!create:redstone_link"
         ],
         "entities": []
       }
@@ -2585,7 +2759,26 @@
         "skyblockaddon": [],
         "items": [],
         "blocks": [
-          "botania:.*"
+          "botania:.*",
+          "!.*:.*_door",
+          "!.*:.*_trapdoor",
+          "!.*:.*_fence_gate",
+          "!.*:.*_(upgraded|pyramid|highley|picket|railing)_gate",
+          "!supplementaries:(iron|gold)_gate",
+          "!framedblocks:framed_gate",
+          "!minecraft:lever",
+          "!.*:.*_button",
+          "!.*:.*_button_.*",
+          "!.*:.*_lever",
+          "!minecraft:repeater",
+          "!minecraft:comparator",
+          "!create:pulse_repeater",
+          "!create:pulse_extender",
+          "!create:powered_latch",
+          "!create:powered_toggle_latch",
+          "!minecraft:daylight_detector",
+          "!minecraft:note_block",
+          "!create:redstone_link"
         ],
         "entities": []
       }
@@ -2621,7 +2814,26 @@
         "skyblockaddon": [],
         "items": [],
         "blocks": [
-          "pneumaticcraft:.*"
+          "pneumaticcraft:.*",
+          "!.*:.*_door",
+          "!.*:.*_trapdoor",
+          "!.*:.*_fence_gate",
+          "!.*:.*_(upgraded|pyramid|highley|picket|railing)_gate",
+          "!supplementaries:(iron|gold)_gate",
+          "!framedblocks:framed_gate",
+          "!minecraft:lever",
+          "!.*:.*_button",
+          "!.*:.*_button_.*",
+          "!.*:.*_lever",
+          "!minecraft:repeater",
+          "!minecraft:comparator",
+          "!create:pulse_repeater",
+          "!create:pulse_extender",
+          "!create:powered_latch",
+          "!create:powered_toggle_latch",
+          "!minecraft:daylight_detector",
+          "!minecraft:note_block",
+          "!create:redstone_link"
         ],
         "entities": []
       }
@@ -2657,7 +2869,26 @@
         "skyblockaddon": [],
         "items": [],
         "blocks": [
-          "industrialforegoing:.*"
+          "industrialforegoing:.*",
+          "!.*:.*_door",
+          "!.*:.*_trapdoor",
+          "!.*:.*_fence_gate",
+          "!.*:.*_(upgraded|pyramid|highley|picket|railing)_gate",
+          "!supplementaries:(iron|gold)_gate",
+          "!framedblocks:framed_gate",
+          "!minecraft:lever",
+          "!.*:.*_button",
+          "!.*:.*_button_.*",
+          "!.*:.*_lever",
+          "!minecraft:repeater",
+          "!minecraft:comparator",
+          "!create:pulse_repeater",
+          "!create:pulse_extender",
+          "!create:powered_latch",
+          "!create:powered_toggle_latch",
+          "!minecraft:daylight_detector",
+          "!minecraft:note_block",
+          "!create:redstone_link"
         ],
         "entities": []
       }
@@ -2693,7 +2924,26 @@
         "skyblockaddon": [],
         "items": [],
         "blocks": [
-          "rftoolsbase:.*"
+          "rftoolsbase:.*",
+          "!.*:.*_door",
+          "!.*:.*_trapdoor",
+          "!.*:.*_fence_gate",
+          "!.*:.*_(upgraded|pyramid|highley|picket|railing)_gate",
+          "!supplementaries:(iron|gold)_gate",
+          "!framedblocks:framed_gate",
+          "!minecraft:lever",
+          "!.*:.*_button",
+          "!.*:.*_button_.*",
+          "!.*:.*_lever",
+          "!minecraft:repeater",
+          "!minecraft:comparator",
+          "!create:pulse_repeater",
+          "!create:pulse_extender",
+          "!create:powered_latch",
+          "!create:powered_toggle_latch",
+          "!minecraft:daylight_detector",
+          "!minecraft:note_block",
+          "!create:redstone_link"
         ],
         "entities": []
       }
@@ -2732,7 +2982,26 @@
         "skyblockaddon": [],
         "items": [],
         "blocks": [
-          "powah:.*"
+          "powah:.*",
+          "!.*:.*_door",
+          "!.*:.*_trapdoor",
+          "!.*:.*_fence_gate",
+          "!.*:.*_(upgraded|pyramid|highley|picket|railing)_gate",
+          "!supplementaries:(iron|gold)_gate",
+          "!framedblocks:framed_gate",
+          "!minecraft:lever",
+          "!.*:.*_button",
+          "!.*:.*_button_.*",
+          "!.*:.*_lever",
+          "!minecraft:repeater",
+          "!minecraft:comparator",
+          "!create:pulse_repeater",
+          "!create:pulse_extender",
+          "!create:powered_latch",
+          "!create:powered_toggle_latch",
+          "!minecraft:daylight_detector",
+          "!minecraft:note_block",
+          "!create:redstone_link"
         ],
         "entities": []
       }

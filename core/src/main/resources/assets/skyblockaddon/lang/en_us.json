@@ -88,6 +88,7 @@
   "island.biome": "Your island biome has changed into %s.",
   "island.travel": "Travelling you through the void and time...",
   "island.private": "Closed",
+  "island.travel.private": "That island is private now.",
   "island.public": "Public",
   "island.permission.enabled": "Enabled",
   "island.permission.disabled": "Disabled",

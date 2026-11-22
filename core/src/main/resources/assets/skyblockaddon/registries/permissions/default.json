@@ -403,7 +403,8 @@
         ],
         "entities": [
           "minecraft:chest_minecart",
-          "minecraft:hopper_minecart"
+          "minecraft:hopper_minecart",
+          "wildbackport:chest_boat"
         ]
       }
     },
@@ -736,10 +737,27 @@
           "!farmingforblockheads:merchant",
           "!minecraft:chest_minecart",
           "!minecraft:hopper_minecart",
+          "!wildbackport:chest_boat",
+          "!minecraft:boat",
+          "!minecraft:minecart",
+          "!.*:.*_boat",
+          "!.*:boat",
+          "!immersive_aircraft:(airship|biplane|gyrodyne|quadrocopter)",
+          "!immersivepetroleum:speedboat",
+          "!littlelogistics:seater_(barge|car)",
+          "!alexsmobs:straddleboard",
+          "!smallships:.*",
+          "!.*:seat",
+          "!luphieclutteredmod:.*seat.*",
           "!taterzens:npc",
           "!corpse:corpse",
           "!flashnpcs:.*",
-          "!masuplots:.*"
+          "!masuplots:.*",
+          "!minecraft:player",
+          "!the_vault:spirit",
+          "!the_vault:doll_mini_me",
+          "!the_vault:pet",
+          "!the_vault:releasing_companion"
         ]
       }
     },

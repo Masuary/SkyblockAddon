@@ -53,6 +53,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class PermissionEvents {
@@ -149,7 +150,7 @@ public class PermissionEvents {
         if (!InteractionHandler.isBreakDenied(player, level, event.getPos())) return;
 
         event.setCanceled(true);
-        InteractionHandler.sendDeniedMessage(player);
+        if (InteractionHandler.isFirstDenialThisTick(player)) InteractionHandler.sendDeniedMessage(player);
         InteractionHandler.resendBlockToPlayer(player, level, event.getPos());
     }
 
@@ -162,9 +163,9 @@ public class PermissionEvents {
         if (!(event.getWorld() instanceof final ServerLevel level)) return;
         if (!(event.getExplosion().getSourceMob() instanceof final ServerPlayer player)) return;
 
-        final boolean blocksSpared = event.getAffectedBlocks().removeIf(position -> InteractionHandler.isBreakDenied(player, level, position));
-        final boolean entitiesSpared = event.getAffectedEntities().removeIf(entity -> !(entity instanceof Player)
-                && InteractionHandler.isBreakDenied(player, level, entity.blockPosition()));
+        final Predicate<BlockPos> breakDenied = InteractionHandler.breakDenialPerIsland(player, level);
+        final boolean blocksSpared = event.getAffectedBlocks().removeIf(breakDenied);
+        final boolean entitiesSpared = event.getAffectedEntities().removeIf(entity -> !(entity instanceof Player) && breakDenied.test(entity.blockPosition()));
         if (blocksSpared || entitiesSpared) InteractionHandler.sendDeniedMessage(player);
     }
 
@@ -210,8 +211,11 @@ public class PermissionEvents {
         if (!InteractionHandler.isEntityInteractionDenied(player, target, event.getItemStack())) return;
 
         event.setCancellationResult(InteractionResult.FAIL);
-        InteractionHandler.deny(event, player);
-        player.inventoryMenu.sendAllDataToRemote();
+        event.setCanceled(true);
+        if (InteractionHandler.isFirstDenialThisTick(player)) {
+            InteractionHandler.sendDeniedMessage(player);
+            player.inventoryMenu.sendAllDataToRemote();
+        }
     }
 
     private static void denyNetherPortalIgnition(final Event event, final Entity entity, final LevelAccessor world, final BlockPos position, final Function<ServerPlayer, ItemStack> heldItem) {

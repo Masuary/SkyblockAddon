@@ -10,6 +10,7 @@ import com.masuary.masugui.element.data.KeyValueRow;
 import com.masuary.masugui.element.data.ListColumn;
 import com.masuary.masugui.element.data.ListRow;
 import net.minecraft.ChatFormatting;
+import net.minecraft.commands.Commands;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
@@ -147,6 +148,11 @@ final class TravelListGui {
         if (island == null) return;
         if (IslandActionService.isBannedFrom(island, player)) {
             player.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("island.banned.travel"))
+                    .withStyle(ChatFormatting.RED), player.getUUID());
+            return;
+        }
+        if (!island.isVisible() && !island.isPartOf(player.getUUID()) && !player.hasPermissions(Commands.LEVEL_MODERATORS)) {
+            player.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("island.travel.private"))
                     .withStyle(ChatFormatting.RED), player.getUUID());
             return;
         }
