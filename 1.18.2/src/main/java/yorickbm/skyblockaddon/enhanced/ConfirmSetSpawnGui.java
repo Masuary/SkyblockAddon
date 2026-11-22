@@ -2,6 +2,7 @@ package yorickbm.skyblockaddon.enhanced;
 
 import com.masuary.masugui.api.MasuGui;
 import com.masuary.masugui.element.ButtonStyle;
+import com.masuary.masugui.element.data.KeyValueRow;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.TextComponent;
@@ -33,10 +34,11 @@ public final class ConfirmSetSpawnGui {
         int x = player.blockPosition().getX();
         int y = player.blockPosition().getY();
         int z = player.blockPosition().getZ();
-        EnhancedDialog.open(player, "confirm_setspawn", "Set island spawn?", new ItemStack(Items.LODESTONE),
-                List.of(new TextComponent("Move the island spawn here?"),
-                        new TextComponent(x + ", " + y + ", " + z).withStyle(ChatFormatting.AQUA),
-                        new TextComponent("Visitors arrive here too.").withStyle(ChatFormatting.GRAY)),
+        EnhancedDialog.open(player, "confirm_setspawn", "Set island spawn", new ItemStack(Items.LODESTONE),
+                "Move the island spawn here?",
+                List.of(KeyValueRow.of("Position", x + ", " + y + ", " + z, EnhancedDialog.VALUE_AQUA),
+                        KeyValueRow.of("Arrive here", "members and visitors", EnhancedDialog.VALUE_WHITE),
+                        KeyValueRow.of("Needs", "solid ground on the island", EnhancedDialog.VALUE_WHITE)),
                 "Set spawn", ButtonStyle.PRIMARY,
                 p -> {
                     if (closeUnlessAllowedToSetSpawn(p, island)) return;
