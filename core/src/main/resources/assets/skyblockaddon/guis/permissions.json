@@ -195,7 +195,30 @@
           "category_id": "vaulthunters"
         }
       },
-      "slot": 22,
+      "slot": 21,
+      "action": {
+        "onClick": "yorickbm.guilibrary.events.ItemOpenMenuEvent",
+        "data": {
+          "gui": "skyblockaddon:set_permission"
+        }
+      }
+    },
+    {
+      "item": {
+        "display_name": [
+          "{\"text\": \"Mods\", \"color\": \"blue\", \"bold\": true}"
+        ],
+        "item": "minecraft:piston",
+        "lore": [
+          [
+            "{\"text\": \"\\u00bb Machines of the big tech and magic mods.\", \"color\": \"dark_gray\"}"
+          ]
+        ],
+        "data": {
+          "category_id": "mods"
+        }
+      },
+      "slot": 23,
       "action": {
         "onClick": "yorickbm.guilibrary.events.ItemOpenMenuEvent",
         "data": {

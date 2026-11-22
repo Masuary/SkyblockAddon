@@ -91,6 +91,24 @@ class BundledRegistryCoverageTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"vaulthunters", "woldsvaults"})
+    void aModToggleOpensOnlyThatModsBlocksAndTheCatchAllNeverOpensAMod(final String pack) {
+        final PermissionManager manager = bundled(pack);
+        final Predicate<String> createOnly = "mod_create"::equals;
+        assertTrue(blockClickDenial(manager, createOnly, "create:mechanical_crafter").isEmpty());
+        assertEquals(Optional.of("interact_generic"), blockClickDenial(manager, createOnly, "minecraft:lectern"));
+        assertEquals(Optional.of("mod_mekanism"), blockClickDenial(manager, createOnly, "mekanism:metallurgic_infuser"));
+        assertEquals(Optional.of("mod_create"), blockClickDenial(manager, "interact_generic"::equals, "create:mechanical_crafter"));
+        assertEquals(Optional.of("mod_powah"), blockClickDenial(manager, "interact_generic"::equals, "powah:energizing_orb"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"vaulthunters", "woldsvaults"})
+    void draconicGatesAreNotDoors(final String pack) {
+        assertEquals(Optional.of("interact_generic"), blockClickDenial(bundled(pack), "interact_doors"::equals, "draconicevolution:flux_gate"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"vaulthunters", "woldsvaults"})
     void anyBreakWithoutTheBreakPermissionIsDenied(final String pack) {
         final PermissionManager manager = bundled(pack);
         final List<Permission> breakPermissions = manager.getPermissionsForTrigger(PermissionTriggers.ON_BREAK_BLOCK);

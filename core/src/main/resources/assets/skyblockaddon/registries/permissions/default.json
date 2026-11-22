@@ -543,7 +543,10 @@
           "!minecraft:dropper",
           "!minecraft:barrel",
           "!.*:.*_barrel",
-          "!.*:.*_gate",
+          "!.*:.*_fence_gate",
+          "!.*:.*_(upgraded|pyramid|highley|picket|railing)_gate",
+          "!supplementaries:(iron|gold)_gate",
+          "!framedblocks:framed_gate",
           "!.*:.*_pressure_plate"
         ],
         "entities": []
@@ -820,8 +823,10 @@
         "blocks": [
           ".*:.*_door",
           ".*:.*_trapdoor",
-          ".*:.*_gate",
-          "!draconicevolution:(flux|fluid)_gate"
+          ".*:.*_fence_gate",
+          ".*:.*_(upgraded|pyramid|highley|picket|railing)_gate",
+          "supplementaries:(iron|gold)_gate",
+          "framedblocks:framed_gate"
         ],
         "entities": []
       }

@@ -761,13 +761,7 @@
           "quark:(crate|feeding_trough)",
           "trashcans:.*",
           "buildscape:.*_shelf",
-          "chestmonster:grid",
-          "create:(item_vault|.*_toolbox)",
-          "mekanism:.*_bin",
-          "thermal:item_buffer",
-          "industrialforegoing:.*_black_hole_unit",
-          "pneumaticcraft:(display_table|display_shelf)",
-          "botania:open_crate"
+          "chestmonster:grid"
         ],
         "entities": []
       }
@@ -940,7 +934,10 @@
           "!the_vault:.*_strongbox",
           "!minecraft:barrel",
           "!.*:.*_barrel",
-          "!.*:.*_gate",
+          "!.*:.*_fence_gate",
+          "!.*:.*_(upgraded|pyramid|highley|picket|railing)_gate",
+          "!supplementaries:(iron|gold)_gate",
+          "!framedblocks:framed_gate",
           "!the_vault:tool_vise",
           "!the_vault:magnet_modification_table",
           "!the_vault:enhancement_altar",
@@ -964,12 +961,15 @@
           "!trashcans:.*",
           "!buildscape:.*_shelf",
           "!chestmonster:grid",
-          "!create:(item_vault|.*_toolbox)",
-          "!mekanism:.*_bin",
-          "!thermal:item_buffer",
-          "!industrialforegoing:.*_black_hole_unit",
-          "!pneumaticcraft:(display_table|display_shelf)",
-          "!botania:open_crate"
+          "!mekanism:.*",
+          "!mekanismgenerators:.*",
+          "!thermal:.*",
+          "!create:.*",
+          "!botania:.*",
+          "!pneumaticcraft:.*",
+          "!industrialforegoing:.*",
+          "!rftoolsbase:.*",
+          "!powah:.*"
         ],
         "entities": []
       }
@@ -1384,8 +1384,10 @@
         "blocks": [
           ".*:.*_door",
           ".*:.*_trapdoor",
-          ".*:.*_gate",
-          "!draconicevolution:(flux|fluid)_gate"
+          ".*:.*_fence_gate",
+          ".*:.*_(upgraded|pyramid|highley|picket|railing)_gate",
+          "supplementaries:(iron|gold)_gate",
+          "framedblocks:framed_gate"
         ],
         "entities": []
       }
@@ -2439,6 +2441,299 @@
           "the_vault:schematic_terminal"
         ],
         "items": [],
+        "entities": []
+      }
+    },
+    {
+      "id": "mod_mekanism",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Mekanism\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "mekanism:alloy_atomic",
+        "lore": [
+          [
+            "{\"text\": \"Use Mekanism machines and blocks.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "mods",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "mekanism:.*",
+          "mekanismgenerators:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "mod_thermal",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Thermal\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "thermal:machine_speed_augment",
+        "lore": [
+          [
+            "{\"text\": \"Use Thermal machines and blocks.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "mods",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "thermal:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "mod_create",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Create\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "create:large_cogwheel",
+        "lore": [
+          [
+            "{\"text\": \"Use Create machines and blocks.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "mods",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "create:.*",
+          "!create:.*seat"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "mod_botania",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Botania\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "botania:lexicon",
+        "lore": [
+          [
+            "{\"text\": \"Use Botania machines and blocks.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "mods",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "botania:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "mod_pneumaticcraft",
+      "item": {
+        "display_name": [
+          "{\"text\": \"PneumaticCraft\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "pneumaticcraft:pressure_gauge",
+        "lore": [
+          [
+            "{\"text\": \"Use PneumaticCraft machines and blocks.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "mods",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "pneumaticcraft:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "mod_industrialforegoing",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Industrial Foregoing\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "industrialforegoing:machine_frame_pity",
+        "lore": [
+          [
+            "{\"text\": \"Use Industrial Foregoing machines and blocks.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "mods",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "industrialforegoing:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "mod_rftoolsbase",
+      "item": {
+        "display_name": [
+          "{\"text\": \"RFTools Base\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "rftoolsbase:machine_frame",
+        "lore": [
+          [
+            "{\"text\": \"Use RFTools Base machines and blocks.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "mods",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "rftoolsbase:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "mod_powah",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Powah\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "powah:energizing_orb",
+        "lore": [
+          [
+            "{\"text\": \"Use Powah machines and blocks.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"Examples: energizing orb, energy cells, reactors\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "mods",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "powah:.*"
+        ],
         "entities": []
       }
     },

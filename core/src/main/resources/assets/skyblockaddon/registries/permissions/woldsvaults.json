@@ -1274,7 +1274,10 @@
           "!refinedcooking:.*",
           "!rsrequestify:.*",
           "!toms_storage:ts.*",
-          "!.*:.*_gate",
+          "!.*:.*_fence_gate",
+          "!.*:.*_(upgraded|pyramid|highley|picket|railing)_gate",
+          "!supplementaries:(iron|gold)_gate",
+          "!framedblocks:framed_gate",
           "!create:pulse_repeater",
           "!create:pulse_extender",
           "!create:powered_latch",
@@ -1328,6 +1331,7 @@
           "!framedcompactdrawers:.*",
           "!framedblocks:framed_secret_storage",
           "!fluiddrawerslegacy:fluiddrawer",
+          "!powah:.*",
           "!lightmanscurrency:.*",
           "!lctech:.*",
           "!farmingforblockheads:market",
@@ -1848,8 +1852,10 @@
         "blocks": [
           ".*:.*_door",
           ".*:.*_trapdoor",
-          ".*:.*_gate",
-          "!draconicevolution:(flux|fluid)_gate"
+          ".*:.*_fence_gate",
+          ".*:.*_(upgraded|pyramid|highley|picket|railing)_gate",
+          "supplementaries:(iron|gold)_gate",
+          "framedblocks:framed_gate"
         ],
         "entities": []
       }
@@ -3526,6 +3532,45 @@
         "items": [],
         "blocks": [
           "davespotioneering:.*"
+        ],
+        "entities": []
+      }
+    },
+    {
+      "id": "mod_powah",
+      "item": {
+        "display_name": [
+          "{\"text\": \"Powah\", \"color\": \"blue\", \"bold\": \"true\"}"
+        ],
+        "item": "powah:energizing_orb",
+        "lore": [
+          [
+            "{\"text\": \"Use Powah machines and blocks.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"Examples: energizing orb, energy cells, reactors\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \" \", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"» Click to allow or deny for %data_group_name%\", \"color\": \"dark_gray\"}"
+          ],
+          [
+            "{\"text\": \"♦ Status: \", \"color\": \"dark_gray\"}",
+            "{\"text\": \"%data_status%\", \"color\": \"white\"}"
+          ]
+        ]
+      },
+      "category": "mods",
+      "triggers": [
+        "onRightClickBlock"
+      ],
+      "data": {
+        "skyblockaddon": [],
+        "items": [],
+        "blocks": [
+          "powah:.*"
         ],
         "entities": []
       }
