@@ -253,12 +253,12 @@ public final class ScrollableListGui {
                     if (island != null) {
                         UUID groupId = itemData.getUUID(GuiDataKeys.GROUP_ID);
                         UUID playerId = data.getUUID(GuiDataKeys.PLAYER_ID);
-                        IslandActionResult result = IslandActionService.assignGroup(player, island, playerId, groupId);
+                        IslandActionResult result = IslandActionService.assignGroup(player, (ForgeIsland) island, playerId, groupId);
+                        String playerName = UsernameCache.getBlocking(playerId);
                         if (result.succeeded()) {
-                            player.sendMessage(new TextComponent("Player assigned to group: " + island.getGroup(groupId).getName())
-                                    .withStyle(ChatFormatting.GREEN), player.getUUID());
+                            player.sendMessage(IslandActionService.groupAssignedMessage(result, playerName, island.getGroup(groupId).getName()), player.getUUID());
                         } else {
-                            IslandActionService.sendFailure(player, result, UsernameCache.getBlocking(playerId));
+                            IslandActionService.sendFailure(player, result, playerName);
                         }
                     }
                     GUILibraryRegistry.openGUIForPlayer(player, "skyblockaddon:members", data);

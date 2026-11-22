@@ -42,8 +42,27 @@ public final class IslandActionService {
         return island.isOwner(player.getUUID()) || player.hasPermissions(Commands.LEVEL_ADMINS);
     }
 
-    public static IslandActionResult assignGroup(final ServerPlayer actor, final Island island, final UUID target, final UUID groupId) {
-        return IslandActions.assignGroup(island, actorOf(actor), target, groupId);
+    /**
+     * A member moved to Visitors is removed from the island like a kick and told so.
+     */
+    public static IslandActionResult assignGroup(final ServerPlayer actor, final ForgeIsland island, final UUID target, final UUID groupId) {
+        final IslandActionResult result = IslandActions.assignGroup(island, actorOf(actor), target, groupId);
+        if (result != IslandActionResult.MEMBER_REMOVED) return result;
+
+        afterMemberRemoved(actor, island, target);
+        notifyIfOnline(server(actor), target, SkyBlockAddonLanguage.getLocalizedString("island.member.demoted.notify")
+                .formatted(PlayerNames.nameOf(server(actor), island.getOwner())), ChatFormatting.RED);
+        return result;
+    }
+
+    /**
+     * The actor's message after a successful group assignment: the group set, or the member removed by a move to Visitors.
+     */
+    public static MutableComponent groupAssignedMessage(final IslandActionResult result, final String playerName, final String groupName) {
+        final String message = result == IslandActionResult.MEMBER_REMOVED
+                ? SkyBlockAddonLanguage.getLocalizedString(result.languageKey()).formatted(playerName)
+                : SkyBlockAddonLanguage.getLocalizedString("island.member.group.set").formatted(playerName, groupName);
+        return new TextComponent(message).withStyle(ChatFormatting.GREEN);
     }
 
     public static IslandActionResult createGroupFromHeldItem(final ServerPlayer actor, final Island island) {
@@ -64,9 +83,13 @@ public final class IslandActionService {
         final IslandActionResult result = IslandActions.kickMember(island, actorOf(actor), target);
         if (!result.succeeded()) return result;
 
+        afterMemberRemoved(actor, island, target);
+        return result;
+    }
+
+    private static void afterMemberRemoved(final ServerPlayer actor, final ForgeIsland island, final UUID target) {
         IslandManager.getInstance().clearCacheForPlayer(target);
         island.sendToWorldSpawnIfStandingOn(server(actor), target);
-        return result;
     }
 
     public static IslandActionResult transferOwnership(final ServerPlayer actor, final ForgeIsland island, final UUID newOwner) {

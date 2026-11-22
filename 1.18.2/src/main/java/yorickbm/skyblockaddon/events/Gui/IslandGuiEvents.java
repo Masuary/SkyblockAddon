@@ -245,13 +245,7 @@ public class IslandGuiEvents {
         event.getHolder().close();
 
         event.getTarget().sendMessage(
-                new TextComponent(
-                        SkyBlockAddonLanguage.getLocalizedString("island.member.group.set")
-                                .formatted(
-                                        playerName,
-                                        event.getIsland().getGroup(groupUUID).getName()
-                                )
-                ).withStyle(ChatFormatting.GREEN),
+                IslandActionService.groupAssignedMessage(result, playerName, event.getIsland().getGroup(groupUUID).getName()),
                 event.getTarget().getUUID());
     }
 

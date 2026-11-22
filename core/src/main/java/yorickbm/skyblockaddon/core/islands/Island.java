@@ -133,30 +133,24 @@ public abstract class Island {
     }
 
     /**
-     * Remove member from island
+     * Remove an entity from the member list and every group, as a kick does. The owner is not touched.
      * @param entity - Entity to remove
-     * @param id - Group UUID
      */
-    public void removeMember(final UUID entity, final UUID id) {
+    public void removeFromIsland(final UUID entity) {
         this.members.remove(entity);
-        this.removeGroupMember(entity, id);
+        this.islandGroups.values().forEach(group -> group.removeMember(entity));
     }
 
     /**
-     * Remove member from island group safely
-     * @param entity - Entity to remove
-     * @param id - Group UUID
+     * A member moved to the Visitors group leaves the island.
      */
-    public void removeGroupMember(final UUID entity, final UUID id) {
-        this.islandGroups.get(id).removeMember(entity);
-        if(this.members.contains(entity) && !this.isInAnyGroup(entity)) {
-            this.addMember(entity, SkyblockAddonCore.MEMBERS_GROUP_ID); //Add back into default group since he/she is an island member
-        }
+    public boolean isDemotionToVisitors(final UUID entity, final UUID groupId) {
+        return groupId.equals(SkyblockAddonCore.VISITORS_GROUP_ID) && this.members.contains(entity);
     }
 
     /**
-     * Assign an entity to an island permission group without changing island membership.
-     * This is used for non-members that should have custom permissions on this island.
+     * Assign an entity to an island permission group without changing island membership, except that a member moved
+     * to the Visitors group leaves the island (see {@link #isDemotionToVisitors}).
      *
      * @param entity - Entity to assign
      * @param id - Group ID
@@ -167,6 +161,10 @@ public abstract class Island {
 
         final IslandGroup group = this.islandGroups.get(id);
         if(group == null) return false;
+        if(isDemotionToVisitors(entity, id)) {
+            removeFromIsland(entity);
+            return true;
+        }
 
         this.islandGroups.forEach(((uuid, islandGroup) -> islandGroup.removeMember(entity)));
         group.addMember(entity);

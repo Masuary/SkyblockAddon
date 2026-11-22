@@ -100,11 +100,7 @@ public class ForgeIsland extends Island implements NBTSerializable {
         if(isOwner(entity)) {
             handOverOwnershipToNextMember();
         } else {
-            final Optional<IslandGroup> group = getGroupForEntityUUID(entity);
-            group.ifPresentOrElse(
-                    g -> super.removeMember(entity, g.getId()),
-                    () -> super.removeMember(entity, SkyblockAddonCore.MEMBERS_GROUP_ID)
-            );
+            removeFromIsland(entity);
         }
 
         //CLear player from cache
