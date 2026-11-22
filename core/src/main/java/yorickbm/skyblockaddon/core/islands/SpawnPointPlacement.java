@@ -1,8 +1,8 @@
 package yorickbm.skyblockaddon.core.islands;
 
 /**
- * Whether the island spawn may be set where the player stands: on the island, on the ground, with a solid block
- * under their feet (never over the void).
+ * Whether the island spawn may be set where the player stands: on the island, on the ground, on a block with a
+ * full top face (never over the void, and never on a post the arriving player would slip past).
  */
 public enum SpawnPointPlacement {
     ALLOWED("island.setspawn.success"),
@@ -15,9 +15,9 @@ public enum SpawnPointPlacement {
         this.languageKey = languageKey;
     }
 
-    public static SpawnPointPlacement evaluate(final boolean standingOnIsland, final boolean onGround, final boolean solidBlockUnderFeet) {
+    public static SpawnPointPlacement evaluate(final boolean standingOnIsland, final boolean onGround, final boolean sturdyTopUnderFeet) {
         if (!standingOnIsland) return OUTSIDE_ISLAND;
-        if (!onGround || !solidBlockUnderFeet) return NOT_ON_GROUND;
+        if (!onGround || !sturdyTopUnderFeet) return NOT_ON_GROUND;
         return ALLOWED;
     }
 

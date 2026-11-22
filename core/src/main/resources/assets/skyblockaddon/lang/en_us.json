@@ -97,7 +97,7 @@
   "island.member.demoted.notify": "You were moved to Visitors on %s's island and are no longer a member of it.",
   "island.setspawn.outside": "You can not set your spawn outside of your islands boundaries.",
   "island.setspawn.success": "Your island spawn has been updated.",
-  "island.setspawn.not.on.ground": "Stand on a solid block of your island to set its spawn.",
+  "island.setspawn.not.on.ground": "Stand on a full solid block of your island to set its spawn.",
   "island.setspawn.not.allowed": "You do not have permission to set the spawn point of this island.",
 
   "commands.admin.purge.ask": "Click here to confirm purging %s island(s). This will take up a part of the servers resources.",

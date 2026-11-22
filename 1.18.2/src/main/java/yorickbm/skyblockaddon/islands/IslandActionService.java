@@ -3,12 +3,12 @@ package yorickbm.skyblockaddon.islands;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.state.BlockState;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandActionResult;
@@ -50,10 +50,9 @@ public final class IslandActionService {
      */
     public static SpawnPointPlacement checkSpawnPlacement(final ForgeIsland island, final ServerPlayer player) {
         final BlockPos blockUnderFeet = player.getOnPos();
-        final BlockState stateUnderFeet = player.getLevel().getBlockState(blockUnderFeet);
-        final boolean solidBlockUnderFeet = !stateUnderFeet.isAir()
-                && !stateUnderFeet.getCollisionShape(player.getLevel(), blockUnderFeet).isEmpty();
-        return SpawnPointPlacement.evaluate(island.isStandingOn(player), player.isOnGround(), solidBlockUnderFeet);
+        final boolean sturdyTopUnderFeet = player.getLevel().getBlockState(blockUnderFeet)
+                .isFaceSturdy(player.getLevel(), blockUnderFeet, Direction.UP);
+        return SpawnPointPlacement.evaluate(island.isStandingOn(player), player.isOnGround(), sturdyTopUnderFeet);
     }
 
     public static IslandActionResult assignGroup(final ServerPlayer actor, final ForgeIsland island, final UUID target, final UUID groupId) {

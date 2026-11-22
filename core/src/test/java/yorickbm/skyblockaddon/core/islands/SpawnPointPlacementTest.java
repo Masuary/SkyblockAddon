@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class SpawnPointPlacementTest {
 
     @Test
-    void standingOnASolidBlockOnTheIslandIsAllowed() {
+    void standingOnAFullBlockOnTheIslandIsAllowed() {
         assertEquals(SpawnPointPlacement.ALLOWED, SpawnPointPlacement.evaluate(true, true, true));
     }
 
@@ -18,7 +18,7 @@ class SpawnPointPlacementTest {
     }
 
     @Test
-    void groundWithoutASolidBlockUnderTheFeetIsRefused() {
+    void groundWithoutAFullTopFaceUnderTheFeetIsRefused() {
         assertEquals(SpawnPointPlacement.NOT_ON_GROUND, SpawnPointPlacement.evaluate(true, true, false));
     }
 
