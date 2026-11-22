@@ -9,7 +9,7 @@
   },
   "server": [
     "BuildscapePillarMixinConfig",
-    "Buildscape3PillarMixinConfig"
+    "BuildscapeBlockPackagePillarMixinConfig"
   ],
   "refmap": "skyblockaddon.refmap.json"
 }

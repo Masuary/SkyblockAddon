@@ -11,7 +11,7 @@ public class EffortlessBuildingMixinPlugin extends OptionalModMixinPlugin {
 
     @Override
     public void onLoad(final String mixinPackage) {
-        targetModLoaded = installedVersion(EFFORTLESS_BUILDING_MOD_ID).isPresent();
+        targetModLoaded = installedModFile(EFFORTLESS_BUILDING_MOD_ID).isPresent();
     }
 
     @Override

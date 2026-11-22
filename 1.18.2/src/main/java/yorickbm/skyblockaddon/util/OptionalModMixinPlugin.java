@@ -1,9 +1,8 @@
 package yorickbm.skyblockaddon.util;
 
 import net.minecraftforge.fml.loading.LoadingModList;
+import net.minecraftforge.fml.loading.moddiscovery.ModFile;
 import net.minecraftforge.fml.loading.moddiscovery.ModFileInfo;
-import net.minecraftforge.forgespi.language.IModInfo;
-import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
@@ -14,17 +13,12 @@ import java.util.Set;
 
 /**
  * A mixin config for another mod: Mixin asks the plugin before it looks a target up, so a mixin the plugin skips logs
- * no missing target warning when the mod (or that version of it) is not installed.
+ * no missing target warning when the mod, or the target class in it, is not installed.
  */
 public abstract class OptionalModMixinPlugin implements IMixinConfigPlugin {
 
-    protected static Optional<ArtifactVersion> installedVersion(final String modId) {
-        final ModFileInfo modFile = LoadingModList.get().getModFileById(modId);
-        if (modFile == null) return Optional.empty();
-        return modFile.getMods().stream()
-                .filter(mod -> modId.equals(mod.getModId()))
-                .map(IModInfo::getVersion)
-                .findFirst();
+    protected static Optional<ModFile> installedModFile(final String modId) {
+        return Optional.ofNullable(LoadingModList.get().getModFileById(modId)).map(ModFileInfo::getFile);
     }
 
     @Override

@@ -16,7 +16,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import yorickbm.skyblockaddon.islands.MixinPermissionChecks;
 
 /**
- * Buildscape 4.x pillars. Buildscape 3.x (Wold's Vaults) is {@link Buildscape3PillarMixinConfig}.
+ * Pillars in Buildscape's feature.pillar package (4.1.x). The old block package is
+ * {@link BuildscapeBlockPackagePillarMixinConfig}.
  */
 @Mixin(value = {PillarBlock.class, AshenKingPillarBlock.class}, remap = false)
 public abstract class BuildscapePillarMixinConfig {

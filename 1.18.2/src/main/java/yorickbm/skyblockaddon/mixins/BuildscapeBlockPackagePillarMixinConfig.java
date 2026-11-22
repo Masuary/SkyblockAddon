@@ -14,11 +14,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import yorickbm.skyblockaddon.islands.MixinPermissionChecks;
 
 /**
- * Buildscape 3.x pillars (Wold's Vaults). The build compiles against Buildscape 4.x, so the 3.x classes are named.
+ * Pillars in Buildscape's old block package (up to 4.0.x; Wold's Vaults ships 3.0.9). The build compiles against
+ * Buildscape 4.1.x, so these classes are named.
  */
 @SuppressWarnings("unresolvable-target")
 @Mixin(targets = {"com.kingodogo.buildscape.block.PillarBlock", "com.kingodogo.buildscape.block.AshenKingPillarBlock"}, remap = false)
-public abstract class Buildscape3PillarMixinConfig {
+public abstract class BuildscapeBlockPackagePillarMixinConfig {
 
     @Inject(method = "m_6227_", at = @At("HEAD"), cancellable = true)
     private void onUse(final BlockState state, final Level level, final BlockPos pos, final Player player, final InteractionHand hand,

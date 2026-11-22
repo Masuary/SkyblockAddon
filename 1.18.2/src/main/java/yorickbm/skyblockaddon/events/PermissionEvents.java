@@ -83,7 +83,7 @@ public class PermissionEvents {
                     .withDenialEffect((event, player) -> InteractionHandler.pushPlayerBack(player)),
 
             TriggerRule.playerInteraction(PlayerInteractEvent.EntityInteract.class, PermissionTriggers.ON_RIGHT_CLICK_ENTITY),
-            TriggerRule.playerInteraction(PlayerInteractEvent.RightClickItem.class, PermissionTriggers.ON_RIGHT_CLICK_ITEM),
+            TriggerRule.itemUse(PermissionTriggers.ON_RIGHT_CLICK_ITEM),
             TriggerRule.playerInteraction(PlayerInteractEvent.LeftClickBlock.class, PermissionTriggers.ON_LEFT_CLICK_BLOCK)
     );
 
@@ -256,6 +256,16 @@ public class PermissionEvents {
         static <E extends PlayerInteractEvent> TriggerRule<E> playerInteraction(final Class<E> eventType, final String trigger) {
             return new TriggerRule<>(eventType, PlayerInteractEvent::getPlayer,
                     (event, player, standingOn) -> InteractionHandler.checkPlayerInteraction(standingOn, player, (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(), trigger),
+                    (event, player) -> { });
+        }
+
+        /**
+         * Judges every stack the right click may use: the held stack, or the contents of a randomizer bag.
+         */
+        static TriggerRule<PlayerInteractEvent.RightClickItem> itemUse(final String trigger) {
+            return new TriggerRule<>(PlayerInteractEvent.RightClickItem.class, PlayerInteractEvent::getPlayer,
+                    (event, player, standingOn) -> RightClickedStacks.stacksUsedBy(player, event.getItemStack()).stream()
+                            .anyMatch(usedStack -> InteractionHandler.checkPlayerInteraction(standingOn, player, (ServerLevel) event.getWorld(), event.getPos(), usedStack, trigger)),
                     (event, player) -> { });
         }
 
