@@ -45,6 +45,7 @@ import yorickbm.skyblockaddon.islands.IslandCreationQueue;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -97,17 +98,7 @@ public class SkyBlockAddon {
      * Run Common config setup.
      */
     public void onCommonSetup(final FMLCommonSetupEvent event) {
-        //Register Resources
-        RegistrySelector selector = new RegistrySelector(Map.of(
-                "PermissionRegistry", () -> {
-                    if (ModList.get().isLoaded("the_vault")) {
-                        return "registries/permissions/vaulthunters.json";
-                    } else {
-                        return "registries/permissions/default.json";
-                    }
-                }
-        ));
-        ResourceManager.commonSetup(FMLPaths.CONFIGDIR.get(), selector);
+        generateMissingConfigFiles();
 
         //Register username cache
         UsernameCache.initCache(500);
@@ -120,6 +111,23 @@ public class SkyBlockAddon {
 
         //Init Version Checker
         VersionChecker.startVersionCheck();
+    }
+
+    /**
+     * Generate every missing config file from the bundled copy (at startup and on /island admin reload). A generated
+     * island.nbt is worth a warning: a server with a custom island would otherwise build the bundled one unnoticed.
+     */
+    public static void generateMissingConfigFiles() {
+        final RegistrySelector selector = new RegistrySelector(Map.of(
+                "PermissionRegistry", () -> ModList.get().isLoaded("the_vault")
+                        ? "registries/permissions/vaulthunters.json"
+                        : "registries/permissions/default.json"
+        ));
+        final List<String> generatedFiles = ResourceManager.commonSetup(FMLPaths.CONFIGDIR.get(), selector);
+        if (generatedFiles.contains(ResourceManager.ISLAND_TEMPLATE_FILE)) {
+            LOGGER.warn("'{}' was missing and has been generated from the bundled island; new islands use the bundled island",
+                    islandTemplatePath());
+        }
     }
 
     /**
@@ -168,7 +176,7 @@ public class SkyBlockAddon {
      * corrupt or empty file stops the server instead of failing every island creation later.
      */
     public static void loadIslandTemplate() {
-        final Path templatePath = FMLPaths.CONFIGDIR.get().resolve(SkyblockAddonCore.MOD_ID + "/island.nbt");
+        final Path templatePath = islandTemplatePath();
         final CompoundTag template = readIslandTemplate(templatePath);
         final int blockCount = template.getList("blocks", Tag.TAG_COMPOUND).size();
         if (blockCount == 0 || template.getList("palette", Tag.TAG_COMPOUND).isEmpty()) {
@@ -176,6 +184,10 @@ public class SkyBlockAddon {
         }
         islandTemplate = template;
         LOGGER.info("Loaded the island template with {} blocks from '{}'.", blockCount, templatePath);
+    }
+
+    private static Path islandTemplatePath() {
+        return FMLPaths.CONFIGDIR.get().resolve(SkyblockAddonCore.MOD_ID).resolve(ResourceManager.ISLAND_TEMPLATE_FILE);
     }
 
     private static CompoundTag readIslandTemplate(final Path templatePath) {
