@@ -11,9 +11,10 @@ import net.minecraft.world.item.Items;
 import yorickbm.skyblockaddon.core.GuiDataKeys;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
-import yorickbm.skyblockaddon.core.util.geometry.Vec3i;
+import yorickbm.skyblockaddon.core.islands.SpawnPointPlacement;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
 import yorickbm.skyblockaddon.islands.IslandActionService;
+import yorickbm.skyblockaddon.util.ForgeConverter;
 
 import java.util.List;
 
@@ -39,14 +40,14 @@ public final class ConfirmSetSpawnGui {
                 "Set spawn", ButtonStyle.PRIMARY,
                 p -> {
                     if (closeUnlessAllowedToSetSpawn(p, island)) return;
-                    Vec3i position = new Vec3i(p.blockPosition().getX(), p.blockPosition().getY(), p.blockPosition().getZ());
-                    if (!island.getIslandBoundingBox().isInside(position)) {
-                        p.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("island.setspawn.outside"))
+                    SpawnPointPlacement placement = IslandActionService.checkSpawnPlacement(island, p);
+                    if (!placement.allowed()) {
+                        p.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString(placement.languageKey()))
                                 .withStyle(ChatFormatting.RED), p.getUUID());
                         MasuGui.closeFor(p);
                         return;
                     }
-                    island.setSpawnPoint(position);
+                    island.setSpawnPoint(ForgeConverter.forgeToInternalVec3i(p.blockPosition()));
                     p.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("island.setspawn.success"))
                             .withStyle(ChatFormatting.GREEN), p.getUUID());
                     IslandHubGui.open(p, data);

@@ -2,17 +2,20 @@ package yorickbm.skyblockaddon.islands;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.Commands;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandActionResult;
 import yorickbm.skyblockaddon.core.islands.IslandActions;
 import yorickbm.skyblockaddon.core.islands.IslandActor;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
+import yorickbm.skyblockaddon.core.islands.SpawnPointPlacement;
 import yorickbm.skyblockaddon.util.PlayerNames;
 
 import java.util.Objects;
@@ -45,6 +48,14 @@ public final class IslandActionService {
     /**
      * A member moved to Visitors is removed from the island like a kick and told so.
      */
+    public static SpawnPointPlacement checkSpawnPlacement(final ForgeIsland island, final ServerPlayer player) {
+        final BlockPos blockUnderFeet = player.getOnPos();
+        final BlockState stateUnderFeet = player.getLevel().getBlockState(blockUnderFeet);
+        final boolean solidBlockUnderFeet = !stateUnderFeet.isAir()
+                && !stateUnderFeet.getCollisionShape(player.getLevel(), blockUnderFeet).isEmpty();
+        return SpawnPointPlacement.evaluate(island.isStandingOn(player), player.isOnGround(), solidBlockUnderFeet);
+    }
+
     public static IslandActionResult assignGroup(final ServerPlayer actor, final ForgeIsland island, final UUID target, final UUID groupId) {
         final IslandActionResult result = IslandActions.assignGroup(island, actorOf(actor), target, groupId);
         if (result != IslandActionResult.MEMBER_REMOVED) return result;

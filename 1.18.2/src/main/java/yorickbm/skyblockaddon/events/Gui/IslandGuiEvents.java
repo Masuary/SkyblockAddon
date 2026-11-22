@@ -15,6 +15,7 @@ import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.IslandActionResult;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
+import yorickbm.skyblockaddon.core.islands.SpawnPointPlacement;
 import yorickbm.skyblockaddon.core.util.UsernameCache;
 import yorickbm.skyblockaddon.events.IslandEvents;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
@@ -65,9 +66,10 @@ public class IslandGuiEvents {
             return;
         }
 
-        if(!event.getIsland().getIslandBoundingBox().isInside(ForgeConverter.forgeToInternalVec3i(event.getTarget().getOnPos()))) {
+        final SpawnPointPlacement placement = IslandActionService.checkSpawnPlacement(event.getIsland(), event.getTarget());
+        if(!placement.allowed()) {
             event.getTarget().sendMessage(new TextComponent(
-                    SkyBlockAddonLanguage.getLocalizedString("island.setspawn.outside")
+                    SkyBlockAddonLanguage.getLocalizedString(placement.languageKey())
             ).withStyle(ChatFormatting.RED),event.getTarget().getUUID());
 
             event.setResult(Event.Result.DENY);
