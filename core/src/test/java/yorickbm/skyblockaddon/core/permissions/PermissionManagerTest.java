@@ -84,7 +84,7 @@ class PermissionManagerTest {
 
     @Test
     void bundledPermissionFilesLoad() throws URISyntaxException {
-        for (final String bundledFile : List.of("vaulthunters.json", "default.json")) {
+        for (final String bundledFile : List.of("vaulthunters.json", "woldsvaults.json", "default.json")) {
             final Path registry = Path.of(Objects.requireNonNull(getClass().getResource("/assets/skyblockaddon/registries/permissions/" + bundledFile), bundledFile).toURI());
 
             assertTrue(new PermissionManager().loadPermissions(registry) > 0, bundledFile);

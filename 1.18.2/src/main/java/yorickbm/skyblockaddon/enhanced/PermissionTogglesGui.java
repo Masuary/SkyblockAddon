@@ -49,7 +49,8 @@ public final class PermissionTogglesGui {
     private static final int HEIGHT = 214;
     private static final String[][] CATEGORIES = {
             {"general", "General"}, {"transport", "Transport"}, {"redstone", "Redstone"}, {"storage", "Storage"},
-            {"interactables", "Interactables"}, {"vaulthunters", "Vault Hunters"}};
+            {"interactables", "Interactables"}};
+    private static final String[][] CATEGORIES_LISTED_WHEN_USED = {{"vaulthunters", "Vault Hunters"}, {"mods", "Mods"}};
     private static final String[] ADMIN_CATEGORY = {"admin_controls", "Admin"};
 
     private PermissionTogglesGui() {}
@@ -79,6 +80,9 @@ public final class PermissionTogglesGui {
 
     static List<String[]> categoriesFor(ServerPlayer player) {
         List<String[]> categories = new ArrayList<>(List.of(CATEGORIES));
+        Arrays.stream(CATEGORIES_LISTED_WHEN_USED)
+                .filter(category -> !PermissionManager.getInstance().getPermissionsFor(category[0]).isEmpty())
+                .forEach(categories::add);
         if (player.hasPermissions(Commands.LEVEL_GAMEMASTERS)) categories.add(ADMIN_CATEGORY);
         return categories;
     }

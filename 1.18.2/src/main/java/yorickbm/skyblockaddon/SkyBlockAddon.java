@@ -29,7 +29,7 @@ import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.permissions.PermissionManager;
-import yorickbm.skyblockaddon.core.util.RegistrySelector;
+import yorickbm.skyblockaddon.core.util.BundledDefaultsPack;
 import yorickbm.skyblockaddon.core.util.ResourceManager;
 import yorickbm.skyblockaddon.core.util.UsernameCache;
 import yorickbm.skyblockaddon.events.ChunkEvents;
@@ -47,7 +47,6 @@ import yorickbm.skyblockaddon.islands.IslandCreationQueue;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 // The value here should match an entry in the META-INF/mods.toml file
@@ -114,16 +113,12 @@ public class SkyBlockAddon {
     }
 
     /**
-     * Generate every missing config file from the bundled copy (at startup and on /island admin reload). A generated
-     * island.nbt is worth a warning: a server with a custom island would otherwise build the bundled one unnoticed.
+     * Generate every missing config file from the bundled copy of the loaded pack (at startup and on /island admin
+     * reload). A generated island.nbt is worth a warning: a server with a custom island would otherwise build the
+     * bundled one unnoticed.
      */
     public static void generateMissingConfigFiles() {
-        final RegistrySelector selector = new RegistrySelector(Map.of(
-                "PermissionRegistry", () -> ModList.get().isLoaded("the_vault")
-                        ? "registries/permissions/vaulthunters.json"
-                        : "registries/permissions/default.json"
-        ));
-        final List<String> generatedFiles = ResourceManager.commonSetup(FMLPaths.CONFIGDIR.get(), selector);
+        final List<String> generatedFiles = ResourceManager.commonSetup(FMLPaths.CONFIGDIR.get(), BundledDefaultsPack.select(ModList.get()::isLoaded));
         if (generatedFiles.contains(ResourceManager.ISLAND_TEMPLATE_FILE)) {
             LOGGER.warn("'{}' was missing and has been generated from the bundled island; new islands use the bundled island",
                     islandTemplatePath());

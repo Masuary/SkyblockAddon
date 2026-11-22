@@ -56,15 +56,15 @@ public class ResourceManager {
     }
 
     /**
-     * Generate every missing config file from the bundled copy.
+     * Generate every missing config file from the bundled copy of the loaded pack.
      * @return The generated files, relative to the mod's config folder
      */
-    public static List<String> commonSetup(Path FMLPath, RegistrySelector selector) throws ResourceNotFoundException {
+    public static List<String> commonSetup(Path FMLPath, BundledDefaultsPack pack) throws ResourceNotFoundException {
         final List<String> generatedFiles = new ArrayList<>();
-        generateMissingFile(generatedFiles, FMLPath, ISLAND_TEMPLATE_FILE, "structures/island.nbt");
+        generateMissingFile(generatedFiles, FMLPath, ISLAND_TEMPLATE_FILE, pack.assetFor("structures/island.nbt"));
 
         //Custom language.json
-        generateMissingFile(generatedFiles, FMLPath, "language.json", "lang/en_us.json");
+        generateMissingFile(generatedFiles, FMLPath, "language.json", pack.assetFor("lang/en_us.json"));
         SkyBlockAddonLanguage.loadLocalization(FMLPath.resolve(SkyblockAddonCore.MOD_ID + "/language.json"));
 
         //Generate registries
@@ -72,22 +72,15 @@ public class ResourceManager {
             ResourceManager.getOrCreateDirectory(FMLPath.resolve(SkyblockAddonCore.MOD_ID + "/"), "registries");
         }
         if(!Files.exists(FMLPath.resolve(SkyblockAddonCore.MOD_ID + "/registries/BiomeRegistry.json"))) {
-            generateMissingFile(generatedFiles, FMLPath, "registries/BiomeRegistry.json", "registries/BiomeRegistry.json");
+            generateMissingFile(generatedFiles, FMLPath, "registries/BiomeRegistry.json", pack.assetFor("registries/BiomeRegistry.json"));
         }
 
-        //Generate correct permissionRegistry
-        try {
-            String path = selector.getRegistry("PermissionRegistry");
-            generateMissingFile(generatedFiles, FMLPath, "registries/PermissionRegistry.json", path);
-        } catch(IllegalArgumentException ex) {
-            throw new ResourceNotFoundException("registries/PermissionRegistry.json");
-        }
-
+        generateMissingFile(generatedFiles, FMLPath, "registries/PermissionRegistry.json", pack.permissionRegistryAsset());
 
         //Generate GUIS: every bundled GUI missing from the server's folder is added, existing files are kept
         ResourceManager.getOrCreateDirectory(FMLPath.resolve(SkyblockAddonCore.MOD_ID + "/"), "guis");
         for (final String guiFile : BUNDLED_GUI_FILES) {
-            generateMissingFile(generatedFiles, FMLPath, "guis/" + guiFile, "guis/" + guiFile);
+            generateMissingFile(generatedFiles, FMLPath, "guis/" + guiFile, pack.assetFor("guis/" + guiFile));
         }
         return List.copyOf(generatedFiles);
     }
