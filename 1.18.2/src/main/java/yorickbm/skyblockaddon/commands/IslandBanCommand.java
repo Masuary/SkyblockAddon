@@ -135,7 +135,7 @@ public class IslandBanCommand extends OverWorldCommandStack {
         command.sendSuccess(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.ban.lookup").formatted(playerName))
                 .withStyle(ChatFormatting.GRAY), false);
         final MinecraftServer server = executor.server;
-        Util.ioPool().execute(() -> {
+        startRemoteLookup(executorId, () -> {
             final AtomicReference<GameProfile> found = new AtomicReference<>();
             final AtomicReference<Exception> failure = new AtomicReference<>();
             try {
@@ -157,6 +157,8 @@ public class IslandBanCommand extends OverWorldCommandStack {
             } finally {
                 server.execute(() -> {
                     PENDING_LOOKUPS.finish(executorId);
+                    // A stopping server runs execute() work inline on this IO thread; the island must not change there.
+                    if (!server.isSameThread()) return;
                     final GameProfile profile = found.get();
                     final RemoteLookup outcome = profile != null ? RemoteLookup.FOUND
                             : failure.get() == null || failure.get() instanceof ProfileNotFoundException ? RemoteLookup.NOT_FOUND
@@ -168,6 +170,18 @@ public class IslandBanCommand extends OverWorldCommandStack {
             }
         });
         return Command.SINGLE_SUCCESS;
+    }
+
+    /**
+     * A lookup the IO pool rejects frees the player's pending slot before the failure is passed on.
+     */
+    private static void startRemoteLookup(final UUID executorId, final Runnable remoteLookup) {
+        try {
+            Util.ioPool().execute(remoteLookup);
+        } catch (final RuntimeException rejectedLookup) {
+            PENDING_LOOKUPS.finish(executorId);
+            throw rejectedLookup;
+        }
     }
 
     /** A lookup still running when the server stops never reaches its server-thread step; forget it. */
