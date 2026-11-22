@@ -16,6 +16,7 @@ import yorickbm.skyblockaddon.core.islands.AbandonedIslandQuery;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandGridSlot;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
+import yorickbm.skyblockaddon.core.islands.PurgeEligibility;
 import yorickbm.skyblockaddon.core.util.ResultPage;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
 
@@ -69,9 +70,13 @@ public class AdminAbandonedIslandsCommand {
     private static MutableComponent describeIsland(final Island island) {
         final IslandGridSlot slot = IslandGridSlot.containing(island.getCenter());
         final String islandId = island.getId().toString();
-        return new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.admin.abandoned.entry")
+        final ForgeIsland forgeIsland = (ForgeIsland) island;
+        final String entryKey = forgeIsland.purgeEligibility() == PurgeEligibility.NO_TRACKED_CHUNKS
+                ? "commands.admin.abandoned.entry.no.chunks"
+                : "commands.admin.abandoned.entry";
+        return new TextComponent(SkyBlockAddonLanguage.getLocalizedString(entryKey)
                 .formatted(islandId, island.getCenter().getX(), island.getCenter().getZ(), slot.column(), slot.row(),
-                        ((ForgeIsland) island).getModifiedChunks().size()))
+                        forgeIsland.getModifiedChunks().size()))
                 .withStyle(ChatFormatting.YELLOW)
                 .withStyle(Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, islandId)));
     }

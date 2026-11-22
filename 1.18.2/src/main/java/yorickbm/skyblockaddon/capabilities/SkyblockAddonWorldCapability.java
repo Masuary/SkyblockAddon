@@ -305,7 +305,7 @@ public class SkyblockAddonWorldCapability {
 
     public List<UUID> getPurgableIslands() {
         return IslandManager.getInstance().getEntrySet().entrySet().stream() // Create a stream of map entries
-                .filter(entry -> entry.getValue().isAbandoned() && !((ForgeIsland)entry.getValue()).getModifiedChunks().isEmpty()) // Filter entries where island is abandoned
+                .filter(entry -> ((ForgeIsland) entry.getValue()).purgeEligibility().purgeable())
                 .map(Map.Entry::getKey) // Map to the UUID (key) of the entry
                 .collect(Collectors.toList()); // Collect into a List<UUID>
     }

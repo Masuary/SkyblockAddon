@@ -31,6 +31,7 @@ import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
+import yorickbm.skyblockaddon.core.islands.PurgeEligibility;
 import yorickbm.skyblockaddon.util.BiomeUtil;
 import yorickbm.skyblockaddon.util.ForgeConverter;
 import yorickbm.skyblockaddon.util.NBTSerializable;
@@ -246,6 +247,10 @@ public class ForgeIsland extends Island implements NBTSerializable {
     }
     public boolean removeChunk(final ChunkPos pos) {
         return playerLoadedChunks.remove(pos);
+    }
+
+    public PurgeEligibility purgeEligibility() {
+        return PurgeEligibility.of(this, playerLoadedChunks.size());
     }
 
     @Override
