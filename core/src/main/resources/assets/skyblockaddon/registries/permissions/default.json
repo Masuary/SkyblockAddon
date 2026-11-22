@@ -405,9 +405,12 @@
           "minecraft:chest_minecart",
           "minecraft:hopper_minecart",
           ".*:(.*_)?chest_boat",
-          "immersive_aircraft:(airship|biplane|gyrodyne|quadrocopter)",
+          "quark:chest_passenger",
+          "immersive_aircraft:.*",
           "immersivepetroleum:speedboat",
-          "smallships:.*"
+          "smallships:.*",
+          "immersiveengineering:cart_.*",
+          "littlelogistics:(?!seater_).*"
         ]
       }
     },
@@ -741,9 +744,12 @@
           "!minecraft:chest_minecart",
           "!minecraft:hopper_minecart",
           "!.*:(.*_)?chest_boat",
-          "!immersive_aircraft:(airship|biplane|gyrodyne|quadrocopter)",
+          "!quark:chest_passenger",
+          "!immersive_aircraft:.*",
           "!immersivepetroleum:speedboat",
           "!smallships:.*",
+          "!immersiveengineering:cart_.*",
+          "!littlelogistics:(?!seater_).*",
           "!minecraft:boat",
           "!minecraft:minecart",
           "!.*:.*_boat",
@@ -1108,13 +1114,16 @@
         "item": "minecraft:oak_boat",
         "lore": [
           [
-            "{\"text\": \"Get into boats, minecarts and other\", \"color\": \"gray\"}"
+            "{\"text\": \"Get into boats and minecarts and ride\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\": \"vehicles, and ride animals.\", \"color\": \"gray\"}"
+            "{\"text\": \"animals. Ships, aircraft and storage carts\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\": \"Examples: boats, minecarts, horses, aircraft\", \"color\": \"dark_gray\"}"
+            "{\"text\": \"need Chests as well.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"Examples: boats, minecarts, horses, striders\", \"color\": \"dark_gray\"}"
           ],
           [
             "{\"text\": \" \", \"color\": \"dark_gray\"}"

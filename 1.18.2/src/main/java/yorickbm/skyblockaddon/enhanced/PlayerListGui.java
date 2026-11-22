@@ -198,6 +198,10 @@ final class PlayerListGui {
                 selectedInThisList);
     }
 
+    static CompoundTag withMemberSelected(CompoundTag data, UUID playerId) {
+        return withPlayer(data, playerId, MEMBERS);
+    }
+
     private static CompoundTag withPlayer(CompoundTag data, UUID playerId, String list) {
         CompoundTag withPlayer = data.copy();
         withPlayer.putUUID(GuiDataKeys.PLAYER_ID, playerId);

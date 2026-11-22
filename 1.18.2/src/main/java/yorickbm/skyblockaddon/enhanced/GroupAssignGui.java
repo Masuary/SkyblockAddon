@@ -148,8 +148,7 @@ final class GroupAssignGui {
                 .emptyText(new TextComponent("Nobody is in this group"))
                 .onClick((p, index, click) -> {
                     if (index < 0 || index >= players.size()) return;
-                    CompoundTag playerData = data.copy();
-                    playerData.putUUID(GuiDataKeys.PLAYER_ID, players.get(index));
+                    CompoundTag playerData = PlayerListGui.withMemberSelected(data, players.get(index));
                     MasuGui.closeFor(p);
                     GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:set_group", playerData);
                 });

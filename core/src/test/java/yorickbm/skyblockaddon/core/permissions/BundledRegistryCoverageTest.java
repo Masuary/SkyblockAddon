@@ -83,6 +83,11 @@ class BundledRegistryCoverageTest {
     void vehiclesWithAnInventoryNeedTheChestToggle(final String pack) {
         final PermissionManager manager = bundled(pack);
         assertEquals(Optional.of("open_chests"), entityDenial(manager, VISITOR, "immersive_aircraft:biplane"));
+        assertEquals(Optional.of("open_chests"), entityDenial(manager, VISITOR, "immersive_aircraft:cargo_airship"));
+        assertEquals(Optional.of("open_chests"), entityDenial(manager, VISITOR, "littlelogistics:chest_car"));
+        assertEquals(Optional.of("open_chests"), entityDenial(manager, VISITOR, "immersiveengineering:cart_woodencrate"));
+        assertEquals(Optional.of("open_chests"), entityDenial(manager, VISITOR, "quark:chest_passenger"));
+        assertTrue(entityDenial(manager, VISITOR, "littlelogistics:seater_barge").isEmpty());
         assertEquals(Optional.of("open_chests"), entityDenial(manager, VISITOR, "smallships:oak_cog"));
         assertEquals(Optional.of("open_chests"), entityDenial(manager, VISITOR, "immersivepetroleum:speedboat"));
         assertEquals(Optional.of("open_chests"), entityDenial(manager, VISITOR, "somemod:oak_chest_boat"));
