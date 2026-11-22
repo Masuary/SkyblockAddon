@@ -4,6 +4,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import yorickbm.skyblockaddon.core.GuiDataKeys;
+import yorickbm.skyblockaddon.core.islands.GroupNames;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.util.NBTSerializable;
 import yorickbm.skyblockaddon.util.NBTUtil;
@@ -31,7 +32,14 @@ public class ForgeIslandGroup extends IslandGroup implements NBTSerializable {
 
     @Override
     public String getName() {
-        return this.item.getDisplayName().getString().trim();
+        return nameOf(this.item);
+    }
+
+    /**
+     * The name a group made from this item gets: the item's hover name, without the brackets of its display name.
+     */
+    public static String nameOf(final ItemStack item) {
+        return GroupNames.normalise(item.getHoverName().getString());
     }
 
     public ItemStack getItem() {

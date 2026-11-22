@@ -50,9 +50,7 @@ public final class IslandActions {
 
     public static IslandActionResult createGroup(final Island island, final IslandActor actor, final IslandGroup group) {
         if (!canManage(island, actor)) return IslandActionResult.NOT_ALLOWED;
-        final boolean nameExists = island.getGroups().stream()
-                .anyMatch(existing -> existing.getName().equalsIgnoreCase(group.getName()));
-        if (nameExists) return IslandActionResult.GROUP_NAME_EXISTS;
+        if (island.getGroupByName(group.getName()).isPresent()) return IslandActionResult.GROUP_NAME_EXISTS;
 
         island.addGroup(group);
         return IslandActionResult.SUCCESS;

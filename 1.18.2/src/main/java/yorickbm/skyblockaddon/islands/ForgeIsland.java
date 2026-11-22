@@ -249,11 +249,6 @@ public class ForgeIsland extends Island implements NBTSerializable {
     }
 
     @Override
-    public Optional<UUID> getGroupByName(String groupName) {
-        return getGroups().stream().filter(g -> g.getName().equalsIgnoreCase(groupName)).map(IslandGroup::getId).findFirst();
-    }
-
-    @Override
     public CompoundTag serializeNBT() {
         final CompoundTag tag = new CompoundTag();
 

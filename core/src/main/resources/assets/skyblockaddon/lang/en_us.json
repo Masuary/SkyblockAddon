@@ -70,7 +70,7 @@
   "commands.group.create": "Click here to create a group, the group will use the item you will be holding & it's name when clicking.",
   "commands.group.created": "Created the group '%s' with item '%s'.",
   "commands.group.failure": "Could not create a group with the item in your hand, try again with another item.",
-  "commands.group.not.found": "Sorry we could not find the group with Id '%s'.",
+  "commands.group.not.found": "Sorry we could not find the group '%s'.",
   "commands.group.added.member": "%s has been added to group %s.",
   "commands.group.click.to.add": "Click here to get the command to add someone to the group.",
   "commands.group.name.exists": "A group with the name '%s' already exists on this island.",

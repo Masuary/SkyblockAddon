@@ -381,7 +381,12 @@ public abstract class Island {
     }
 
     /**
-     * Forge implementations
+     * Find a group by a typed name, with or without surrounding brackets and ignoring case.
      */
-    public abstract Optional<UUID> getGroupByName(final String groupName);
+    public Optional<UUID> getGroupByName(final String groupName) {
+        return getGroups().stream()
+                .filter(group -> GroupNames.matches(group.getName(), groupName))
+                .map(IslandGroup::getId)
+                .findFirst();
+    }
 }

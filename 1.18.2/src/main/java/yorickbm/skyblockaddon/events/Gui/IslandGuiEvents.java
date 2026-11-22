@@ -155,7 +155,7 @@ public class IslandGuiEvents {
         final UUID id = UUID.randomUUID();
         final Function<ServerPlayer, Boolean> function = executor -> {
             final ItemStack heldItem = executor.getMainHandItem().copy();
-            final String newGroupName = heldItem.getDisplayName().getString().trim();
+            final String newGroupName = ForgeIslandGroup.nameOf(heldItem);
             final IslandActionResult result = IslandActionService.createGroupFromHeldItem(executor, event.getIsland());
             if (!result.succeeded()) {
                 IslandActionService.sendFailure(executor, result, newGroupName);
@@ -266,7 +266,7 @@ public class IslandGuiEvents {
             denyWithMessage(event, IslandActionResult.GROUP_NOT_FOUND, "");
             return;
         }
-        final String groupName = group.getItem().getDisplayName().getString().trim();
+        final String groupName = group.getName();
 
         final IslandActionResult result = IslandActionService.removeGroup(event.getTarget(), event.getIsland(), groupUUID);
         if(result.succeeded()) {
