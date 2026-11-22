@@ -59,7 +59,7 @@ final class BiomeListGui {
             rows.add(isCurrent ? row.withStatus(CURRENT_COLOR) : row);
         }
 
-        String count = biomes.size() + " biomes";
+        String count = EnhancedGuiHelper.countOf(biomes.size(), "biome", "biomes");
         MasuGui gui = DetailListScreen.frame("island_biomes", DetailListScreen.PLAYERS, "Biome", count, new ItemStack(Items.GRASS_BLOCK),
                 p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:settings", data),
                 List.of(new KeyHint("Click", "a biome for details"), new KeyHint("Hover", "for its mobs and plants")),

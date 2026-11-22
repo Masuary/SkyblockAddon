@@ -56,7 +56,7 @@ final class GroupListGui {
         }
 
         DetailListScreen.Geometry geometry = DetailListScreen.PLAYERS_WITH_TOOLBAR;
-        String count = groups.size() + " groups";
+        String count = EnhancedGuiHelper.countOf(groups.size(), "group", "groups");
         MasuGui gui = DetailListScreen.frame("island_groups", geometry, "Groups", count, new ItemStack(Items.WRITABLE_BOOK),
                 p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:settings", data),
                 List.of(new KeyHint("Click", "a group for details")), count);

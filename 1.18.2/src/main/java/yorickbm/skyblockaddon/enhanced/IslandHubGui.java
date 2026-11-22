@@ -136,12 +136,12 @@ public final class IslandHubGui {
         List<Action> actions = new ArrayList<>();
         int memberCount = IslandTravelListing.playerCount(island);
         actions.add(new Action(Card.of(new ItemStack(Items.PLAYER_HEAD), "Members",
-                memberCount + " members" + (canManageIsland ? ", set groups" : "")),
+                EnhancedGuiHelper.countOf(memberCount, "member", "members") + (canManageIsland ? ", set groups" : "")),
                 p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:members", data)));
         if (canManageIsland) {
             actions.add(new Action(Card.of(new ItemStack(Items.SPYGLASS), "Visitors", visitorCount + " here now"),
                     p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:visitors", data)));
-            actions.add(new Action(Card.of(new ItemStack(Items.WRITABLE_BOOK), "Permissions", island.getGroups().size() + " groups"),
+            actions.add(new Action(Card.of(new ItemStack(Items.WRITABLE_BOOK), "Permissions", EnhancedGuiHelper.countOf(island.getGroups().size(), "group", "groups")),
                     p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:groups", data)));
             actions.add(new Action(Card.of(new ItemStack(Items.IRON_BARS), "Bans", island.getBannedPlayers().size() + " banned"),
                     p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:bans", data)));

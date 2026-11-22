@@ -81,10 +81,10 @@ final class TravelListGui {
         }
 
         DetailListScreen.Geometry geometry = DetailListScreen.TRAVEL;
-        MasuGui gui = DetailListScreen.frame("island_travel", geometry, "Travel", destinations.size() + " public islands",
+        MasuGui gui = DetailListScreen.frame("island_travel", geometry, "Travel", EnhancedGuiHelper.countOf(destinations.size(), "public island", "public islands"),
                 new ItemStack(Items.ENDER_PEARL), null,
                 List.of(new KeyHint("Click", "an island for details"), new KeyHint("Enter", ": search")),
-                destinations.size() + " islands");
+                EnhancedGuiHelper.countOf(destinations.size(), "island", "islands"));
         gui.add(new TextField("search", 5, 22, 118, 17).modern(true).searchIcon(true).maxLength(16)
                 .placeholder("Search owner").value(query)
                 .onSubmit((p, text) -> {

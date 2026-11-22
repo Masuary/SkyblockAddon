@@ -56,7 +56,7 @@ final class PlayerListGui {
                     .withCells(group, Cell.of(EnhancedGuiHelper.onlineText(online), EnhancedGuiHelper.onlineColor(online))));
         }
 
-        String count = players.size() + " members";
+        String count = EnhancedGuiHelper.countOf(players.size(), "member", "members");
         MasuGui gui = DetailListScreen.frame("island_members", DetailListScreen.PLAYERS, "Members", count,
                 new ItemStack(Items.PLAYER_HEAD), p -> GUILibraryRegistry.openGUIForPlayer(p, "skyblockaddon:overview", data),
                 List.of(new KeyHint("Click", "a member for details")), count);

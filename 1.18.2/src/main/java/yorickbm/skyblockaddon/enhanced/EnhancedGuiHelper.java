@@ -112,4 +112,8 @@ public final class EnhancedGuiHelper {
 
         return profile;
     }
+
+    public static String countOf(int count, String singular, String plural) {
+        return count + " " + (count == 1 ? singular : plural);
+    }
 }
