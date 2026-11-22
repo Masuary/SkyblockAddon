@@ -1,13 +1,15 @@
 {
   "required": false,
   "package": "yorickbm.skyblockaddon.mixins",
+  "plugin": "yorickbm.skyblockaddon.util.BuildscapeMixinPlugin",
   "compatibilityLevel": "JAVA_11",
   "minVersion": "0.8",
   "injectors": {
     "defaultRequire": 1
   },
   "server": [
-    "BuildscapePillarMixinConfig"
+    "BuildscapePillarMixinConfig",
+    "Buildscape3PillarMixinConfig"
   ],
   "refmap": "skyblockaddon.refmap.json"
 }

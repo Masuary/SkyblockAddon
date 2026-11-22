@@ -4,6 +4,8 @@ import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
@@ -80,6 +82,25 @@ public final class MixinPermissionChecks {
 
         InteractionHandler.sendDeniedMessage(player);
         return true;
+    }
+
+    /**
+     * Blocks that hand out or take items on right click (Vault treasure pedestals, Buildscape pillars) and are reached
+     * without a cancellable event: fake players never get the items, a denied player gets FAIL. Empty when the block's
+     * own use should run.
+     */
+    public static Optional<InteractionResult> itemHolderUseOverride(final Player player, final Level level, final BlockPos position, final InteractionHand hand) {
+        if (player instanceof FakePlayer) return Optional.of(InteractionResult.SUCCESS);
+        if (!(player instanceof final ServerPlayer serverPlayer) || !(level instanceof final ServerLevel serverLevel)) return Optional.empty();
+
+        final AtomicReference<Island> standingOn = new AtomicReference<>();
+        if (InteractionHandler.verifyEntity(player, standingOn).asBoolean()) return Optional.empty();
+        if (!InteractionHandler.checkPlayerInteraction(standingOn, serverPlayer, serverLevel, position, player.getItemInHand(hand), PermissionTriggers.ON_RIGHT_CLICK_BLOCK)) {
+            return Optional.empty();
+        }
+
+        InteractionHandler.sendDeniedMessage(player);
+        return Optional.of(InteractionResult.FAIL);
     }
 
     /**

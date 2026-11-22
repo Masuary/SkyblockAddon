@@ -1,51 +1,29 @@
 package yorickbm.skyblockaddon.mixins;
 
+import com.kingodogo.buildscape.feature.pillar.AshenKingPillarBlock;
+import com.kingodogo.buildscape.feature.pillar.PillarBlock;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraftforge.common.util.FakePlayer;
-import com.kingodogo.buildscape.feature.pillar.AshenKingPillarBlock;
-import com.kingodogo.buildscape.feature.pillar.PillarBlock;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import yorickbm.skyblockaddon.core.islands.Island;
-import yorickbm.skyblockaddon.core.permissions.PermissionTriggers;
-import yorickbm.skyblockaddon.islands.InteractionHandler;
+import yorickbm.skyblockaddon.islands.MixinPermissionChecks;
 
-import java.util.concurrent.atomic.AtomicReference;
-
+/**
+ * Buildscape 4.x pillars. Buildscape 3.x (Wold's Vaults) is {@link Buildscape3PillarMixinConfig}.
+ */
 @Mixin(value = {PillarBlock.class, AshenKingPillarBlock.class}, remap = false)
 public abstract class BuildscapePillarMixinConfig {
 
     @Inject(method = "m_6227_", at = @At("HEAD"), cancellable = true)
-    public void onUse(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand,
-                      BlockHitResult hit, CallbackInfoReturnable<InteractionResult> cir) {
-        if (player instanceof FakePlayer) {
-            cir.setReturnValue(InteractionResult.SUCCESS);
-            return;
-        }
-
-        if (!(player instanceof ServerPlayer serverPlayer) || !(level instanceof ServerLevel serverLevel)) {
-            return;
-        }
-
-        final AtomicReference<Island> standingOn = new AtomicReference<>();
-        if (InteractionHandler.verifyEntity(player, standingOn).asBoolean()) {
-            return;
-        }
-
-        if (InteractionHandler.checkPlayerInteraction(standingOn, serverPlayer, serverLevel, pos,
-                player.getItemInHand(hand), PermissionTriggers.ON_RIGHT_CLICK_BLOCK)) {
-            InteractionHandler.sendDeniedMessage(player);
-            cir.setReturnValue(InteractionResult.FAIL);
-        }
+    private void onUse(final BlockState state, final Level level, final BlockPos pos, final Player player, final InteractionHand hand,
+                       final BlockHitResult hit, final CallbackInfoReturnable<InteractionResult> callback) {
+        MixinPermissionChecks.itemHolderUseOverride(player, level, pos, hand).ifPresent(callback::setReturnValue);
     }
 }

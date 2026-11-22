@@ -43,6 +43,7 @@ import yorickbm.skyblockaddon.core.permissions.PermissionTriggers;
 import yorickbm.skyblockaddon.islands.InteractionHandler;
 import yorickbm.skyblockaddon.util.BlockInteractability;
 import yorickbm.skyblockaddon.util.ForgeConverter;
+import yorickbm.skyblockaddon.util.RightClickedStacks;
 
 import java.util.List;
 import java.util.Objects;
@@ -112,7 +113,8 @@ public class PermissionEvents {
     }
 
     /**
-     * Boats, and spawn eggs aimed at water, are used through RightClickItem, which no block check sees.
+     * Boats, and spawn eggs aimed at water, are used through RightClickItem, which no block check sees. A randomizer
+     * bag is denied when any stack it could pick is a denied entity placer.
      */
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onRightClickItemPlacingEntity(final PlayerInteractEvent.RightClickItem event) {
@@ -120,7 +122,8 @@ public class PermissionEvents {
         if (InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) return;
 
         final ServerPlayer player = (ServerPlayer) event.getPlayer();
-        if (InteractionHandler.isEntityPlacementDenied(standingOn, player, event.getItemStack())) {
+        if (RightClickedStacks.stacksUsedBy(player, event.getItemStack()).stream()
+                .anyMatch(usedStack -> InteractionHandler.isEntityPlacementDenied(standingOn, player, usedStack))) {
             InteractionHandler.deny(event, player);
             player.inventoryMenu.sendAllDataToRemote();
         }

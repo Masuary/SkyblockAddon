@@ -152,8 +152,24 @@ def modDep = { String property, Object fallback ->
 }
 // cursemaven-helper:end
 
+configurations {
+    bundledCore {
+        canBeConsumed = false
+        transitive = false
+    }
+    skyvaultLine {
+        canBeConsumed = false
+        transitive = false
+    }
+    woldsLine {
+        canBeConsumed = false
+        transitive = false
+    }
+}
+
 dependencies {
     implementation 'yorickbm.skyblockaddon.core:SkyBlockAddon-Core:10.0'
+    bundledCore 'yorickbm.skyblockaddon.core:SkyBlockAddon-Core:10.0'
 
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
@@ -173,6 +189,11 @@ dependencies {
     compileOnly modDep('buildscape_jar', "curse.maven:buildscape-1377354:${buildscape_file}")
     compileOnly modDep('masugui_jar', fg.deobf("curse.maven:masugui-1539733:${masugui_file}"))
     runtimeOnly modDep('masugui_jar', fg.deobf("curse.maven:masugui-1539733:${masugui_file}"))
+
+    skyvaultLine "curse.maven:vault-hunters-official-mod-458203:${vault_hunters_file}"
+    skyvaultLine "curse.maven:buildscape-1377354:${buildscape_file}"
+    woldsLine "curse.maven:vault-hunters-official-mod-458203:${wolds_vault_hunters_file}"
+    woldsLine "curse.maven:buildscape-1377354:${wolds_buildscape_file}"
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }
@@ -213,7 +234,7 @@ tasks.named('jar', Jar).configure {
     }
 
     from({
-        configurations.runtimeClasspath.findAll { it.name.startsWith("SkyBlockAddon-Core") }.collect { zipTree(it) }
+        configurations.bundledCore.collect { zipTree(it) }
     })
 
     // Include your own compiled classes/resources
@@ -223,6 +244,16 @@ tasks.named('jar', Jar).configure {
 
     // This is the preferred method to reobfuscate your jar file
     finalizedBy 'reobfJar'
+}
+
+tasks.register('linkCheckJars', Sync) {
+    group = 'verification'
+    description = 'Collects the reobfuscated mod jar and the Vault Hunters and Buildscape jars of both VH lines into build/link-check.'
+    dependsOn 'reobfJar'
+    from(tasks.named('jar').flatMap { it.archiveFile })
+    into('skyvault') { from(configurations.skyvaultLine) }
+    into('wolds') { from(configurations.woldsLine) }
+    into(layout.buildDirectory.dir('link-check'))
 }
 
 tasks.withType(JavaCompile).configureEach {
