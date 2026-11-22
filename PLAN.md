@@ -25,6 +25,11 @@ Branch `main` (created 2026-11-21 from `gui-redesign` at `5e191cd`; sir: this be
 - `/island ban` lookups: one pending Mojang lookup per player (any name); a second one while pending is refused.
 - GUI changes (Fable F8 confirm before Visitors removes a member, any other SkyblockAddon screen work) wait until MasuGUI is done (review 16: 1.1.3 with the button confirm, theme art); then one GUI pass on SkyblockAddon adopting MasuGUI 1.1.3.
 
+## Decisions for W2 (sir, 2026-11-22)
+
+- Buildscape pillar protection on Wolds (Buildscape 3.0.9; the B15 mixin targets 4.x classes): add a second pillar mixin config for the Buildscape 3.x classes, chosen by the installed Buildscape version, so pillars are protected on both packs with no missing-target warnings.
+- Fable W1 low F3 (randomizer bag holding a boat or spawn egg places the entity on a foreign island): fix now, the entity placer check judges the bag's inner item.
+
 ## Phases
 
 | Phase | Contents | Status |
