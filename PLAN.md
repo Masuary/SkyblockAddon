@@ -2,7 +2,7 @@
 
 Source of truth for the findings and sir's answers: `/mnt/data/Projects/skyvault-update4-2026-11-20/9-mod-review/findings/15-skyblockaddon.md` (B1-B14, F1-F7, cleanup stages, upstream comparison, answers 2026-11-21). The previous ItemGrid redesign plan was superseded by the ListView redesign (`efe1458`) and is in git history.
 
-Branch `main` (created 2026-11-21 from `gui-redesign` at `5e191cd`; sir: this becomes the main line and ships as 10.0, one version for Remastered and Wolds). `main` is local only: push it and make it the GitHub default only with sir's go after the testnet QA. `remastered`, `gui-redesign` and the wolds branches stay as they are (archived after the Wolds switch, never deleted). Wolds sibling (`SkyblockAddon-Wolds`) is read only: fixes are ported from it, never edited there.
+Branch `main` (created 2026-11-21 from `gui-redesign` at `5e191cd`; sir: this becomes the main line and ships as 10.0, one version for Remastered and Wolds). `main` is pushed to `origin` and is the GitHub default branch since 2026-11-22 (sir's go after the testnet QA). `remastered`, `gui-redesign` and the wolds branches stay as they are (archived after the Wolds switch, never deleted). Wolds sibling (`SkyblockAddon-Wolds`) is read only: fixes are ported from it, never edited there.
 
 ## Decisions (sir, 2026-11-21)
 
