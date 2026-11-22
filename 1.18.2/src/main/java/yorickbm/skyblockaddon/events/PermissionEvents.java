@@ -43,6 +43,7 @@ import yorickbm.skyblockaddon.core.permissions.PermissionTriggers;
 import yorickbm.skyblockaddon.islands.InteractionHandler;
 import yorickbm.skyblockaddon.util.BlockInteractability;
 import yorickbm.skyblockaddon.util.ForgeConverter;
+import yorickbm.skyblockaddon.util.RightClickedStacks;
 
 import java.util.List;
 import java.util.Objects;
@@ -82,7 +83,7 @@ public class PermissionEvents {
                     .withDenialEffect((event, player) -> InteractionHandler.pushPlayerBack(player)),
 
             TriggerRule.playerInteraction(PlayerInteractEvent.EntityInteract.class, PermissionTriggers.ON_RIGHT_CLICK_ENTITY),
-            TriggerRule.playerInteraction(PlayerInteractEvent.RightClickItem.class, PermissionTriggers.ON_RIGHT_CLICK_ITEM),
+            TriggerRule.itemUse(PermissionTriggers.ON_RIGHT_CLICK_ITEM),
             TriggerRule.playerInteraction(PlayerInteractEvent.LeftClickBlock.class, PermissionTriggers.ON_LEFT_CLICK_BLOCK)
     );
 
@@ -112,7 +113,8 @@ public class PermissionEvents {
     }
 
     /**
-     * Boats, and spawn eggs aimed at water, are used through RightClickItem, which no block check sees.
+     * Boats, and spawn eggs aimed at water, are used through RightClickItem, which no block check sees. A randomizer
+     * bag is denied when any stack it could pick is a denied entity placer.
      */
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onRightClickItemPlacingEntity(final PlayerInteractEvent.RightClickItem event) {
@@ -120,7 +122,8 @@ public class PermissionEvents {
         if (InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) return;
 
         final ServerPlayer player = (ServerPlayer) event.getPlayer();
-        if (InteractionHandler.isEntityPlacementDenied(standingOn, player, event.getItemStack())) {
+        if (RightClickedStacks.stacksUsedBy(player, event.getItemStack()).stream()
+                .anyMatch(usedStack -> InteractionHandler.isEntityPlacementDenied(standingOn, player, usedStack))) {
             InteractionHandler.deny(event, player);
             player.inventoryMenu.sendAllDataToRemote();
         }
@@ -253,6 +256,16 @@ public class PermissionEvents {
         static <E extends PlayerInteractEvent> TriggerRule<E> playerInteraction(final Class<E> eventType, final String trigger) {
             return new TriggerRule<>(eventType, PlayerInteractEvent::getPlayer,
                     (event, player, standingOn) -> InteractionHandler.checkPlayerInteraction(standingOn, player, (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(), trigger),
+                    (event, player) -> { });
+        }
+
+        /**
+         * Judges every stack the right click may use: the held stack, or the contents of a randomizer bag.
+         */
+        static TriggerRule<PlayerInteractEvent.RightClickItem> itemUse(final String trigger) {
+            return new TriggerRule<>(PlayerInteractEvent.RightClickItem.class, PlayerInteractEvent::getPlayer,
+                    (event, player, standingOn) -> RightClickedStacks.stacksUsedBy(player, event.getItemStack()).stream()
+                            .anyMatch(usedStack -> InteractionHandler.checkPlayerInteraction(standingOn, player, (ServerLevel) event.getWorld(), event.getPos(), usedStack, trigger)),
                     (event, player) -> { });
         }
 

@@ -5,7 +5,9 @@ plugins {
 
 group = 'yorickbm.skyblockaddon.core'
 version = '10.0'
-archivesBaseName = 'SkyBlockAddon-Core'
+base {
+    archivesName = 'SkyBlockAddon-Core'
+}
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
@@ -45,7 +47,7 @@ publishing {
         mavenJava(MavenPublication) {
             from components.java
             groupId = project.group
-            artifactId = project.archivesBaseName
+            artifactId = base.archivesName.get()
             version = project.version
         }
     }
