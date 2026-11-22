@@ -9,6 +9,7 @@ import yorickbm.skyblockaddon.core.permissions.PermissionManager;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -56,6 +57,17 @@ class MissingPermissionDefaultTest {
         final TestIsland.TestGroup members = savedBeforeTheRegistryGrew(SkyblockAddonCore.MEMBERS_GROUP_ID);
         members.setPermission(ADDED_LATER, false);
         assertFalse(members.canDo(ADDED_LATER));
+    }
+
+    @Test
+    void aGroupLoadedFromASaveWithoutTheNewPermissionUsesTheMembersDefault() {
+        final TestIsland.TestGroup members = new TestIsland.TestGroup(SkyblockAddonCore.MEMBERS_GROUP_ID, "Members", false);
+        final TestIsland.TestGroup visitors = new TestIsland.TestGroup(SkyblockAddonCore.VISITORS_GROUP_ID, "Visitors", false);
+        members.loadStoredPermissions(Map.of("place_blocks", true));
+        visitors.loadStoredPermissions(Map.of("place_blocks", false));
+        assertTrue(members.canDo(ADDED_LATER));
+        assertFalse(visitors.canDo(ADDED_LATER));
+        assertFalse(members.canDo("not_in_the_registry"));
     }
 
     @Test

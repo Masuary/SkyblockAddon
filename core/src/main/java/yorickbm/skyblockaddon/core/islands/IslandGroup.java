@@ -52,6 +52,16 @@ public abstract class IslandGroup {
     }
 
     /**
+     * Replace the group's permissions with the saved ones. Permissions the save has no entry for stay unset, so
+     * {@link #canDo(String)} resolves them (allowed for Members, the registry default for every other group) instead of
+     * the defaults the constructor filled in.
+     */
+    public void loadStoredPermissions(final Map<String, Boolean> storedPermissions) {
+        this.permissions.clear();
+        this.permissions.putAll(storedPermissions);
+    }
+
+    /**
      * Add member to group
      * @param entity Entity UUID
      */

@@ -9,6 +9,8 @@ import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.util.NBTSerializable;
 import yorickbm.skyblockaddon.util.NBTUtil;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class ForgeIslandGroup extends IslandGroup implements NBTSerializable {
@@ -91,8 +93,10 @@ public class ForgeIslandGroup extends IslandGroup implements NBTSerializable {
         this.item = NBTUtil.nbtToItemStack(tag.getCompound("item"));
 
         final CompoundTag permissions = tag.getCompound("permissions");
+        final Map<String, Boolean> storedPermissions = new HashMap<>();
         for(final String key : permissions.getAllKeys()) {
-            this.permissions.put(key, permissions.getBoolean(key));
+            storedPermissions.put(key, permissions.getBoolean(key));
         }
+        loadStoredPermissions(storedPermissions);
     }
 }
