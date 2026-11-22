@@ -3,6 +3,7 @@ package yorickbm.skyblockaddon.core.islands;
 import org.junit.jupiter.api.Test;
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -55,6 +56,24 @@ class IslandVisitorDemotionTest {
 
         assertFalse(island.isPartOf(GUEST));
         assertEquals(SkyblockAddonCore.VISITORS_GROUP_ID, island.getGroupForEntityUUID(GUEST).orElseThrow().getId());
+    }
+
+    @Test
+    void memberDemotedBeforeP8LeavesTheIslandWhenItLoads() {
+        final TestIsland island = new TestIsland();
+        final UUID stayingMember = UUID.fromString("00000000-0000-0000-0000-0000000000b2");
+        island.addMember(stayingMember, SkyblockAddonCore.MEMBERS_GROUP_ID);
+        island.addMember(DEMOTED_MEMBER, SkyblockAddonCore.MEMBERS_GROUP_ID);
+        island.getMembersGroup().removeMember(DEMOTED_MEMBER);
+        island.getDefaultGroup().addMember(DEMOTED_MEMBER);
+        island.assignGroup(GUEST, SkyblockAddonCore.VISITORS_GROUP_ID);
+
+        assertEquals(List.of(DEMOTED_MEMBER), island.removeMembersInVisitorsGroup());
+
+        assertLeftTheIsland(island);
+        assertTrue(island.getMembers().contains(stayingMember));
+        assertTrue(island.getDefaultGroup().hasMember(GUEST));
+        assertEquals(List.of(), island.removeMembersInVisitorsGroup());
     }
 
     private static void assertLeftTheIsland(final TestIsland island) {

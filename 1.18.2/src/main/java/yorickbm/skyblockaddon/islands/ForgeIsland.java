@@ -26,6 +26,8 @@ import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.lang3.mutable.MutableInt;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.Island;
@@ -46,6 +48,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class ForgeIsland extends Island implements NBTSerializable {
+    private static final Logger LOGGER = LogManager.getLogger();
     private static final String BANNED_PLAYERS_TAG = "bannedPlayers";
     private static final String LAST_ACTIVE_TAG = "lastActive";
     private final List<ChunkPos> playerLoadedChunks = new ArrayList<>();
@@ -333,6 +336,8 @@ public class ForgeIsland extends Island implements NBTSerializable {
         for(final String key : members.getAllKeys()) {
             super.members.add(members.getUUID(key));
         }
+        removeMembersInVisitorsGroup().forEach(demotedMember ->
+                LOGGER.info("Island {}: removed member {}, who was in the Visitors group (moved to Visitors before 10.0)", getId(), demotedMember));
 
         final CompoundTag bannedPlayers = tag.getCompound(BANNED_PLAYERS_TAG);
         for(final String key : bannedPlayers.getAllKeys()) {

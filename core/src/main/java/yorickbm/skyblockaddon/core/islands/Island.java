@@ -142,6 +142,19 @@ public abstract class Island {
     }
 
     /**
+     * Islands saved before P8 can hold members that were moved to Visitors but kept their membership. Remove them
+     * from the island as a move to Visitors does now.
+     * @return - The members that were removed
+     */
+    public List<UUID> removeMembersInVisitorsGroup() {
+        final IslandGroup visitorsGroup = getDefaultGroup();
+        if (visitorsGroup == null) return List.of();
+        final List<UUID> demotedMembers = this.members.stream().filter(visitorsGroup::hasMember).toList();
+        demotedMembers.forEach(this::removeFromIsland);
+        return demotedMembers;
+    }
+
+    /**
      * A member moved to the Visitors group leaves the island.
      */
     public boolean isDemotionToVisitors(final UUID entity, final UUID groupId) {
