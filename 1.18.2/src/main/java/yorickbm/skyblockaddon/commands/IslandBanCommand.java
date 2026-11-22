@@ -1,6 +1,10 @@
 package yorickbm.skyblockaddon.commands;
 
+import com.mojang.authlib.Agent;
 import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.GameProfileRepository;
+import com.mojang.authlib.ProfileLookupCallback;
+import com.mojang.authlib.yggdrasil.ProfileNotFoundException;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -8,12 +12,15 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraftforge.common.UsernameCache;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import yorickbm.skyblockaddon.commands.interfaces.Cmds;
@@ -21,19 +28,29 @@ import yorickbm.skyblockaddon.commands.interfaces.OverWorldCommandStack;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
 import yorickbm.skyblockaddon.core.islands.IslandActionResult;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
+import yorickbm.skyblockaddon.core.util.BanNameResolution;
+import yorickbm.skyblockaddon.core.util.BanNameResolution.Decision;
+import yorickbm.skyblockaddon.core.util.BanNameResolution.RemoteLookup;
+import yorickbm.skyblockaddon.core.util.KnownPlayerNames;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
 import yorickbm.skyblockaddon.islands.IslandActionService;
 import yorickbm.skyblockaddon.util.PlayerNames;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * /island ban, unban and bans: the island's ban list.
  */
 public class IslandBanCommand extends OverWorldCommandStack {
+    private static final Set<String> PENDING_LOOKUPS = ConcurrentHashMap.newKeySet();
     private static final Logger LOGGER = LogManager.getLogger();
 
     public IslandBanCommand(final CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -80,8 +97,9 @@ public class IslandBanCommand extends OverWorldCommandStack {
     }
 
     /**
-     * Online players are banned at once. Any other name is resolved through the server's profile cache off the server
-     * thread (an unknown name means a Mojang lookup) and the ban continues on the server thread.
+     * Online players and offline-mode players who have played on this server are banned at once. Any other name is
+     * looked up at Mojang off the server thread (a name already being looked up for this player is not asked twice) and the ban continues on the server
+     * thread. The server's own profile cache is not used: an offline-mode server invents a profile for every failed lookup.
      */
     public int executeBan(final CommandSourceStack command, final ServerPlayer executor, final String playerName) {
         if (super.execute(command, executor) == 0) return Command.SINGLE_SUCCESS;
@@ -99,21 +117,78 @@ public class IslandBanCommand extends OverWorldCommandStack {
             return Command.SINGLE_SUCCESS;
         }
 
+        final Map<UUID, String> knownNames = UsernameCache.getMap();
+        final Optional<UUID> knownPlayer = KnownPlayerNames.find(knownNames, playerName);
+        if (!BanNameResolution.needsRemoteLookup(knownPlayer)) {
+            finishLookup(executor, playerName, knownNames, knownPlayer, RemoteLookup.NOT_ASKED, null);
+            return Command.SINGLE_SUCCESS;
+        }
+        if (knownPlayer.isEmpty() && !BanNameResolution.isPossibleName(playerName)) {
+            finishLookup(executor, playerName, knownNames, knownPlayer, RemoteLookup.NOT_FOUND, null);
+            return Command.SINGLE_SUCCESS;
+        }
+
         command.sendSuccess(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.ban.lookup").formatted(playerName))
                 .withStyle(ChatFormatting.GRAY), false);
-        executor.server.getProfileCache().getAsync(playerName, lookupResult -> {
-            if (executor.hasDisconnected()) return;
-            if (lookupResult == null) {
-                LOGGER.warn("Looking up the player name '{}' for /island ban failed", playerName);
-                executor.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.ban.lookup.failed").formatted(playerName))
-                        .withStyle(ChatFormatting.RED), executor.getUUID());
-                return;
+        final String pendingKey = executor.getUUID() + ":" + playerName.toLowerCase(Locale.ROOT);
+        if (!PENDING_LOOKUPS.add(pendingKey)) return Command.SINGLE_SUCCESS;
+        final MinecraftServer server = executor.server;
+        Util.ioPool().execute(() -> {
+            final AtomicReference<GameProfile> found = new AtomicReference<>();
+            final AtomicReference<Exception> failure = new AtomicReference<>();
+            try {
+                final GameProfileRepository repository = server.getProfileRepository();
+                if (repository == null) throw new IllegalStateException("The server has no profile repository");
+                repository.findProfilesByNames(new String[]{playerName}, Agent.MINECRAFT, new ProfileLookupCallback() {
+                    @Override
+                    public void onProfileLookupSucceeded(final GameProfile profile) {
+                        found.set(profile);
+                    }
+
+                    @Override
+                    public void onProfileLookupFailed(final GameProfile profile, final Exception exception) {
+                        failure.set(exception);
+                    }
+                });
+            } catch (final RuntimeException exception) {
+                failure.set(exception);
+            } finally {
+                server.execute(() -> {
+                    PENDING_LOOKUPS.remove(pendingKey);
+                    final GameProfile profile = found.get();
+                    final RemoteLookup outcome = profile != null ? RemoteLookup.FOUND
+                            : failure.get() == null || failure.get() instanceof ProfileNotFoundException ? RemoteLookup.NOT_FOUND
+                            : RemoteLookup.FAILED;
+                    if (outcome == RemoteLookup.FOUND && server.getProfileCache() != null) server.getProfileCache().add(profile);
+                    if (outcome == RemoteLookup.FAILED) LOGGER.warn("Looking up the player name '{}' for /island ban failed: {}", playerName, failure.get().toString());
+                    finishLookup(executor, playerName, knownNames, knownPlayer, outcome, profile);
+                });
             }
-            lookupResult.ifPresentOrElse(profile -> banResolvedPlayer(executor, profile),
-                    () -> executor.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.ban.unknown.player").formatted(playerName))
-                            .withStyle(ChatFormatting.RED), executor.getUUID()));
         });
         return Command.SINGLE_SUCCESS;
+    }
+
+    /** A lookup still running when the server stops never reaches its server-thread step; forget it. */
+    public static void clearPendingLookups() {
+        PENDING_LOOKUPS.clear();
+    }
+
+    private static void finishLookup(final ServerPlayer executor, final String playerName, final Map<UUID, String> knownNames,
+                                     final Optional<UUID> knownPlayer, final RemoteLookup remoteLookup, final GameProfile remoteProfile) {
+        if (executor.hasDisconnected()) return;
+        final Decision decision = BanNameResolution.decide(knownPlayer, remoteLookup,
+                Optional.ofNullable(remoteProfile).map(GameProfile::getId));
+        switch (decision.reply()) {
+            case BAN -> {
+                final UUID target = decision.banTarget().orElseThrow();
+                final String name = remoteProfile != null && remoteProfile.getId().equals(target) ? remoteProfile.getName() : knownNames.get(target);
+                banResolvedPlayer(executor, new GameProfile(target, name));
+            }
+            case UNKNOWN_PLAYER -> executor.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.ban.unknown.player").formatted(playerName))
+                    .withStyle(ChatFormatting.RED), executor.getUUID());
+            case LOOKUP_FAILED -> executor.sendMessage(new TextComponent(SkyBlockAddonLanguage.getLocalizedString("commands.ban.lookup.failed").formatted(playerName))
+                    .withStyle(ChatFormatting.RED), executor.getUUID());
+        }
     }
 
     private static void banResolvedPlayer(final ServerPlayer executor, final GameProfile profile) {

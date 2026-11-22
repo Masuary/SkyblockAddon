@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import yorickbm.guilibrary.GUILibraryRegistry;
 import yorickbm.guilibrary.events.DefaultEventHandler;
 import yorickbm.skyblockaddon.chunk.ChunkTaskScheduler;
+import yorickbm.skyblockaddon.commands.IslandBanCommand;
 import yorickbm.skyblockaddon.configs.SkyblockAddonConfig;
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.islands.Island;
@@ -154,6 +155,7 @@ public class SkyBlockAddon {
      */
     @SubscribeEvent
     public void onServerShutDown(final ServerStoppedEvent event) {
+        IslandBanCommand.clearPendingLookups();
         try {
             ChunkTaskScheduler.clear();
         } catch (final NoClassDefFoundError ex) {
