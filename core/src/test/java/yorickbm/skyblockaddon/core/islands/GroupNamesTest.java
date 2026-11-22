@@ -16,7 +16,7 @@ class GroupNamesTest {
     void oneSurroundingPairOfBracketsIsStripped() {
         assertEquals("Oak Log", GroupNames.normalise("[Oak Log]"));
         assertEquals("Oak Log", GroupNames.normalise("  [ Oak Log ] "));
-        assertEquals("[Oak Log]", GroupNames.normalise("[[Oak Log]]"));
+        assertEquals("[[Oak Log]]", GroupNames.normalise("[[Oak Log]]"));
     }
 
     @Test
@@ -25,6 +25,14 @@ class GroupNamesTest {
         assertEquals("[Oak] Log", GroupNames.normalise("[Oak] Log"));
         assertEquals("Oak [Log]", GroupNames.normalise("Oak [Log]"));
         assertEquals("[]", GroupNames.normalise("[]"));
+    }
+
+    @Test
+    void bracketsThatAreNotOneSurroundingPairStay() {
+        assertEquals("[VIP] Helpers [EU]", GroupNames.normalise("[VIP] Helpers [EU]"));
+        assertEquals("[VIP] [EU]", GroupNames.normalise("[VIP] [EU]"));
+        assertTrue(GroupNames.matches("[VIP] Helpers [EU]", "[VIP] Helpers [EU]"));
+        assertFalse(GroupNames.matches("[VIP] Helpers [EU]", "VIP] Helpers [EU"));
     }
 
     @Test

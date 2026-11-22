@@ -12,7 +12,9 @@ public final class GroupNames {
     public static String normalise(final String name) {
         final String trimmedName = name.trim();
         if (trimmedName.length() <= 2 || !trimmedName.startsWith("[") || !trimmedName.endsWith("]")) return trimmedName;
-        return trimmedName.substring(1, trimmedName.length() - 1).trim();
+        final String innerText = trimmedName.substring(1, trimmedName.length() - 1);
+        if (innerText.contains("[") || innerText.contains("]")) return trimmedName;
+        return innerText.trim();
     }
 
     public static boolean matches(final String groupName, final String typedName) {
