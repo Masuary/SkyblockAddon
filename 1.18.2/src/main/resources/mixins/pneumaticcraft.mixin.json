@@ -8,6 +8,9 @@
     "defaultRequire": 1
   },
   "server": [
+    "PneumaticCraftAphorismMixinConfig",
+    "PneumaticCraftHackingBlockMixinConfig",
+    "PneumaticCraftHackingEntityMixinConfig",
     "PneumaticCraftWrenchMixinConfig"
   ],
   "refmap": "skyblockaddon.refmap.json"

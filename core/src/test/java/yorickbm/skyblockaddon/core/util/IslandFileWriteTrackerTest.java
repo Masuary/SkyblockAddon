@@ -22,9 +22,9 @@ class IslandFileWriteTrackerTest {
     }
 
     @Test
-    void unchangedBytesAfterASuccessfulWriteAreSkipped() {
+    void unchangedBytesAfterAQueuedWriteAreSkipped() {
         final IslandFileWriteTracker tracker = new IslandFileWriteTracker();
-        tracker.recordWritten(ISLAND, bytes("island"));
+        tracker.recordQueued(ISLAND, bytes("island"));
 
         assertFalse(tracker.needsWrite(ISLAND, bytes("island")));
     }
@@ -32,24 +32,34 @@ class IslandFileWriteTrackerTest {
     @Test
     void changedBytesAreWritten() {
         final IslandFileWriteTracker tracker = new IslandFileWriteTracker();
-        tracker.recordWritten(ISLAND, bytes("island"));
+        tracker.recordQueued(ISLAND, bytes("island"));
 
         assertTrue(tracker.needsWrite(ISLAND, bytes("island with a new member")));
     }
 
     @Test
-    void aFailedWriteIsRetriedBecauseOnlySuccessfulWritesAreRecorded() {
+    void aFailedWriteIsWrittenAgainAtTheNextSave() {
         final IslandFileWriteTracker tracker = new IslandFileWriteTracker();
-        tracker.recordWritten(ISLAND, bytes("island"));
+        final IslandFileWriteTracker.QueuedDigest failedWrite = tracker.recordQueued(ISLAND, bytes("island"));
+        tracker.writeFailed(ISLAND, failedWrite);
 
-        assertTrue(tracker.needsWrite(ISLAND, bytes("changed but the write failed")));
-        assertTrue(tracker.needsWrite(ISLAND, bytes("changed but the write failed")));
+        assertTrue(tracker.needsWrite(ISLAND, bytes("island")));
+    }
+
+    @Test
+    void aFailedOlderWriteKeepsTheNewerQueuedOne() {
+        final IslandFileWriteTracker tracker = new IslandFileWriteTracker();
+        final IslandFileWriteTracker.QueuedDigest olderWrite = tracker.recordQueued(ISLAND, bytes("island"));
+        tracker.recordQueued(ISLAND, bytes("island with a new member"));
+        tracker.writeFailed(ISLAND, olderWrite);
+
+        assertFalse(tracker.needsWrite(ISLAND, bytes("island with a new member")));
     }
 
     @Test
     void islandsAreTrackedSeparately() {
         final IslandFileWriteTracker tracker = new IslandFileWriteTracker();
-        tracker.recordWritten(ISLAND, bytes("same content"));
+        tracker.recordQueued(ISLAND, bytes("same content"));
 
         assertTrue(tracker.needsWrite(OTHER_ISLAND, bytes("same content")));
     }
@@ -57,7 +67,7 @@ class IslandFileWriteTrackerTest {
     @Test
     void aForgottenIslandIsWrittenAgain() {
         final IslandFileWriteTracker tracker = new IslandFileWriteTracker();
-        tracker.recordWritten(ISLAND, bytes("island"));
+        tracker.recordQueued(ISLAND, bytes("island"));
         tracker.forget(ISLAND);
 
         assertTrue(tracker.needsWrite(ISLAND, bytes("island")));
@@ -67,7 +77,7 @@ class IslandFileWriteTrackerTest {
     void recordingKeepsADigestNotTheCallersArray() {
         final IslandFileWriteTracker tracker = new IslandFileWriteTracker();
         final byte[] written = bytes("island");
-        tracker.recordWritten(ISLAND, written);
+        tracker.recordQueued(ISLAND, written);
         written[0] = 'X';
 
         assertFalse(tracker.needsWrite(ISLAND, bytes("island")));

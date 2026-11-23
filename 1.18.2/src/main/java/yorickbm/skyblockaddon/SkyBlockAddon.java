@@ -21,6 +21,7 @@ import net.minecraftforge.fml.loading.FileUtils;
 import org.slf4j.Logger;
 import yorickbm.guilibrary.GUILibraryRegistry;
 import yorickbm.guilibrary.events.DefaultEventHandler;
+import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldCapability;
 import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldCapability.ParsedIslandStructure;
 import yorickbm.skyblockaddon.chunk.ChunkTaskScheduler;
 import yorickbm.skyblockaddon.commands.IslandBanCommand;
@@ -166,6 +167,7 @@ public class SkyBlockAddon {
      */
     @SubscribeEvent
     public void onServerShutDown(final ServerStoppedEvent event) {
+        SkyblockAddonWorldCapability.drainIslandWritesOnServerStop();
         IslandBanCommand.clearPendingLookups();
         try {
             ChunkTaskScheduler.clear();

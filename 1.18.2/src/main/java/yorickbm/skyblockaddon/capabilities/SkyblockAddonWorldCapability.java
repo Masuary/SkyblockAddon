@@ -17,6 +17,7 @@ import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
 import yorickbm.skyblockaddon.core.islands.IslandSlot;
 import yorickbm.skyblockaddon.core.islands.IslandSlotAllocator;
+import yorickbm.skyblockaddon.core.util.IslandFileWriteQueue;
 import yorickbm.skyblockaddon.core.util.IslandFileWriteTracker;
 import yorickbm.skyblockaddon.core.util.geometry.Vec3i;
 import yorickbm.skyblockaddon.islands.ForgeIsland;
@@ -27,6 +28,7 @@ import yorickbm.skyblockaddon.util.NBTEncoder;
 import yorickbm.skyblockaddon.util.NBTUtil;
 
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -34,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 public class SkyblockAddonWorldCapability {
@@ -44,10 +47,15 @@ public class SkyblockAddonWorldCapability {
     private List<Vec3i> persistedReusableSlots = List.of();
     private List<IslandSlot> persistedAdminReservedSlots = List.of();
     private boolean islandsLoaded = false;
+    private static final Duration STOP_DRAIN_TIMEOUT = Duration.ofMinutes(5);
+    private static volatile IslandFileWriteQueue activeIslandFileWriteQueue;
     private final IslandFileWriteTracker islandFileWriteTracker = new IslandFileWriteTracker();
+    private final IslandFileWriteQueue islandFileWriteQueue;
 
     public SkyblockAddonWorldCapability(final MinecraftServer server) {
         serverInstance = server;
+        this.islandFileWriteQueue = new IslandFileWriteQueue(islandDataFolder(), this.islandFileWriteTracker, SkyblockAddonWorldCapability::logWrittenBatch);
+        activeIslandFileWriteQueue = this.islandFileWriteQueue;
 
         //Init Island Manager
         IslandManager.getInstance().initializeCaches(server.getMaxPlayers());
@@ -94,10 +102,11 @@ public class SkyblockAddonWorldCapability {
     }
 
     /**
-     * Persist the in-memory islands that changed since their last write. Island files are written only here: the
-     * overworld's {@code WorldEvent.Save} (autosave, save-all, stop) and the admin commands that must persist at once
-     * call it; the capabilities.dat hook stores the grid state only. Serializes the live island objects, so it must run
-     * on the server thread, where islands are changed.
+     * Persist the in-memory islands that changed since their last write. Island files are written only through here:
+     * the overworld's {@code WorldEvent.Save} (autosave, save-all, stop) and the admin commands that must persist at
+     * once call it; the capabilities.dat hook stores the grid state only. The live island objects are serialized here
+     * on the server thread, where islands are changed; the bytes go to the island writer thread, which does the disk
+     * work in queue order (the server stop waits for it in {@link #drainIslandWritesOnServerStop}).
      */
     public void saveIslandsToDisk() {
         if (!serverInstance.isSameThread()) {
@@ -107,15 +116,49 @@ public class SkyblockAddonWorldCapability {
             LOGGER.warn("Islands are not loaded; skipping the island file save so no island file is touched.");
             return;
         }
-        final long saveStartNanos = System.nanoTime();
-        final NBTEncoder.IslandSaveReport report = NBTEncoder.saveChangedToFile(IslandManager.getInstance().getIslands().stream()
+        final long serializeStartNanos = System.nanoTime();
+        final NBTEncoder.IslandSerializationReport report = NBTEncoder.serializeChanged(IslandManager.getInstance().getIslands().stream()
                 .map(SkyblockAddonWorldCapability::asForgeIsland)
                 .toList(), islandDataFolder(), this.islandFileWriteTracker);
-        final long saveMillis = (System.nanoTime() - saveStartNanos) / 1_000_000L;
-        if (report.written() > 0 || !report.failed().isEmpty()) {
-            LOGGER.info("Saved islands in {} ms: {} written, {} unchanged, {} failed.", saveMillis, report.written(), report.skipped(), report.failed().size());
+        this.islandFileWriteQueue.queueWrites(report.changed());
+        final long serializeMillis = (System.nanoTime() - serializeStartNanos) / 1_000_000L;
+        LOGGER.debug("Serialized islands in {} ms: {} queued for writing, {} unchanged, {} failed.",
+                serializeMillis, report.changed().size(), report.unchanged(), report.failed().size());
+    }
+
+    private static void logWrittenBatch(final IslandFileWriteQueue.BatchReport report) {
+        report.failures().forEach((islandId, failure) -> LOGGER.error("Failed to write the file of island {}; it is written again at the next save", islandId, failure));
+        if (report.failures().isEmpty()) {
+            LOGGER.info("Wrote {} island file(s) in {} ms.", report.written(), report.millis());
         } else {
-            LOGGER.debug("Saved islands in {} ms: {} written, {} unchanged, {} failed.", saveMillis, report.written(), report.skipped(), report.failed().size());
+            LOGGER.error("Wrote {} island file(s) in {} ms; {} failed: {}", report.written(), report.millis(), report.failures().size(), report.failures().keySet());
+        }
+    }
+
+    /**
+     * Wait until every island write and delete queued so far is on disk, for code that reads island files back.
+     *
+     * @throws TimeoutException when the island writer is still busy at the timeout
+     */
+    public void awaitQueuedIslandWrites(final Duration timeout) throws TimeoutException, InterruptedException {
+        this.islandFileWriteQueue.awaitQueued(timeout);
+    }
+
+    /**
+     * Called when the server has stopped, after its final save: waits for the island writer to finish so no queued
+     * island file is lost when the JVM exits.
+     */
+    public static void drainIslandWritesOnServerStop() {
+        final IslandFileWriteQueue queue = activeIslandFileWriteQueue;
+        if (queue == null) return;
+        activeIslandFileWriteQueue = null;
+        try {
+            if (!queue.shutdownAndDrain(STOP_DRAIN_TIMEOUT)) {
+                LOGGER.error("The island writer did not finish within {} s of the server stop; island files queued last may not be on disk.", STOP_DRAIN_TIMEOUT.toSeconds());
+            }
+        } catch (final InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            LOGGER.error("Interrupted while waiting for the island writer at the server stop; island files queued last may not be on disk.", interrupted);
         }
     }
 
@@ -298,12 +341,13 @@ public class SkyblockAddonWorldCapability {
         return new IslandReservation(islandLocation, height, offset, chunks, allocation.skippedSlots());
     }
 
-    public void removeIslandNBT(ForgeIsland data) {
-        final Path worldPath = serverInstance.getWorldPath(LevelResource.ROOT).normalize();
-        final Path filePath = worldPath.resolve("islanddata");
-
-        NBTEncoder.removeFileFromFolder(filePath, data);
-        this.islandFileWriteTracker.forget(data.getId());
+    /**
+     * Delete an island's file after any write of it that is still queued.
+     */
+    public void removeIslandNBT(final ForgeIsland data) {
+        final UUID islandId = data.getId();
+        this.islandFileWriteTracker.forget(islandId);
+        this.islandFileWriteQueue.queueDelete(islandId, failure -> LOGGER.error("Failed to delete the file of island {} in '{}'", islandId, islandDataFolder(), failure));
     }
 
     public List<UUID> getPurgableIslands() {

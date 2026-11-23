@@ -5,19 +5,16 @@ import net.minecraft.nbt.NbtIo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import yorickbm.skyblockaddon.core.util.IslandDataFiles;
+import yorickbm.skyblockaddon.core.util.IslandFileStore;
+import yorickbm.skyblockaddon.core.util.IslandFileWriteQueue;
 import yorickbm.skyblockaddon.core.util.IslandFileWriteTracker;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -166,41 +163,37 @@ public class NBTEncoder {
         }
     }
 
-    public record IslandSaveReport(int written, int skipped, List<UUID> failed) {
+    public record IslandSerializationReport(List<IslandFileWriteQueue.IslandWrite> changed, int unchanged, List<UUID> failed) {
     }
 
     /**
-     * Save only the islands whose serialized bytes differ from their last successful write (or whose file is gone),
-     * each through temp-file + fsync + atomic rename. A failed island is reported and retried at the next save.
+     * Serialize every island and keep only those whose bytes differ from their last queued write (or whose file is
+     * gone), recording them as queued in the tracker. Runs on the server thread; the caller hands the result to the
+     * island writer. An island that fails to serialize is reported and tried again at the next save.
      */
-    public static <T extends NBTSerializable> IslandSaveReport saveChangedToFile(final Collection<T> collection, final Path folderPath,
-                                                                                 final IslandFileWriteTracker writeTracker) {
-        createFolderIfMissing(folderPath);
-
-        int written = 0;
-        int skipped = 0;
-        final List<UUID> failedSaves = new ArrayList<>();
+    public static <T extends NBTSerializable> IslandSerializationReport serializeChanged(final Collection<T> collection, final Path folderPath,
+                                                                                         final IslandFileWriteTracker writeTracker) {
+        final List<IslandFileWriteQueue.IslandWrite> changed = new ArrayList<>();
+        int unchanged = 0;
+        final List<UUID> failedSerializations = new ArrayList<>();
         for (final T data : collection) {
             try {
-                final CompoundTag islandTag = data.serializeNBT();
-                final byte[] serializedIsland = uncompressedBytes(islandTag);
+                final byte[] serializedIsland = uncompressedBytes(data.serializeNBT());
                 final boolean fileExists = Files.isRegularFile(folderPath.resolve(IslandDataFiles.fileNameFor(data.getId())));
                 if (fileExists && !writeTracker.needsWrite(data.getId(), serializedIsland)) {
-                    skipped++;
+                    unchanged++;
                     continue;
                 }
-                writeAtomically(data.getId(), islandTag, folderPath);
-                writeTracker.recordWritten(data.getId(), serializedIsland);
-                written++;
+                changed.add(new IslandFileWriteQueue.IslandWrite(data.getId(), serializedIsland, writeTracker.recordQueued(data.getId(), serializedIsland)));
             } catch (final IOException | RuntimeException e) {
-                failedSaves.add(data.getId());
-                LOGGER.error("Failed to save island {} to '{}'", data.getId(), folderPath.toAbsolutePath(), e);
+                failedSerializations.add(data.getId());
+                LOGGER.error("Failed to serialize island {} for saving", data.getId(), e);
             }
         }
-        if (!failedSaves.isEmpty()) {
-            LOGGER.error("{} of {} island file(s) were not saved: {}", failedSaves.size(), collection.size(), failedSaves);
+        if (!failedSerializations.isEmpty()) {
+            LOGGER.error("{} of {} island(s) were not saved: {}", failedSerializations.size(), collection.size(), failedSerializations);
         }
-        return new IslandSaveReport(written, skipped, List.copyOf(failedSaves));
+        return new IslandSerializationReport(List.copyOf(changed), unchanged, List.copyOf(failedSerializations));
     }
 
     private static void createFolderIfMissing(final Path folderPath) {
@@ -219,54 +212,6 @@ public class NBTEncoder {
     }
 
     private static <T extends NBTSerializable> void writeAtomically(final T data, final Path folderPath) throws IOException {
-        writeAtomically(data.getId(), data.serializeNBT(), folderPath);
-    }
-
-    private static void writeAtomically(final UUID islandId, final CompoundTag islandTag, final Path folderPath) throws IOException {
-        final Path path = folderPath.resolve(IslandDataFiles.fileNameFor(islandId));
-        final Path tempPath = folderPath.resolve(islandId + IslandDataFiles.TEMPORARY_EXTENSION);
-        try {
-            final ByteArrayOutputStream compressedIsland = new ByteArrayOutputStream();
-            NbtIo.writeCompressed(islandTag, compressedIsland);
-            try (final FileChannel tempFile = FileChannel.open(tempPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
-                final ByteBuffer remainingBytes = ByteBuffer.wrap(compressedIsland.toByteArray());
-                while (remainingBytes.hasRemaining()) tempFile.write(remainingBytes);
-                tempFile.force(true);
-            }
-            try {
-                Files.move(tempPath, path, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-            } catch (final AtomicMoveNotSupportedException atomicMoveNotSupported) {
-                Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING);
-            }
-        } finally {
-            Files.deleteIfExists(tempPath);
-        }
-    }
-
-    /**
-     * Remove an NBT file with the given UUID from the specified folder.
-     *
-     * @param folderPath - Folder where the NBT file is stored
-     * @param object     - Object to remove
-     *
-     * @returns - If the file has been able to be removed
-     */
-    public static <T extends NBTSerializable> boolean removeFileFromFolder(Path folderPath, T object) {
-        // Resolve the path to the specific file
-        Path fileToDelete = folderPath.resolve(object.getId().toString() + ".nbt");
-        // Check if the file exists before attempting to delete
-        if (Files.exists(fileToDelete)) {
-            try {
-                Files.delete(fileToDelete);
-                LOGGER.info("Successfully deleted NBT file: " + fileToDelete.getFileName());
-                return true;
-            } catch (IOException e) {
-                LOGGER.error("Failed to delete file '" + fileToDelete.getFileName() + "': " + e.getMessage());
-                return false;
-            }
-        } else {
-            LOGGER.warn("File not found for deletion: " + fileToDelete.getFileName());
-            return false;
-        }
+        IslandFileStore.writeAtomically(folderPath, data.getId(), uncompressedBytes(data.serializeNBT()));
     }
 }

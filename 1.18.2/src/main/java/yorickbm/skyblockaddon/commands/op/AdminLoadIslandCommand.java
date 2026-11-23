@@ -7,6 +7,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.UuidArgument;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.level.storage.LevelResource;
+import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldCapability;
 import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldProvider;
 import yorickbm.skyblockaddon.commands.interfaces.Cmds;
 import yorickbm.skyblockaddon.core.configs.SkyBlockAddonLanguage;
@@ -16,9 +17,12 @@ import yorickbm.skyblockaddon.islands.ForgeIsland;
 import yorickbm.skyblockaddon.util.NBTEncoder;
 
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.UUID;
+import java.util.concurrent.TimeoutException;
 
 public class AdminLoadIslandCommand {
+    private static final Duration QUEUED_WRITES_TIMEOUT = Duration.ofSeconds(30);
 
     public AdminLoadIslandCommand(final CommandDispatcher<CommandSourceStack> dispatcher) {
         register(dispatcher, "island");
@@ -44,6 +48,7 @@ public class AdminLoadIslandCommand {
     public int execute(final CommandSourceStack command, final UUID islandUUID) {
 
         command.getServer().overworld().getCapability(SkyblockAddonWorldProvider.SKYBLOCKADDON_WORLD_CAPABILITY).ifPresent(cap -> {
+            if (!islandFilesWritten(command, cap)) return;
 
             // Build path to islanddata folder (same as SkyblockAddonWorldCapability)
             final Path worldPath = command.getServer().getWorldPath(LevelResource.ROOT).normalize();
@@ -76,5 +81,18 @@ public class AdminLoadIslandCommand {
         });
 
         return Command.SINGLE_SUCCESS;
+    }
+
+    private static boolean islandFilesWritten(final CommandSourceStack command, final SkyblockAddonWorldCapability capability) {
+        try {
+            capability.awaitQueuedIslandWrites(QUEUED_WRITES_TIMEOUT);
+            return true;
+        } catch (final TimeoutException stillWriting) {
+            command.sendFailure(new TextComponent("Island files are still being written; try again in a moment."));
+            return false;
+        } catch (final InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while waiting for the island writer", interrupted);
+        }
     }
 }

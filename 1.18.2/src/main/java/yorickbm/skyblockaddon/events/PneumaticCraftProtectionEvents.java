@@ -200,18 +200,34 @@ public class PneumaticCraftProtectionEvents {
     }
 
     /**
-     * PneumaticCraft items used on blocks. A click on a PneumaticCraft block is judged by the island permissions like
-     * any other block (the "PneumaticCraft" toggle), so a Visitor group given that toggle can use the machines; a click
-     * with another mod's wrench reaches the block through PneumaticCraft's own packet, judged in
-     * {@code PneumaticCraftWrenchMixinConfig}.
+     * PneumaticCraft items used on blocks. A plain click with one on a PneumaticCraft block is left to the island
+     * permissions like any other block click (the "PneumaticCraft" toggle), so a Visitor group given that toggle can
+     * use the machines with PneumaticCraft items in hand; a sneaking click skips the block and lets the item act on it
+     * (the Pneumatic Wrench dismantles the block), so it is judged like breaking the block. On any other block the
+     * item stays for island members only. A click with another mod's wrench reaches the block through PneumaticCraft's
+     * own packet, judged in {@code PneumaticCraftWrenchMixinConfig}.
      */
     @SubscribeEvent
     public void onRightClickBlock(final PlayerInteractEvent.RightClickBlock event) {
         if (!isPneumaticCraftItem(event.getItemStack())) return;
+        if (isPneumaticCraftBlock(event.getWorld().getBlockState(event.getPos()))) {
+            judgeItemOnPneumaticCraftBlock(event);
+            return;
+        }
         if (shouldBlock(event.getPlayer(), event.getPos(), event.getWorld())) {
             SkyBlockAddon.logPermissionDebug(LOGGER, "PNC blocked: RightClickBlock at " + event.getPos());
             event.setCanceled(true);
             notifyDeny(event.getPlayer());
+        }
+    }
+
+    private static void judgeItemOnPneumaticCraftBlock(final PlayerInteractEvent.RightClickBlock event) {
+        final Player player = event.getPlayer();
+        if (!player.isSecondaryUseActive() || !(event.getWorld() instanceof final ServerLevel level)) return;
+        if (InteractionHandler.isBreakDenied(player, level, event.getPos())) {
+            SkyBlockAddon.logPermissionDebug(LOGGER, "PNC blocked: sneaking RightClickBlock on a PneumaticCraft block at " + event.getPos());
+            event.setCanceled(true);
+            notifyDeny(player);
         }
     }
 

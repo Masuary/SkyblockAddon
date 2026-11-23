@@ -158,6 +158,47 @@ public final class MixinPermissionChecks {
     }
 
     /**
+     * PneumaticCraft's aphorism tile edit packet rewrites the tile's text, rotation, margin and visibility with only a
+     * reach check: judged like a right click on the tile, by the island there. A denied edit gets the tile resent so the
+     * client's screen shows the real text again.
+     */
+    public static boolean denyPneumaticCraftTileEdit(final ServerPlayer player, final BlockPos position) {
+        final ServerLevel level = player.getLevel();
+        final Optional<Island> guardingIsland = InteractionHandler.islandGuardingPosition(player, level, position);
+        if (guardingIsland.isEmpty()) return false;
+
+        final boolean denied = isDeniedOn(guardingIsland.get(), player, PermissionTriggers.ON_RIGHT_CLICK_BLOCK, InteractionHandler.subjectOfClick(level, position, ItemStack.EMPTY));
+        if (denied) {
+            InteractionHandler.resendBlockToPlayer(player, level, position);
+            if (InteractionHandler.isFirstDenialMessageThisTick(player)) InteractionHandler.sendDeniedMessage(player);
+        }
+        return denied;
+    }
+
+    /**
+     * A Pneumatic Helmet block hack (opens doors, flips levers, primes TNT, silences spawners) works on the block
+     * without a click: judged like breaking the block, by the island there.
+     */
+    public static boolean denyPneumaticCraftBlockHack(final ServerPlayer player, final BlockPos position) {
+        final boolean denied = InteractionHandler.isBreakDenied(player, player.getLevel(), position);
+        if (denied && InteractionHandler.isFirstDenialMessageThisTick(player)) InteractionHandler.sendDeniedMessage(player);
+        return denied;
+    }
+
+    /**
+     * A Pneumatic Helmet entity hack can take over a tamed animal, so on an island only its owner and members may hack
+     * an entity.
+     */
+    public static boolean denyPneumaticCraftEntityHack(final ServerPlayer player, final Entity target) {
+        if (!(target.getLevel() instanceof final ServerLevel level)) return false;
+        final boolean denied = InteractionHandler.islandGuardingPosition(player, level, target.blockPosition())
+                .map(island -> !island.isPartOf(player.getUUID()))
+                .orElse(false);
+        if (denied && InteractionHandler.isFirstDenialMessageThisTick(player)) InteractionHandler.sendDeniedMessage(player);
+        return denied;
+    }
+
+    /**
      * A block broken at range by a world write no Forge event sees, judged by the island at the position like a break by
      * hand there (a left click with the main hand item).
      */
