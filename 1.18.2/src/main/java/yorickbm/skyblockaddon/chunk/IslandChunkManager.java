@@ -4,7 +4,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.TicketType;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -17,7 +16,6 @@ import yorickbm.skyblockaddon.islands.ForgeIsland;
 import yorickbm.skyblockaddon.util.ProgressBar;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -29,8 +27,6 @@ public class IslandChunkManager {
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final int CHUNK_SIZE = 16;
-    private static final TicketType<ChunkPos> PURGE_TICKET = TicketType.create("skyblockaddon_purge", Comparator.comparingLong(ChunkPos::toLong));
-    private static final int FULL_CHUNK_TICKET_DISTANCE = 0;
 
     public static void createDummies(List<ForgeIsland> islands, ProgressBar bar, Predicate<ForgeIsland> islandStillPurgeable, Consumer<ForgeIsland> onIslandFinished, Runnable onDone, ServerLevel level) {
         Task tracker = new Task(onDone, bar);
@@ -64,7 +60,6 @@ public class IslandChunkManager {
                 return;
             }
             task.getBar().sendToast(new TextComponent("Loading chunk " + pos + ""));
-            level.getChunkSource().addRegionTicket(PURGE_TICKET, pos, FULL_CHUNK_TICKET_DISTANCE, pos);
             ChunkAccess chunk = level.getChunk(pos.x, pos.z, ChunkStatus.FULL, true);
             processChunk(chunk, level, task, clearingAllowed);
         });
@@ -95,10 +90,7 @@ public class IslandChunkManager {
             }
 
             if (nonAirBlocks.isEmpty()) {
-                level.getServer().execute(() -> {
-                    releasePurgeTicket(level, chunk.getPos());
-                    task.completeSubTask(false);
-                });
+                level.getServer().execute(() -> task.completeSubTask(false));
                 LOGGER.debug("Finished processing (empty) chunk {} for task {}", chunk.getPos(), task.getId());
                 return;
             }
@@ -110,20 +102,21 @@ public class IslandChunkManager {
                 final int end = Math.min(i + batchSize, nonAirBlocks.size());
 
                 ChunkTaskScheduler.queue(() -> {
+                    // The scanned chunk may have unloaded since: clear the chunk that is loaded now, or the changes are lost.
+                    LevelChunk liveChunk = level.getChunk(chunk.getPos().x, chunk.getPos().z);
                     if (clearingAllowed.getAsBoolean()) {
                         for (int j = start; j < end; j++) {
                             BlockPos pos = nonAirBlocks.get(j);
-                            removeBlockEntityBeforeClearing(chunk, pos);
-                            chunk.setBlockState(pos, Blocks.AIR.defaultBlockState(), false); // silent
+                            removeBlockEntityBeforeClearing(liveChunk, pos);
+                            liveChunk.setBlockState(pos, Blocks.AIR.defaultBlockState(), false); // silent
                         }
                     }
 
                     // After last batch, send chunk update to players
                     if (end >= nonAirBlocks.size()) {
-                        level.getChunkSource().chunkMap.getPlayers(chunk.getPos(), false)
+                        level.getChunkSource().chunkMap.getPlayers(liveChunk.getPos(), false)
                                 .forEach(player -> player.connection
-                                        .send(new ClientboundLevelChunkWithLightPacket((LevelChunk) chunk, level.getLightEngine(), null, null, false)));
-                        releasePurgeTicket(level, chunk.getPos());
+                                        .send(new ClientboundLevelChunkWithLightPacket(liveChunk, level.getLightEngine(), null, null, false)));
 
                         task.completeSubTask(false);
                         task.getBar().sendToast(new TextComponent("Cleared chunk " + chunk.getPos() + ""));
@@ -133,16 +126,13 @@ public class IslandChunkManager {
         }, "AsyncChunkScan-" + chunk.getPos().x + "," + chunk.getPos().z).start();
     }
 
-    private static void releasePurgeTicket(ServerLevel level, ChunkPos pos) {
-        level.getChunkSource().removeRegionTicket(PURGE_TICKET, pos, FULL_CHUNK_TICKET_DISTANCE, pos);
-    }
-
     /**
      * Purged blocks must not drop anything: without a block entity, onRemove finds nothing to spill or pack (a packed
      * Sophisticated barrel never despawns and leaves an entry in sophisticatedstorage.dat). getBlockEntity first so a
      * block entity still pending as chunk NBT is promoted and removed instead of being loaded again during onRemove.
+     * A storage controller that looks its storage up again in setRemoved recreates an empty one, which drops nothing.
      */
-    private static void removeBlockEntityBeforeClearing(ChunkAccess chunk, BlockPos pos) {
+    private static void removeBlockEntityBeforeClearing(LevelChunk chunk, BlockPos pos) {
         if (chunk.getBlockEntity(pos) != null) {
             chunk.removeBlockEntity(pos);
         }
