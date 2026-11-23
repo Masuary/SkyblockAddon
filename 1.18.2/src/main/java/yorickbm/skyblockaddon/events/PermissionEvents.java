@@ -80,7 +80,8 @@ public class PermissionEvents {
             TriggerRule.matchedAgainstData(FillBucketEvent.class, PermissionTriggers.ON_BUCKET, FillBucketEvent::getEntity,
                     PermissionEvents::bucketItemId, PermissionDataJson::getItemsData),
             TriggerRule.matchedAgainstData(EntityMountEvent.class, PermissionTriggers.ON_MOUNT, EntityMountEvent::getEntity,
-                    event -> entityTypeId(event.getEntityBeingMounted()), PermissionDataJson::getEntitiesData),
+                    event -> entityTypeId(event.getEntityBeingMounted()), PermissionDataJson::getEntitiesData)
+                    .onlyWhen(EntityMountEvent::isMounting),
             TriggerRule.matchedAgainstData(AttackEntityEvent.class, PermissionTriggers.ON_ATTACK, AttackEntityEvent::getPlayer,
                     event -> entityTypeId(event.getTarget()), PermissionDataJson::getEntitiesData),
             TriggerRule.matchedAgainstData(LivingEntityUseItemEvent.class, PermissionTriggers.ON_USE, LivingEntityUseItemEvent::getEntity,
@@ -377,6 +378,16 @@ public class PermissionEvents {
 
         TriggerRule<E> withDenialEffect(final BiConsumer<E, ServerPlayer> effect) {
             return new TriggerRule<>(this.eventType, this.actor, this.decision, effect);
+        }
+
+        /**
+         * Judge only the events the predicate accepts; the others pass unchecked (getting off a vehicle is never refused,
+         * or a rider who lost the permission while seated could not leave).
+         */
+        TriggerRule<E> onlyWhen(final Predicate<E> judged) {
+            final TriggerDecision<E> judgedDecision = this.decision;
+            return new TriggerRule<>(this.eventType, this.actor,
+                    (event, player, standingOn) -> judged.test(event) && judgedDecision.isDenied(event, player, standingOn), this.denialEffect);
         }
 
         void register(final IEventBus eventBus) {
