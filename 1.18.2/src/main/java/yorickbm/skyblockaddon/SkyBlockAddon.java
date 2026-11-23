@@ -25,7 +25,6 @@ import yorickbm.skyblockaddon.capabilities.SkyblockAddonWorldCapability.ParsedIs
 import yorickbm.skyblockaddon.chunk.ChunkTaskScheduler;
 import yorickbm.skyblockaddon.commands.IslandBanCommand;
 import yorickbm.skyblockaddon.configs.SkyblockAddonConfig;
-import yorickbm.skyblockaddon.util.RiddenStorageVehicleRules;
 import yorickbm.skyblockaddon.core.SkyblockAddonCore;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
@@ -153,7 +152,6 @@ public class SkyBlockAddon {
     @SubscribeEvent
     public void onServerStarting(final ServerStartingEvent event) {
         SkyblockAddonConfig.validateIslandCreationSettings();
-        RiddenStorageVehicleRules.rules();
 
         //Loading public island owner names into username cache form Mojang API
         IslandManager.getInstance().getIslands().stream().filter(Island::isVisible).forEach(Island::updateName);
