@@ -2,6 +2,7 @@ package yorickbm.skyblockaddon.core.permissions;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import yorickbm.skyblockaddon.core.util.MatchResult;
@@ -94,6 +95,31 @@ class BundledRegistryCoverageTest {
         assertTrue(entityDenial(manager, "open_chests"::equals, "smallships:oak_cog").isEmpty());
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"vaulthunters", "woldsvaults", "default"})
+    void bedsAreLeftToSleepInBedsAndNotRefusedByTheCatchAll(final String pack) {
+        final PermissionManager manager = bundled(pack);
+        assertTrue(blockClickDenial(manager, VISITOR, "minecraft:red_bed").isEmpty());
+        assertTrue(blockClickDenial(manager, VISITOR, "comforts:hammock_white").isEmpty());
+        assertEquals(Optional.of("interact_generic"), blockClickDenial(manager, VISITOR, "minecraft:lectern"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"vaulthunters", "woldsvaults", "default"})
+    void carpentryBedsAreFramesFirstAndStayUnderTheCatchAll(final String pack) {
+        final PermissionManager manager = bundled(pack);
+        assertEquals(Optional.of("interact_generic"), blockClickDenial(manager, VISITOR, "blockcarpentry:frame_bed"));
+        assertEquals(Optional.of("interact_generic"), blockClickDenial(manager, VISITOR, "blockcarpentry:illusion_bed"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"vaulthunters", "woldsvaults", "default"})
+    void storageCartsOfOtherModsNeedTheChestToggle(final String pack) {
+        final PermissionManager manager = bundled(pack);
+        assertEquals(Optional.of("open_chests"), entityDenial(manager, VISITOR, "supplementaries:dispenser_minecart"));
+        assertEquals(Optional.of("open_chests"), entityDenial(manager, VISITOR, "lootr:lootr_minecart"));
+    }
+
     @Test
     void plainChestsOfModsWithTheirOwnToggleStayUnderChests() {
         final PermissionManager manager = bundled("woldsvaults");
@@ -172,6 +198,43 @@ class BundledRegistryCoverageTest {
         assertTrue(itemUseInAirDenied(manager, "minecraft:egg"));
         assertFalse(itemUseInAirDenied(manager, "minecraft:golden_apple"));
         assertFalse(itemUseInAirDenied(manager, "minecraft:bow"));
+    }
+
+    private static Optional<String> placementDenial(final PermissionManager manager, final Predicate<String> group, final String handItemId, final String clickedBlockId) {
+        return InteractionPermissionDecision.findDenyingPermission(PermissionTriggers.ON_PLACE_BLOCK, manager.getPermissionsForTrigger(PermissionTriggers.ON_PLACE_BLOCK), group,
+                new InteractionSubject(Optional.of(handItemId), Optional.empty(), Optional.of(clickedBlockId))).map(Permission::getId);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "vaulthunters, minecraft:zombie_spawn_egg", "vaulthunters, ispawner:spawn_egg", "vaulthunters, quark:egg_parrot_red", "vaulthunters, minecraft:egg",
+            "woldsvaults, minecraft:zombie_spawn_egg", "woldsvaults, ispawner:spawn_egg", "woldsvaults, quark:egg_parrot_red", "woldsvaults, minecraft:egg"})
+    void everySpawnEggItemNeedsOnlyTheSpawnEggToggle(final String pack, final String eggId) {
+        final PermissionManager manager = bundled(pack);
+        final List<Permission> placementPermissions = manager.getPermissionsForTrigger(PermissionTriggers.ON_PLACE_BLOCK);
+        assertEquals(Optional.of("interact_spawn"), placementDenial(manager, VISITOR, eggId, "minecraft:grass_block"));
+        assertEquals(Optional.empty(), placementDenial(manager, "interact_spawn"::equals, eggId, "minecraft:grass_block"));
+        assertEquals(Optional.of("interact_spawn"), InteractionPermissionDecision.findDenyingEntityPlacement(placementPermissions, "place_blocks"::equals, eggId).map(Permission::getId));
+        assertEquals(Optional.empty(), InteractionPermissionDecision.findDenyingEntityPlacement(placementPermissions, "interact_spawn"::equals, eggId));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"vaulthunters", "woldsvaults"})
+    void easyVillagersAndBlocksOnPortalFramesStayUnderPlaceBlocks(final String pack) {
+        final PermissionManager manager = bundled(pack);
+        assertEquals(Optional.of("place_blocks"), placementDenial(manager, "interact_easy_villagers"::equals, "easy_villagers:villager", "minecraft:grass_block"));
+        assertEquals(Optional.of("place_blocks"), placementDenial(manager, "use_vault_portal"::equals, "minecraft:stick", "the_vault:vault_portal"));
+        assertEquals(Optional.of("place_blocks"), placementDenial(manager, "use_vault_portal"::equals, "minecraft:stick", "the_vault:vault_stone_pillar"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"vaulthunters", "woldsvaults"})
+    void openingAVaultPortalNeedsOnlyTheVaultPortalToggle(final String pack) {
+        final List<Permission> openPermissions = bundled(pack).getPermissionsForTrigger(PermissionTriggers.ON_OPEN_VAULT_PORTAL);
+        final InteractionSubject crystalOnFrame = new InteractionSubject(Optional.of("the_vault:vault_crystal"), Optional.empty(), Optional.of("the_vault:vault_stone_pillar"));
+        assertEquals(Optional.of("use_vault_portal"), InteractionPermissionDecision.findDenyingPermission(PermissionTriggers.ON_OPEN_VAULT_PORTAL, openPermissions, "place_blocks"::equals, crystalOnFrame)
+                .map(Permission::getId));
+        assertEquals(Optional.empty(), InteractionPermissionDecision.findDenyingPermission(PermissionTriggers.ON_OPEN_VAULT_PORTAL, openPermissions, "use_vault_portal"::equals, crystalOnFrame));
     }
 
     @ParameterizedTest

@@ -64,10 +64,28 @@ class InteractionPermissionDecisionTest {
         assertTrue(visitorPlacementDenied(clickWith(null, null, "minecraft:grass_block")));
     }
 
+    private static final String INTERACT_SPAWN = """
+            {"id": "interact_spawn", "category": "animals", "triggers": ["onRightClickBlock", "onRightClickItem", "onPlaceBlock"],
+             "data": {"skyblockaddon": [], "items": [".*:.*_spawn_egg", "minecraft:egg"], "blocks": [], "entities": []}}
+            """;
+
+    private static boolean placementDenied(final Predicate<String> group, final InteractionSubject subject) {
+        return InteractionPermissionDecision.findDenyingPermission(PermissionTriggers.ON_PLACE_BLOCK,
+                List.of(permission(LIVE_PLACE_BLOCKS), permission(INTERACT_SPAWN)), group, subject).isPresent();
+    }
+
     @Test
-    void spawnEggOnTheGroundOrASpawnerIsDenied() {
-        assertTrue(visitorPlacementDenied(clickWith("minecraft:zombie_spawn_egg", null, "minecraft:grass_block")));
-        assertTrue(visitorPlacementDenied(clickWith("minecraft:zombie_spawn_egg", null, "minecraft:spawner")));
+    void spawnEggOnTheGroundOrASpawnerIsLeftToTheSpawnEggToggle() {
+        assertFalse(visitorPlacementDenied(clickWith("minecraft:zombie_spawn_egg", null, "minecraft:grass_block")));
+        assertFalse(visitorPlacementDenied(clickWith("minecraft:zombie_spawn_egg", null, "minecraft:spawner")));
+        assertTrue(placementDenied(VISITOR, clickWith("minecraft:zombie_spawn_egg", null, "minecraft:grass_block")));
+        assertFalse(placementDenied("interact_spawn"::equals, clickWith("minecraft:zombie_spawn_egg", null, "minecraft:grass_block")));
+        assertTrue(placementDenied("place_blocks"::equals, clickWith("minecraft:zombie_spawn_egg", null, "minecraft:spawner")));
+    }
+
+    @Test
+    void carvedOutItemInTheHandDoesNotLetAPlacedBlockThrough() {
+        assertTrue(placementDenied("interact_spawn"::equals, clickWith("minecraft:zombie_spawn_egg", "minecraft:stone", "minecraft:stone")));
     }
 
     @Test
@@ -173,7 +191,16 @@ class InteractionPermissionDecisionTest {
         assertTrue(entityPlacementDenied(placePermissions, VISITOR, "minecraft:item_frame"));
         assertTrue(entityPlacementDenied(placePermissions, VISITOR, "minecraft:oak_boat"));
         assertTrue(entityPlacementDenied(placePermissions, VISITOR, "minecraft:end_crystal"));
+    }
+
+    @Test
+    void spawnEggPlacementIsJudgedByTheSpawnEggToggleAlone() {
+        final List<Permission> placePermissions = List.of(permission(LIVE_PLACE_BLOCKS), permission(INTERACT_SPAWN));
+
         assertTrue(entityPlacementDenied(placePermissions, VISITOR, "minecraft:zombie_spawn_egg"));
+        assertTrue(entityPlacementDenied(placePermissions, "place_blocks"::equals, "minecraft:zombie_spawn_egg"));
+        assertFalse(entityPlacementDenied(placePermissions, "interact_spawn"::equals, "minecraft:zombie_spawn_egg"));
+        assertTrue(entityPlacementDenied(placePermissions, "interact_spawn"::equals, "minecraft:armor_stand"));
     }
 
     @Test

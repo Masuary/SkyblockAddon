@@ -1,21 +1,10 @@
 package yorickbm.skyblockaddon.util;
 
 /**
- * Applies the Effortless Building mixins only when the mod is installed, so a pack without it (Skyvault) loads without
- * a missing mixin target warning.
+ * The Effortless Building mixins, absent on Skyvault.
  */
-public class EffortlessBuildingMixinPlugin extends OptionalModMixinPlugin {
-    private static final String EFFORTLESS_BUILDING_MOD_ID = "effortlessbuilding";
-
-    private boolean targetModLoaded;
-
-    @Override
-    public void onLoad(final String mixinPackage) {
-        targetModLoaded = installedModFile(EFFORTLESS_BUILDING_MOD_ID).isPresent();
-    }
-
-    @Override
-    public boolean shouldApplyMixin(final String targetClassName, final String mixinClassName) {
-        return targetModLoaded;
+public class EffortlessBuildingMixinPlugin extends InstalledModMixinPlugin {
+    public EffortlessBuildingMixinPlugin() {
+        super("effortlessbuilding");
     }
 }

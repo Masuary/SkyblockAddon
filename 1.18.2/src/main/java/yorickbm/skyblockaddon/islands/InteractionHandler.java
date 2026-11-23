@@ -14,6 +14,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -55,6 +56,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public class InteractionHandler {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -286,6 +288,29 @@ public class InteractionHandler {
     }
 
     /**
+     * A storage screen whose slots belong to an entity (a chest riding a boat, a ship's hold, a chest minecart) can open
+     * without any click on that entity: Quark's seated inventory key opens the chest on the boat a player rides, and the
+     * Small Ships open-screen packet opens any ship nearby. The screen is judged like a right click on the entity, on
+     * the island where the entity is.
+     */
+    public static boolean isEntityStorageDenied(final ServerPlayer player, final AbstractContainerMenu menu) {
+        return entityStorages(menu).anyMatch(entity -> isEntityInteractionDenied(player, entity, ItemStack.EMPTY));
+    }
+
+    public static boolean hasEntityStorage(final AbstractContainerMenu menu) {
+        return entityStorages(menu).findAny().isPresent();
+    }
+
+    private static Stream<Entity> entityStorages(final AbstractContainerMenu menu) {
+        return menu.slots.stream()
+                .map(slot -> slot.container)
+                .filter(Entity.class::isInstance)
+                .map(Entity.class::cast)
+                .filter(entity -> !(entity instanceof Player))
+                .distinct();
+    }
+
+    /**
      * Any block break by a player, whatever caused it (a left click, an area tool, a spell, an explosion they started),
      * judged by the island at the position as an onBreakBlock without a target: no block carve-out lets it through, so
      * only a group with the break permission may break blocks there.
@@ -345,7 +370,13 @@ public class InteractionHandler {
      * A click on a block: the hand item, the block it would place and the clicked block (none when air).
      */
     public static InteractionSubject subjectOfClick(final ServerLevel world, final BlockPos position, final ItemStack handItem) {
-        final BlockState clickedState = world.getBlockState(position);
+        return subjectOfClickOn(world.getBlockState(position), handItem);
+    }
+
+    /**
+     * A click on a block that is not in the world at the clicked position (a block of a moving contraption).
+     */
+    public static InteractionSubject subjectOfClickOn(final BlockState clickedState, final ItemStack handItem) {
         final Optional<String> clickedBlockId = clickedState.isAir() ? Optional.empty() : Optional.of(blockId(clickedState.getBlock()));
         return new InteractionSubject(itemId(handItem), heldBlockId(handItem), clickedBlockId);
     }
@@ -357,7 +388,7 @@ public class InteractionHandler {
     public static InteractionSubject subjectOfPlacedBlock(final ItemStack handItem, final BlockState placedState) {
         final Block placedBlock = placedState.getBlock();
         final Block judgedBlock = placedBlock.asItem() instanceof final BlockItem placingItem ? placingItem.getBlock() : placedBlock;
-        return new InteractionSubject(itemId(handItem), Optional.empty(), Optional.of(blockId(judgedBlock)));
+        return new InteractionSubject(itemId(handItem), Optional.of(blockId(judgedBlock)), Optional.of(blockId(judgedBlock)));
     }
 
     /**

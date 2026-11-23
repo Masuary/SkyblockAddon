@@ -120,6 +120,15 @@ public class PermissionManager {
         return foundNonNegatedMatch ? MatchResult.BLOCK : (onlyNegations ? MatchResult.BLOCK : MatchResult.SKIP);
     }
 
+    /**
+     * Whether a negated rule names the id, i.e. the rules explicitly leave it to another permission.
+     */
+    public static boolean isCarvedOut(final List<String> rules, final String id) {
+        return rules.stream()
+                .map(rule -> COMPILED_MATCH_RULES.computeIfAbsent(rule, MatchRule::compile))
+                .anyMatch(matchRule -> matchRule.negation() && matchRule.pattern().matcher(id).matches());
+    }
+
     private static void validatePermission(final Path path, final int position, final Permission permission) {
         if (permission == null) {
             throw new IllegalStateException("'" + path.toAbsolutePath() + "' permission #" + position + " is empty");

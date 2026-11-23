@@ -195,9 +195,11 @@
       "data": {
         "skyblockaddon": [],
         "items": [
-          "!easy_villagers:villager",
           "!.*:.*_spawn_egg",
-          "supplementaries:slingshot"
+          "supplementaries:slingshot",
+          "!minecraft:egg",
+          "!ispawner:spawn_egg",
+          "!quark:egg_parrot_.*"
         ],
         "blocks": [
           ".*:.*",
@@ -485,7 +487,9 @@
           "immersivepetroleum:speedboat",
           "smallships:.*",
           "immersiveengineering:cart_.*",
-          "littlelogistics:(?!seater_).*"
+          "littlelogistics:(?!seater_).*",
+          "supplementaries:dispenser_minecart",
+          "lootr:lootr_minecart"
         ]
       }
     },
@@ -1076,7 +1080,13 @@
           "!pneumaticcraft:.*",
           "!industrialforegoing:.*",
           "!rftoolsbase:.*",
-          "!powah:.*"
+          "!powah:.*",
+          "!minecraft:.*_bed",
+          "!the_vault:velvet_bed",
+          "!buildscape:straw_bed",
+          "!comforts:(hammock|sleeping_bag)_.*",
+          "!dyenamics:.*_bed",
+          "!dyenamicsandfriends:comforts_.*_(hammock|sleeping_bag)"
         ],
         "entities": []
       }
@@ -1272,6 +1282,8 @@
           "!smallships:.*",
           "!immersiveengineering:cart_.*",
           "!littlelogistics:(?!seater_).*",
+          "!supplementaries:dispenser_minecart",
+          "!lootr:lootr_minecart",
           "!minecraft:boat",
           "!minecraft:minecart",
           "!.*:.*_boat",
@@ -1321,7 +1333,8 @@
       "category": "animals",
       "triggers": [
         "onRightClickBlock",
-        "onRightClickItem"
+        "onRightClickItem",
+        "onPlaceBlock"
       ],
       "data": {
         "skyblockaddon": [],
@@ -1985,15 +1998,18 @@
       "id": "use_vault_portal",
       "item": {
         "display_name": [
-          "{\"text\": \"Enter Vault Portals\", \"color\": \"yellow\", \"bold\": \"true\"}"
+          "{\"text\": \"Vault portals\", \"color\": \"yellow\", \"bold\": \"true\"}"
         ],
         "item": "the_vault:vault_crystal",
         "lore": [
           [
-            "{\"text\": \"Step into vault portals on this island.\", \"color\": \"gray\"}"
+            "{\"text\": \"Open vault portals with your own crystal\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\": \"Examples: vault portals\", \"color\": \"dark_gray\"}"
+            "{\"text\": \"and step into them.\", \"color\": \"gray\"}"
+          ],
+          [
+            "{\"text\": \"Examples: a crystal on a portal frame\", \"color\": \"dark_gray\"}"
           ],
           [
             "{\"text\": \" \", \"color\": \"dark_gray\"}"
@@ -2009,7 +2025,8 @@
       },
       "category": "vaulthunters",
       "triggers": [
-        "onEnterVaultPortal"
+        "onEnterVaultPortal",
+        "onOpenVaultPortal"
       ],
       "data": {
         "skyblockaddon": [],
