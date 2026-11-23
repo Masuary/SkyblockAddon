@@ -9,6 +9,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -48,6 +49,7 @@ import yorickbm.skyblockaddon.util.BlockInteractability;
 import yorickbm.skyblockaddon.util.ForgeConverter;
 import yorickbm.skyblockaddon.util.RightClickedStacks;
 
+import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -146,15 +148,31 @@ public class PermissionEvents {
     }
 
     /**
-     * Entity storage opened without a click on the entity (a seated inventory key, a mod's open-screen packet).
+     * Entity storage opened without a click on the entity (a seated inventory key, a mod's open-screen packet). Runs
+     * last, so a screen another listener already closed is left alone. Some mods open the screen straight from their
+     * packet handler on the network thread (wildbackport's chest boat key): the island data is then read off the server
+     * thread, so a read that races a group change refuses the screen instead of failing.
      */
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onContainerOpen(final PlayerContainerEvent.Open event) {
         if (!(event.getPlayer() instanceof final ServerPlayer player)) return;
-        if (!InteractionHandler.isEntityStorageDenied(player, event.getContainer())) return;
+        if (player.containerMenu != event.getContainer()) return;
+
+        final boolean onServerThread = player.getServer() != null && player.getServer().isSameThread();
+        if (!isEntityStorageDeniedFailingClosed(player, event.getContainer(), onServerThread)) return;
 
         player.closeContainer();
-        if (InteractionHandler.isFirstDenialMessageThisTick(player)) InteractionHandler.sendDeniedMessage(player);
+        if (onServerThread && InteractionHandler.isFirstDenialMessageThisTick(player)) InteractionHandler.sendDeniedMessage(player);
+        else if (!onServerThread) player.getServer().execute(() -> InteractionHandler.sendDeniedMessage(player));
+    }
+
+    private static boolean isEntityStorageDeniedFailingClosed(final ServerPlayer player, final AbstractContainerMenu menu, final boolean onServerThread) {
+        if (onServerThread) return InteractionHandler.isEntityStorageDenied(player, menu);
+        try {
+            return InteractionHandler.isEntityStorageDenied(player, menu);
+        } catch (final ConcurrentModificationException raceWithTheServerThread) {
+            return true;
+        }
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)

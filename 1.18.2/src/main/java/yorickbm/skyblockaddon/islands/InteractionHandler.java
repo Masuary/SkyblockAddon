@@ -299,22 +299,7 @@ public class InteractionHandler {
                 .map(Entity.class::cast)
                 .filter(entity -> !(entity instanceof Player))
                 .distinct()
-                .anyMatch(entity -> isStorageOfEntityDenied(player, entity));
-    }
-
-    private static boolean isStorageOfEntityDenied(final ServerPlayer player, final Entity entity) {
-        if (!(entity.getLevel() instanceof final ServerLevel level)) return false;
-        final Optional<Island> guardingIsland = islandGuardingPosition(player, level, entity.blockPosition());
-        if (guardingIsland.isEmpty()) return false;
-
-        final Optional<IslandGroup> group = guardingIsland.get().getGroupForEntityUUID(player.getUUID());
-        if (group.isEmpty()) return true;
-
-        final String entityTypeId = Objects.requireNonNull(EntityType.getKey(entity.getType())).toString();
-        final Optional<Permission> denyingPermission = InteractionPermissionDecision.findDenyingEntityInteraction(
-                PermissionManager.getInstance().getPermissionsForTrigger(PermissionTriggers.ON_RIGHT_CLICK_ENTITY), group.get()::canDo, entityTypeId, Optional.empty());
-        denyingPermission.ifPresent(permission -> SkyBlockAddon.logPermissionDebug(LOGGER, entityTypeId + " (entity storage screen) is BLOCKED on " + permission.getId() + " in group " + group.get().getName()));
-        return denyingPermission.isPresent();
+                .anyMatch(entity -> isEntityInteractionDenied(player, entity, ItemStack.EMPTY));
     }
 
     /**

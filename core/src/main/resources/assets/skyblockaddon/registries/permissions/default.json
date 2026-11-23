@@ -410,7 +410,9 @@
           "immersivepetroleum:speedboat",
           "smallships:.*",
           "immersiveengineering:cart_.*",
-          "littlelogistics:(?!seater_).*"
+          "littlelogistics:(?!seater_).*",
+          "supplementaries:dispenser_minecart",
+          "lootr:lootr_minecart"
         ]
       }
     },
@@ -554,7 +556,14 @@
           "!.*:.*_(upgraded|pyramid|highley|picket|railing)_gate",
           "!supplementaries:(iron|gold)_gate",
           "!framedblocks:framed_gate",
-          "!.*:.*_pressure_plate"
+          "!.*:.*_pressure_plate",
+          "!minecraft:.*_bed",
+          "!the_vault:velvet_bed",
+          "!buildscape:straw_bed",
+          "!blockcarpentry:(frame|illusion)_bed",
+          "!comforts:(hammock|sleeping_bag)_.*",
+          "!dyenamics:.*_bed",
+          "!dyenamicsandfriends:comforts_.*_(hammock|sleeping_bag)"
         ],
         "entities": []
       }
@@ -750,6 +759,8 @@
           "!smallships:.*",
           "!immersiveengineering:cart_.*",
           "!littlelogistics:(?!seater_).*",
+          "!supplementaries:dispenser_minecart",
+          "!lootr:lootr_minecart",
           "!minecraft:boat",
           "!minecraft:minecart",
           "!.*:.*_boat",

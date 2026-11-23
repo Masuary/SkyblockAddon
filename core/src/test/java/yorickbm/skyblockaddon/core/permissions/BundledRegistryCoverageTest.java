@@ -94,6 +94,23 @@ class BundledRegistryCoverageTest {
         assertTrue(entityDenial(manager, "open_chests"::equals, "smallships:oak_cog").isEmpty());
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"vaulthunters", "woldsvaults", "default"})
+    void bedsAreLeftToSleepInBedsAndNotRefusedByTheCatchAll(final String pack) {
+        final PermissionManager manager = bundled(pack);
+        assertTrue(blockClickDenial(manager, VISITOR, "minecraft:red_bed").isEmpty());
+        assertTrue(blockClickDenial(manager, VISITOR, "comforts:hammock_white").isEmpty());
+        assertEquals(Optional.of("interact_generic"), blockClickDenial(manager, VISITOR, "minecraft:lectern"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"vaulthunters", "woldsvaults", "default"})
+    void storageCartsOfOtherModsNeedTheChestToggle(final String pack) {
+        final PermissionManager manager = bundled(pack);
+        assertEquals(Optional.of("open_chests"), entityDenial(manager, VISITOR, "supplementaries:dispenser_minecart"));
+        assertEquals(Optional.of("open_chests"), entityDenial(manager, VISITOR, "lootr:lootr_minecart"));
+    }
+
     @Test
     void plainChestsOfModsWithTheirOwnToggleStayUnderChests() {
         final PermissionManager manager = bundled("woldsvaults");
