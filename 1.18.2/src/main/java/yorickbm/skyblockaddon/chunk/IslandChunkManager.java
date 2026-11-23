@@ -3,12 +3,16 @@ package yorickbm.skyblockaddon.chunk;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkWithLightPacket;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Clearable;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import yorickbm.skyblockaddon.configs.SkyblockAddonConfig;
@@ -27,6 +31,7 @@ public class IslandChunkManager {
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final int CHUNK_SIZE = 16;
+    private static final String SOPHISTICATED_STORAGE_NAMESPACE = "sophisticatedstorage";
 
     public static void createDummies(List<ForgeIsland> islands, ProgressBar bar, Predicate<ForgeIsland> islandStillPurgeable, Consumer<ForgeIsland> onIslandFinished, Runnable onDone, ServerLevel level) {
         Task tracker = new Task(onDone, bar);
@@ -105,6 +110,7 @@ public class IslandChunkManager {
                     if (clearingAllowed.getAsBoolean()) {
                         for (int j = start; j < end; j++) {
                             BlockPos pos = nonAirBlocks.get(j);
+                            releaseBlockEntityWithoutDrops(chunk, pos);
                             chunk.setBlockState(pos, Blocks.AIR.defaultBlockState(), false); // silent
                         }
                     }
@@ -121,6 +127,24 @@ public class IslandChunkManager {
                 });
             }
         }, "AsyncChunkScan-" + chunk.getPos().x + "," + chunk.getPos().z).start();
+    }
+
+    /**
+     * Purged blocks must not spill their contents: Sophisticated Storage block entities are removed so neither
+     * Sophisticated nor VaultIntegrations finds one to drop or pack (a packed barrel drop never despawns and keeps an
+     * entry in sophisticatedstorage.dat), and every other block entity that supports it is emptied first.
+     */
+    private static void releaseBlockEntityWithoutDrops(ChunkAccess chunk, BlockPos pos) {
+        BlockEntity blockEntity = chunk.getBlockEntity(pos);
+        if (blockEntity == null) {
+            return;
+        }
+        ResourceLocation blockId = ForgeRegistries.BLOCKS.getKey(chunk.getBlockState(pos).getBlock());
+        if (blockId != null && SOPHISTICATED_STORAGE_NAMESPACE.equals(blockId.getNamespace())) {
+            chunk.removeBlockEntity(pos);
+            return;
+        }
+        Clearable.tryClear(blockEntity);
     }
 
     public static class Task {
