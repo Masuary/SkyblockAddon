@@ -14,6 +14,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -282,6 +283,37 @@ public class InteractionHandler {
         final Optional<Permission> denyingPermission = InteractionPermissionDecision.findDenyingEntityInteraction(
                 PermissionManager.getInstance().getPermissionsForTrigger(PermissionTriggers.ON_RIGHT_CLICK_ENTITY), group.get()::canDo, entityTypeId, itemId(handItem));
         denyingPermission.ifPresent(permission -> SkyBlockAddon.logPermissionDebug(LOGGER, entityTypeId + " (entity click) is BLOCKED on " + permission.getId() + " in group " + group.get().getName()));
+        return denyingPermission.isPresent();
+    }
+
+    /**
+     * A storage screen whose slots belong to an entity (a chest riding a boat, a ship's hold, a chest minecart) can open
+     * without any click on that entity: Quark's seated inventory key opens the chest on the boat a player rides, and the
+     * Small Ships open-screen packet opens any ship nearby. The screen is judged like a right click on the entity, on
+     * the island where the entity is.
+     */
+    public static boolean isEntityStorageDenied(final ServerPlayer player, final AbstractContainerMenu menu) {
+        return menu.slots.stream()
+                .map(slot -> slot.container)
+                .filter(Entity.class::isInstance)
+                .map(Entity.class::cast)
+                .filter(entity -> !(entity instanceof Player))
+                .distinct()
+                .anyMatch(entity -> isStorageOfEntityDenied(player, entity));
+    }
+
+    private static boolean isStorageOfEntityDenied(final ServerPlayer player, final Entity entity) {
+        if (!(entity.getLevel() instanceof final ServerLevel level)) return false;
+        final Optional<Island> guardingIsland = islandGuardingPosition(player, level, entity.blockPosition());
+        if (guardingIsland.isEmpty()) return false;
+
+        final Optional<IslandGroup> group = guardingIsland.get().getGroupForEntityUUID(player.getUUID());
+        if (group.isEmpty()) return true;
+
+        final String entityTypeId = Objects.requireNonNull(EntityType.getKey(entity.getType())).toString();
+        final Optional<Permission> denyingPermission = InteractionPermissionDecision.findDenyingEntityInteraction(
+                PermissionManager.getInstance().getPermissionsForTrigger(PermissionTriggers.ON_RIGHT_CLICK_ENTITY), group.get()::canDo, entityTypeId, Optional.empty());
+        denyingPermission.ifPresent(permission -> SkyBlockAddon.logPermissionDebug(LOGGER, entityTypeId + " (entity storage screen) is BLOCKED on " + permission.getId() + " in group " + group.get().getName()));
         return denyingPermission.isPresent();
     }
 

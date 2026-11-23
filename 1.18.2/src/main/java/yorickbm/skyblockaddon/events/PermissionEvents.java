@@ -24,6 +24,7 @@ import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.BonemealEvent;
 import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 import net.minecraftforge.event.entity.player.FillBucketEvent;
+import net.minecraftforge.event.entity.player.PlayerContainerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.entity.player.PlayerSleepInBedEvent;
 import net.minecraftforge.event.entity.player.PlayerXpEvent;
@@ -142,6 +143,18 @@ public class PermissionEvents {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onRightClickEntityAtPoint(final PlayerInteractEvent.EntityInteractSpecific event) {
         denyEntityClick(event, event.getTarget());
+    }
+
+    /**
+     * Entity storage opened without a click on the entity (a seated inventory key, a mod's open-screen packet).
+     */
+    @SubscribeEvent
+    public void onContainerOpen(final PlayerContainerEvent.Open event) {
+        if (!(event.getPlayer() instanceof final ServerPlayer player)) return;
+        if (!InteractionHandler.isEntityStorageDenied(player, event.getContainer())) return;
+
+        player.closeContainer();
+        if (InteractionHandler.isFirstDenialMessageThisTick(player)) InteractionHandler.sendDeniedMessage(player);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
