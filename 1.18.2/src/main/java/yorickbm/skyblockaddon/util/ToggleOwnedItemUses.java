@@ -13,6 +13,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.portal.PortalShape;
 import net.minecraftforge.fml.ModList;
+import yorickbm.skyblockaddon.core.permissions.PermissionTriggers;
 
 import java.util.Map;
 import java.util.Optional;
@@ -20,9 +21,9 @@ import java.util.WeakHashMap;
 
 /**
  * Item uses on a block that one named toggle judges alone, although the click would otherwise count as a placement:
- * bone meal on a block it can grow ("Use bone meal", judged by the bonemeal event), flint and steel on obsidian where
- * the fire forms a nether portal ("Nether portals", judged as a portal ignition) and a vault crystal on a vault portal
- * frame ("Vault portals"). The blocks such a use places in the same click (plants, fire and portal blocks) are not
+ * bone meal on a block it can grow ("Use bone meal", judged later by the bonemeal event), flint and steel on obsidian
+ * where the fire forms a nether portal ("Nether portals") and a vault crystal on a vault portal frame ("Vault portals"),
+ * both judged on the click. The blocks such a use places in the same click (plants, fire and portal blocks) are not
  * judged as placements either.
  */
 public final class ToggleOwnedItemUses {
@@ -30,9 +31,19 @@ public final class ToggleOwnedItemUses {
     private static final Map<ServerPlayer, AllowedUse> ALLOWED_USE_THIS_TICK = new WeakHashMap<>();
 
     public enum Owner {
-        BONE_MEAL,
-        NETHER_PORTAL_IGNITION,
-        VAULT_PORTAL_OPENING
+        BONE_MEAL(Optional.empty()),
+        NETHER_PORTAL_IGNITION(Optional.of(PermissionTriggers.ON_PORTAL_IGNITION)),
+        VAULT_PORTAL_OPENING(Optional.of(PermissionTriggers.ON_OPEN_VAULT_PORTAL));
+
+        private final Optional<String> triggerJudgedOnTheClick;
+
+        Owner(final Optional<String> triggerJudgedOnTheClick) {
+            this.triggerJudgedOnTheClick = triggerJudgedOnTheClick;
+        }
+
+        public Optional<String> triggerJudgedOnTheClick() {
+            return triggerJudgedOnTheClick;
+        }
     }
 
     private record AllowedUse(ItemStack usedStack, long gameTime) {

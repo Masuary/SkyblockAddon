@@ -127,13 +127,13 @@ public class PermissionEvents {
     }
 
     /**
-     * A vault crystal on a portal frame is judged here; bone meal and nether portal ignition by their own checks later
-     * in the click. The blocks an allowed use places are then left to that judgement.
+     * Judged by the owning toggle's trigger here, or for bone meal by the bonemeal event later in the click. The blocks
+     * an allowed use places are then left to that judgement.
      */
     private static void judgeToggleOwnedUse(final PlayerInteractEvent.RightClickBlock event, final AtomicReference<Island> standingOn, final ServerPlayer player,
                                             final ServerLevel level, final ToggleOwnedItemUses.Owner toggleOwningTheUse) {
-        if (toggleOwningTheUse == ToggleOwnedItemUses.Owner.VAULT_PORTAL_OPENING && InteractionHandler.checkPlayerInteraction(standingOn, player, level, event.getPos(),
-                event.getItemStack(), PermissionTriggers.ON_OPEN_VAULT_PORTAL)) {
+        final Optional<String> trigger = toggleOwningTheUse.triggerJudgedOnTheClick();
+        if (trigger.isPresent() && InteractionHandler.checkPlayerInteraction(standingOn, player, level, event.getPos(), event.getItemStack(), trigger.get())) {
             InteractionHandler.denyBlockClick(event, player);
             return;
         }
