@@ -14,7 +14,9 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.block.Blocks;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.BaseFireBlock;
+import net.minecraft.world.level.portal.PortalShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.event.entity.EntityMountEvent;
 import net.minecraftforge.event.entity.EntityTeleportEvent;
@@ -251,13 +253,16 @@ public class PermissionEvents {
     }
 
     /**
-     * Fire that formed a nether portal reaches the event as the portal block, whatever lit it (flint and steel on any
-     * block facing the frame, a fire charge): judged by "Nether portals" alone, like the click on obsidian.
+     * Fire placed inside an empty nether portal frame, whatever lit it (flint and steel on any block facing the frame, a
+     * fire charge), is judged by "Nether portals" alone, like the click on obsidian. Forge builds the portal from that
+     * fire only after the placement events pass, so a denial leaves neither fire nor portal.
      */
     private static boolean isPlacementDenied(final AtomicReference<Island> standingOn, final ServerPlayer player, final ServerLevel level, final BlockPos position,
                                              final BlockState placedState) {
         final InteractionSubject placedBlock = InteractionHandler.subjectOfPlacedBlock(player.getMainHandItem(), placedState);
-        if (placedState.is(Blocks.NETHER_PORTAL) && isTriggerInRegistry(PermissionTriggers.ON_PORTAL_IGNITION)) {
+        final boolean fireFormingAPortal = placedState.getBlock() instanceof BaseFireBlock
+                && PortalShape.findEmptyPortalShape(level, position, Direction.Axis.X).isPresent();
+        if (fireFormingAPortal && isTriggerInRegistry(PermissionTriggers.ON_PORTAL_IGNITION)) {
             return InteractionHandler.checkPlayerInteraction(standingOn, player, level, position, PermissionTriggers.ON_PORTAL_IGNITION, placedBlock);
         }
         return !ToggleOwnedItemUses.isPlacedByAllowedUse(player)
