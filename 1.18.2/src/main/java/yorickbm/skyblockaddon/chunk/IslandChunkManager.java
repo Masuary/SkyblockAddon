@@ -102,18 +102,21 @@ public class IslandChunkManager {
                 final int end = Math.min(i + batchSize, nonAirBlocks.size());
 
                 ChunkTaskScheduler.queue(() -> {
+                    // The scanned chunk may have unloaded since: clear the chunk that is loaded now, or the changes are lost.
+                    LevelChunk liveChunk = level.getChunk(chunk.getPos().x, chunk.getPos().z);
                     if (clearingAllowed.getAsBoolean()) {
                         for (int j = start; j < end; j++) {
                             BlockPos pos = nonAirBlocks.get(j);
-                            chunk.setBlockState(pos, Blocks.AIR.defaultBlockState(), false); // silent
+                            removeBlockEntityBeforeClearing(liveChunk, pos);
+                            liveChunk.setBlockState(pos, Blocks.AIR.defaultBlockState(), false); // silent
                         }
                     }
 
                     // After last batch, send chunk update to players
                     if (end >= nonAirBlocks.size()) {
-                        level.getChunkSource().chunkMap.getPlayers(chunk.getPos(), false)
+                        level.getChunkSource().chunkMap.getPlayers(liveChunk.getPos(), false)
                                 .forEach(player -> player.connection
-                                        .send(new ClientboundLevelChunkWithLightPacket((LevelChunk) chunk, level.getLightEngine(), null, null, false)));
+                                        .send(new ClientboundLevelChunkWithLightPacket(liveChunk, level.getLightEngine(), null, null, false)));
 
                         task.completeSubTask(false);
                         task.getBar().sendToast(new TextComponent("Cleared chunk " + chunk.getPos() + ""));
@@ -121,6 +124,18 @@ public class IslandChunkManager {
                 });
             }
         }, "AsyncChunkScan-" + chunk.getPos().x + "," + chunk.getPos().z).start();
+    }
+
+    /**
+     * Purged blocks must not drop anything: without a block entity, onRemove finds nothing to spill or pack (a packed
+     * Sophisticated barrel never despawns and leaves an entry in sophisticatedstorage.dat). getBlockEntity first so a
+     * block entity still pending as chunk NBT is promoted and removed instead of being loaded again during onRemove.
+     * A storage controller that looks its storage up again in setRemoved recreates an empty one, which drops nothing.
+     */
+    private static void removeBlockEntityBeforeClearing(LevelChunk chunk, BlockPos pos) {
+        if (chunk.getBlockEntity(pos) != null) {
+            chunk.removeBlockEntity(pos);
+        }
     }
 
     public static class Task {
