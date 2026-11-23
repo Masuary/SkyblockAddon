@@ -431,7 +431,7 @@
             "{\"text\": \"Open chests, chest carts and the storage\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\": \"of ships and aircraft, and ride those.\", \"color\": \"gray\"}"
+            "{\"text\": \"of ships, aircraft and chest boats.\", \"color\": \"gray\"}"
           ],
           [
             "{\"text\": \"Examples: chests, strongboxes, chest minecarts, cogs, biplanes\", \"color\": \"dark_gray\"}"
@@ -1778,13 +1778,13 @@
         "item": "minecraft:oak_boat",
         "lore": [
           [
-            "{\"text\": \"Get into boats and minecarts and ride\", \"color\": \"gray\"}"
+            "{\"text\": \"Get into boats, minecarts, ships and\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\": \"animals. Ships, aircraft and storage carts\", \"color\": \"gray\"}"
+            "{\"text\": \"aircraft and ride animals. Their storage\", \"color\": \"gray\"}"
           ],
           [
-            "{\"text\": \"need Chests as well.\", \"color\": \"gray\"}"
+            "{\"text\": \"needs Chests.\", \"color\": \"gray\"}"
           ],
           [
             "{\"text\": \"Examples: boats, minecarts, horses, striders\", \"color\": \"dark_gray\"}"

@@ -8,12 +8,14 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -44,8 +46,10 @@ import yorickbm.skyblockaddon.core.permissions.PermissionTriggers;
 import yorickbm.skyblockaddon.core.util.MatchResult;
 import yorickbm.skyblockaddon.util.EntityPlacerItems;
 import yorickbm.skyblockaddon.util.ForgeConverter;
+import yorickbm.skyblockaddon.util.RiddenStorageVehicleRules;
 import yorickbm.skyblockaddon.util.ServerHelper;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +64,7 @@ public class InteractionHandler {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Map<ServerPlayer, Long> LAST_DENIAL_MESSAGE_TICK = new WeakHashMap<>();
     private static final Map<ServerPlayer, Long> LAST_INVENTORY_RESYNC_TICK = new WeakHashMap<>();
+    private static final Map<ServerPlayer, BoardingClick> BOARDING_CLICK_THIS_TICK = new WeakHashMap<>();
 
     public static void deny(final Event event, final Player player) {
         if (event.isCancelable()) event.setCanceled(true);
@@ -278,11 +283,74 @@ public class InteractionHandler {
         final Optional<IslandGroup> group = guardingIsland.get().getGroupForEntityUUID(player.getUUID());
         if (group.isEmpty()) return true;
 
-        final String entityTypeId = Objects.requireNonNull(EntityType.getKey(target.getType())).toString();
-        final Optional<Permission> denyingPermission = InteractionPermissionDecision.findDenyingEntityInteraction(
-                PermissionManager.getInstance().getPermissionsForTrigger(PermissionTriggers.ON_RIGHT_CLICK_ENTITY), group.get()::canDo, entityTypeId, itemId(handItem));
+        final String entityTypeId = entityTypeId(target);
+        final List<Permission> clickPermissions = PermissionManager.getInstance().getPermissionsForTrigger(PermissionTriggers.ON_RIGHT_CLICK_ENTITY);
+        final Optional<Permission> denyingPermission = InteractionPermissionDecision.findDenyingEntityClick(
+                clickPermissions, group.get()::canDo, entityTypeId, itemId(handItem), player.isSecondaryUseActive(), RiddenStorageVehicleRules.rules());
         denyingPermission.ifPresent(permission -> SkyBlockAddon.logPermissionDebug(LOGGER, entityTypeId + " (entity click) is BLOCKED on " + permission.getId() + " in group " + group.get().getName()));
+        if (denyingPermission.isEmpty() && InteractionPermissionDecision.findDenyingEntityInteraction(clickPermissions, group.get()::canDo, entityTypeId, Optional.empty()).isPresent()) {
+            BOARDING_CLICK_THIS_TICK.put(player, new BoardingClick(target, level.getGameTime()));
+        }
         return denyingPermission.isPresent();
+    }
+
+    /**
+     * Whether a storage screen that just opened belongs to a vehicle whose storage the player may not open here: the
+     * vehicle they ride (or anything riding with them, such as a chest on a boat) or a vehicle they boarded with a plain
+     * click in this tick (a full ship opens its chest instead). The seated inventory key of ships, aircraft and boat
+     * chests opens storage without any click, so the screen itself is judged.
+     */
+    public static boolean isVehicleStorageDenied(final ServerPlayer player, final AbstractContainerMenu menu) {
+        final List<Entity> candidates = new ArrayList<>();
+        if (player.isPassenger()) {
+            final Entity rootVehicle = player.getRootVehicle();
+            candidates.add(rootVehicle);
+            rootVehicle.getIndirectPassengers().forEach(candidates::add);
+        }
+        final BoardingClick boardingClick = BOARDING_CLICK_THIS_TICK.remove(player);
+        if (boardingClick != null && boardingClick.gameTime() == player.getLevel().getGameTime()) candidates.add(boardingClick.vehicle());
+
+        return candidates.stream()
+                .filter(candidate -> !(candidate instanceof Player))
+                .filter(candidate -> menuBelongsTo(menu, candidate))
+                .anyMatch(candidate -> isStorageOfEntityDenied(player, candidate));
+    }
+
+    private static boolean menuBelongsTo(final AbstractContainerMenu menu, final Entity entity) {
+        if (menu.slots.stream().anyMatch(slot -> slot.container == entity)) return true;
+        final String entityNamespace = Objects.requireNonNull(EntityType.getKey(entity.getType())).getNamespace();
+        if (ResourceLocation.DEFAULT_NAMESPACE.equals(entityNamespace)) return false;
+        return menuTypeId(menu).map(menuTypeId -> menuTypeId.getNamespace().equals(entityNamespace)).orElse(false);
+    }
+
+    private static Optional<ResourceLocation> menuTypeId(final AbstractContainerMenu menu) {
+        try {
+            return Optional.ofNullable(menu.getType().getRegistryName());
+        } catch (final UnsupportedOperationException menuWithoutType) {
+            return Optional.empty();
+        }
+    }
+
+    private static boolean isStorageOfEntityDenied(final ServerPlayer player, final Entity entity) {
+        if (!(entity.getLevel() instanceof final ServerLevel level)) return false;
+        final Optional<Island> guardingIsland = islandGuardingPosition(player, level, entity.blockPosition());
+        if (guardingIsland.isEmpty()) return false;
+
+        final Optional<IslandGroup> group = guardingIsland.get().getGroupForEntityUUID(player.getUUID());
+        if (group.isEmpty()) return true;
+
+        final String entityTypeId = entityTypeId(entity);
+        final Optional<Permission> denyingPermission = InteractionPermissionDecision.findDenyingEntityInteraction(
+                PermissionManager.getInstance().getPermissionsForTrigger(PermissionTriggers.ON_RIGHT_CLICK_ENTITY), group.get()::canDo, entityTypeId, Optional.empty());
+        denyingPermission.ifPresent(permission -> SkyBlockAddon.logPermissionDebug(LOGGER, entityTypeId + " (vehicle storage) is BLOCKED on " + permission.getId() + " in group " + group.get().getName()));
+        return denyingPermission.isPresent();
+    }
+
+    private static String entityTypeId(final Entity entity) {
+        return Objects.requireNonNull(EntityType.getKey(entity.getType())).toString();
+    }
+
+    private record BoardingClick(Entity vehicle, long gameTime) {
     }
 
     /**

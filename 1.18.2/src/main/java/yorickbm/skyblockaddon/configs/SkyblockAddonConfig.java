@@ -7,6 +7,8 @@ import yorickbm.skyblockaddon.core.util.BundledDefaultsPack;
 import yorickbm.skyblockaddon.core.islands.IslandSlot;
 import yorickbm.skyblockaddon.util.BlockInteractability;
 import yorickbm.skyblockaddon.util.EntityPlacerItems;
+import yorickbm.skyblockaddon.util.RiddenStorageVehicleRules;
+import yorickbm.skyblockaddon.core.permissions.RiddenStorageVehicles;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,6 +44,7 @@ public class SkyblockAddonConfig {
         register(BlockInteractability.NON_INTERACTABLE_BLOCKS_CONFIG_KEY, "", "Comma-separated block ids whose right-clicks are always checked as onPlaceBlock (placing against the block).");
         register(EntityPlacerItems.EXTRA_ENTITY_PLACER_ITEMS_CONFIG_KEY, bundledEntityPlacerItems(), "Comma-separated item ids of modded items that put an entity into the world when used. Like spawn eggs, armor stands, frames, paintings, boats, minecarts and end crystals they are judged as an onPlaceBlock placement with no target block, wherever they are used. The default is the loaded pack's list (Vault Hunters or Wold's Vaults).");
 
+        register(RiddenStorageVehicleRules.CONFIG_KEY, RiddenStorageVehicles.DEFAULT_RULES, "Comma-separated entity id rules (regular expressions, ! excludes) for vehicles that carry storage but are boarded with a plain click and opened with a sneak click (ships, aircraft, chest boats). A plain click on them needs only the mount permission; a sneak click, and any storage screen of theirs opened while riding or by the plain click, needs the permission that judges the entity (Chests). Empty: every click on them is judged like any other entity click.");
         register("purge.batch_time", "15", "Amount of ticks (20 ticks +- 1 second) in between filling batch buffer.");
         register("purge.concurrent", "1", "Amount of chunks allowed to be processed concurrent.");
         register("purge.blocks", "800", "Amount of blocks to remove per execution.");

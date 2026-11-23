@@ -24,6 +24,7 @@ import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.BonemealEvent;
 import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 import net.minecraftforge.event.entity.player.FillBucketEvent;
+import net.minecraftforge.event.entity.player.PlayerContainerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.entity.player.PlayerSleepInBedEvent;
 import net.minecraftforge.event.entity.player.PlayerXpEvent;
@@ -142,6 +143,19 @@ public class PermissionEvents {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onRightClickEntityAtPoint(final PlayerInteractEvent.EntityInteractSpecific event) {
         denyEntityClick(event, event.getTarget());
+    }
+
+    /**
+     * Storage of a ship, aircraft or boat chest opened without a sneak click on it: the seated inventory key, or a plain
+     * click that opened a full ship's chest instead of boarding it.
+     */
+    @SubscribeEvent
+    public void onContainerOpen(final PlayerContainerEvent.Open event) {
+        if (!(event.getPlayer() instanceof final ServerPlayer player)) return;
+        if (!InteractionHandler.isVehicleStorageDenied(player, event.getContainer())) return;
+
+        player.closeContainer();
+        if (InteractionHandler.isFirstDenialMessageThisTick(player)) InteractionHandler.sendDeniedMessage(player);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)

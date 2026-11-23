@@ -56,6 +56,23 @@ public final class InteractionPermissionDecision {
      */
     public static Optional<Permission> findDenyingEntityInteraction(final List<Permission> triggerPermissions, final Predicate<String> groupHasPermission,
                                                                     final String entityTypeId, final Optional<String> handItemId) {
+        return findDenyingEntityInteraction(triggerPermissions, groupHasPermission, entityTypeId, handItemId, true);
+    }
+
+    /**
+     * A player's right click on an entity. A plain click on a {@link RiddenStorageVehicles ridden storage vehicle} boards
+     * it, which the mount permission judges, so only the hand item is judged here; a sneak click opens its storage and is
+     * judged like any other entity click.
+     */
+    public static Optional<Permission> findDenyingEntityClick(final List<Permission> triggerPermissions, final Predicate<String> groupHasPermission,
+                                                              final String entityTypeId, final Optional<String> handItemId, final boolean sneaking,
+                                                              final List<String> riddenStorageVehicleRules) {
+        final boolean boardingClick = !sneaking && RiddenStorageVehicles.isRiddenStorageVehicle(riddenStorageVehicleRules, entityTypeId);
+        return findDenyingEntityInteraction(triggerPermissions, groupHasPermission, entityTypeId, handItemId, !boardingClick);
+    }
+
+    private static Optional<Permission> findDenyingEntityInteraction(final List<Permission> triggerPermissions, final Predicate<String> groupHasPermission,
+                                                                     final String entityTypeId, final Optional<String> handItemId, final boolean judgeEntity) {
         for (final Permission permission : triggerPermissions) {
             if (groupHasPermission.test(permission.getId())) continue;
 
@@ -65,7 +82,7 @@ public final class InteractionPermissionDecision {
             final List<String> itemRules = permission.getData().getItemsData();
             if (entityRules.isEmpty() && itemRules.isEmpty()) return Optional.of(permission);
 
-            final boolean entityDenied = !entityRules.isEmpty() && PermissionManager.checkMatch(entityRules, entityTypeId) == MatchResult.BLOCK;
+            final boolean entityDenied = judgeEntity && !entityRules.isEmpty() && PermissionManager.checkMatch(entityRules, entityTypeId) == MatchResult.BLOCK;
             final boolean itemDenied = !itemRules.isEmpty() && handItemId
                     .map(itemId -> PermissionManager.checkMatch(itemRules, itemId) == MatchResult.BLOCK)
                     .orElse(false);
