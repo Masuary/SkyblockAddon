@@ -9,8 +9,10 @@
   },
   "server": [
     "PneumaticCraftAphorismMixinConfig",
+    "PneumaticCraftHackCompletionMixinConfig",
     "PneumaticCraftHackingBlockMixinConfig",
     "PneumaticCraftHackingEntityMixinConfig",
+    "PneumaticCraftTubeModuleMixinConfig",
     "PneumaticCraftWrenchMixinConfig"
   ],
   "refmap": "skyblockaddon.refmap.json"

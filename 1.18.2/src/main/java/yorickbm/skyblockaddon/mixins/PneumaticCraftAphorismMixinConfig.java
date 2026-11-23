@@ -2,6 +2,7 @@ package yorickbm.skyblockaddon.mixins;
 
 import me.desht.pneumaticcraft.common.network.LocationIntPacket;
 import me.desht.pneumaticcraft.common.network.PacketAphorismTileUpdate;
+import me.desht.pneumaticcraft.common.util.PneumaticCraftUtils;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
@@ -26,6 +27,7 @@ public abstract class PneumaticCraftAphorismMixinConfig extends LocationIntPacke
     @Inject(method = "lambda$handle$2", at = @At("HEAD"), cancellable = true)
     private void judgeTileEdit(final Supplier<NetworkEvent.Context> context, final CallbackInfo callback) {
         final ServerPlayer sender = context.get().getSender();
-        if (sender != null && MixinPermissionChecks.denyPneumaticCraftTileEdit(sender, this.pos)) callback.cancel();
+        if (sender == null || !PneumaticCraftUtils.canPlayerReach(sender, this.pos)) return;
+        if (MixinPermissionChecks.denyPneumaticCraftBlockEdit(sender, this.pos)) callback.cancel();
     }
 }

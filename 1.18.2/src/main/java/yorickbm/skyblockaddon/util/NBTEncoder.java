@@ -167,11 +167,12 @@ public class NBTEncoder {
     }
 
     /**
-     * Serialize every island and keep only those whose bytes differ from their last queued write (or whose file is
-     * gone), recording them as queued in the tracker. Runs on the server thread; the caller hands the result to the
-     * island writer. An island that fails to serialize is reported and tried again at the next save.
+     * Serialize every island and keep only those whose bytes differ from their last queued write (every island, the
+     * first time after boot), recording them as queued in the tracker. Runs on the server thread without touching the
+     * disk; the caller hands the result to the island writer. An island that fails to serialize is reported and tried
+     * again at the next save.
      */
-    public static <T extends NBTSerializable> IslandSerializationReport serializeChanged(final Collection<T> collection, final Path folderPath,
+    public static <T extends NBTSerializable> IslandSerializationReport serializeChanged(final Collection<T> collection,
                                                                                          final IslandFileWriteTracker writeTracker) {
         final List<IslandFileWriteQueue.IslandWrite> changed = new ArrayList<>();
         int unchanged = 0;
@@ -179,8 +180,7 @@ public class NBTEncoder {
         for (final T data : collection) {
             try {
                 final byte[] serializedIsland = uncompressedBytes(data.serializeNBT());
-                final boolean fileExists = Files.isRegularFile(folderPath.resolve(IslandDataFiles.fileNameFor(data.getId())));
-                if (fileExists && !writeTracker.needsWrite(data.getId(), serializedIsland)) {
+                if (!writeTracker.needsWrite(data.getId(), serializedIsland)) {
                     unchanged++;
                     continue;
                 }

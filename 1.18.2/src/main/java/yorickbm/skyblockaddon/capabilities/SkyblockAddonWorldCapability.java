@@ -54,7 +54,8 @@ public class SkyblockAddonWorldCapability {
 
     public SkyblockAddonWorldCapability(final MinecraftServer server) {
         serverInstance = server;
-        this.islandFileWriteQueue = new IslandFileWriteQueue(islandDataFolder(), this.islandFileWriteTracker, SkyblockAddonWorldCapability::logWrittenBatch);
+        this.islandFileWriteQueue = new IslandFileWriteQueue(islandDataFolder(), this.islandFileWriteTracker, SkyblockAddonWorldCapability::logWrittenBatch,
+                taskFailure -> LOGGER.error("An island writer task failed; island files queued in it are written again at the next save", taskFailure));
         activeIslandFileWriteQueue = this.islandFileWriteQueue;
 
         //Init Island Manager
@@ -103,8 +104,8 @@ public class SkyblockAddonWorldCapability {
 
     /**
      * Persist the in-memory islands that changed since their last write. Island files are written only through here:
-     * the overworld's {@code WorldEvent.Save} (autosave, save-all, stop) and the admin commands that must persist at
-     * once call it; the capabilities.dat hook stores the grid state only. The live island objects are serialized here
+     * the overworld's {@code WorldEvent.Save} (autosave, save-all, stop) and the admin commands that change many islands
+     * call it; the capabilities.dat hook stores the grid state only. The live island objects are serialized here
      * on the server thread, where islands are changed; the bytes go to the island writer thread, which does the disk
      * work in queue order (the server stop waits for it in {@link #drainIslandWritesOnServerStop}).
      */
@@ -119,7 +120,7 @@ public class SkyblockAddonWorldCapability {
         final long serializeStartNanos = System.nanoTime();
         final NBTEncoder.IslandSerializationReport report = NBTEncoder.serializeChanged(IslandManager.getInstance().getIslands().stream()
                 .map(SkyblockAddonWorldCapability::asForgeIsland)
-                .toList(), islandDataFolder(), this.islandFileWriteTracker);
+                .toList(), this.islandFileWriteTracker);
         this.islandFileWriteQueue.queueWrites(report.changed());
         final long serializeMillis = (System.nanoTime() - serializeStartNanos) / 1_000_000L;
         LOGGER.debug("Serialized islands in {} ms: {} queued for writing, {} unchanged, {} failed.",
@@ -129,9 +130,10 @@ public class SkyblockAddonWorldCapability {
     private static void logWrittenBatch(final IslandFileWriteQueue.BatchReport report) {
         report.failures().forEach((islandId, failure) -> LOGGER.error("Failed to write the file of island {}; it is written again at the next save", islandId, failure));
         if (report.failures().isEmpty()) {
-            LOGGER.info("Wrote {} island file(s) in {} ms.", report.written(), report.millis());
+            LOGGER.info("Wrote {} island file(s) in {} ms ({} skipped for a newer queued version).", report.written(), report.millis(), report.superseded());
         } else {
-            LOGGER.error("Wrote {} island file(s) in {} ms; {} failed: {}", report.written(), report.millis(), report.failures().size(), report.failures().keySet());
+            LOGGER.error("Wrote {} island file(s) in {} ms ({} skipped for a newer queued version); {} failed: {}", report.written(), report.millis(),
+                    report.superseded(), report.failures().size(), report.failures().keySet());
         }
     }
 
@@ -346,8 +348,10 @@ public class SkyblockAddonWorldCapability {
      */
     public void removeIslandNBT(final ForgeIsland data) {
         final UUID islandId = data.getId();
+        final Path islandDataFolder = islandDataFolder();
         this.islandFileWriteTracker.forget(islandId);
-        this.islandFileWriteQueue.queueDelete(islandId, failure -> LOGGER.error("Failed to delete the file of island {} in '{}'", islandId, islandDataFolder(), failure));
+        this.islandFileWriteQueue.queueDelete(islandId, failure -> LOGGER.error("Failed to delete the file of island {} in '{}'; delete it by hand with the server stopped or the island returns at the next start",
+                islandId, islandDataFolder, failure));
     }
 
     public List<UUID> getPurgableIslands() {

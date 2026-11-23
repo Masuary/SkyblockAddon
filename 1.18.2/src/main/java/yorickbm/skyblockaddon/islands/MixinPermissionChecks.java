@@ -158,11 +158,11 @@ public final class MixinPermissionChecks {
     }
 
     /**
-     * PneumaticCraft's aphorism tile edit packet rewrites the tile's text, rotation, margin and visibility with only a
-     * reach check: judged like a right click on the tile, by the island there. A denied edit gets the tile resent so the
-     * client's screen shows the real text again.
+     * PneumaticCraft packets that rewrite a block from a client-side screen (the aphorism tile's text, a tube module's
+     * settings) with only a reach check: judged like a right click on the block, by the island there. A denied edit
+     * gets the block resent so the client shows the real state again.
      */
-    public static boolean denyPneumaticCraftTileEdit(final ServerPlayer player, final BlockPos position) {
+    public static boolean denyPneumaticCraftBlockEdit(final ServerPlayer player, final BlockPos position) {
         final ServerLevel level = player.getLevel();
         final Optional<Island> guardingIsland = InteractionHandler.islandGuardingPosition(player, level, position);
         if (guardingIsland.isEmpty()) return false;

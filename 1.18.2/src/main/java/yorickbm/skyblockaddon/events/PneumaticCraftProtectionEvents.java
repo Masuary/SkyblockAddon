@@ -37,6 +37,7 @@ import java.util.UUID;
 public class PneumaticCraftProtectionEvents {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final String PNC_NAMESPACE = "pneumaticcraft";
+    private static final ResourceLocation PNEUMATIC_WRENCH_ID = ResourceLocation.fromNamespaceAndPath(PNC_NAMESPACE, "pneumatic_wrench");
     private static final String DRONE_CLASS_NAME = "me.desht.pneumaticcraft.common.entity.drone.DroneEntity";
 
     private static volatile boolean droneReflectionInit = false;
@@ -200,12 +201,14 @@ public class PneumaticCraftProtectionEvents {
     }
 
     /**
-     * PneumaticCraft items used on blocks. A plain click with one on a PneumaticCraft block is left to the island
-     * permissions like any other block click (the "PneumaticCraft" toggle), so a Visitor group given that toggle can
-     * use the machines with PneumaticCraft items in hand; a sneaking click skips the block and lets the item act on it
-     * (the Pneumatic Wrench dismantles the block), so it is judged like breaking the block. On any other block the
-     * item stays for island members only. A click with another mod's wrench reaches the block through PneumaticCraft's
-     * own packet, judged in {@code PneumaticCraftWrenchMixinConfig}.
+     * PneumaticCraft items used on blocks. On a PneumaticCraft block the block's own use is left to the island
+     * permissions like any other block click (the "PneumaticCraft" toggle), so a Visitor group given that toggle can use
+     * the machines with PneumaticCraft items in hand, but for anyone outside the island the item itself does not act
+     * (frames, gadgets, drones, the camouflage applicator), except the Pneumatic Wrench rotating the block, which the
+     * toggle covers like another mod's wrench. A sneaking click skips the block and lets the item act on it (the wrench
+     * dismantles the block), so it is judged like breaking the block. On any other block the item stays for island
+     * members only. A click with another mod's wrench reaches the block through PneumaticCraft's own packet, judged in
+     * {@code PneumaticCraftWrenchMixinConfig}.
      */
     @SubscribeEvent
     public void onRightClickBlock(final PlayerInteractEvent.RightClickBlock event) {
@@ -223,12 +226,23 @@ public class PneumaticCraftProtectionEvents {
 
     private static void judgeItemOnPneumaticCraftBlock(final PlayerInteractEvent.RightClickBlock event) {
         final Player player = event.getPlayer();
-        if (!player.isSecondaryUseActive() || !(event.getWorld() instanceof final ServerLevel level)) return;
-        if (InteractionHandler.isBreakDenied(player, level, event.getPos())) {
-            SkyBlockAddon.logPermissionDebug(LOGGER, "PNC blocked: sneaking RightClickBlock on a PneumaticCraft block at " + event.getPos());
-            event.setCanceled(true);
-            notifyDeny(player);
+        if (!(event.getWorld() instanceof final ServerLevel level)) return;
+        if (player.isSecondaryUseActive()) {
+            if (InteractionHandler.isBreakDenied(player, level, event.getPos())) {
+                SkyBlockAddon.logPermissionDebug(LOGGER, "PNC blocked: sneaking RightClickBlock on a PneumaticCraft block at " + event.getPos());
+                event.setCanceled(true);
+                notifyDeny(player);
+            }
+            return;
         }
+        if (!isPneumaticWrench(event.getItemStack()) && shouldBlock(player, event.getPos(), level)) {
+            SkyBlockAddon.logPermissionDebug(LOGGER, "PNC item use refused on a PneumaticCraft block at " + event.getPos() + "; the block itself is judged by the island permissions");
+            event.setUseItem(Event.Result.DENY);
+        }
+    }
+
+    private static boolean isPneumaticWrench(final ItemStack stack) {
+        return PNEUMATIC_WRENCH_ID.equals(ForgeRegistries.ITEMS.getKey(stack.getItem()));
     }
 
     @SubscribeEvent

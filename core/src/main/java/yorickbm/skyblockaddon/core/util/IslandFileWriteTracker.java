@@ -47,6 +47,14 @@ public final class IslandFileWriteTracker {
         this.lastQueuedDigests.remove(islandId, failedWrite);
     }
 
+    /**
+     * Whether this queued write still carries the newest bytes queued for the island; an older one is skipped by the
+     * writer, since a newer write of the same island follows it.
+     */
+    public synchronized boolean isLatestQueued(final UUID islandId, final QueuedDigest queuedWrite) {
+        return this.lastQueuedDigests.get(islandId) == queuedWrite;
+    }
+
     public synchronized void forget(final UUID islandId) {
         this.lastQueuedDigests.remove(islandId);
     }

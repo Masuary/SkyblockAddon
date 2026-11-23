@@ -7,6 +7,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -163,11 +164,19 @@ public class SkyBlockAddon {
     }
 
     /**
+     * The island writer is drained before any other stop listener runs, so a failing listener cannot lose the island
+     * files queued by the final save.
+     */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onServerStoppedDrainIslandWrites(final ServerStoppedEvent event) {
+        SkyblockAddonWorldCapability.drainIslandWritesOnServerStop();
+    }
+
+    /**
      * Runs upon Shutdown Event of server.
      */
     @SubscribeEvent
     public void onServerShutDown(final ServerStoppedEvent event) {
-        SkyblockAddonWorldCapability.drainIslandWritesOnServerStop();
         IslandBanCommand.clearPendingLookups();
         try {
             ChunkTaskScheduler.clear();

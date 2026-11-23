@@ -28,6 +28,7 @@ public final class IslandFileWriteQueue {
     private final Path folderPath;
     private final IslandFileWriteTracker writeTracker;
     private final Consumer<BatchReport> batchListener;
+    private final Consumer<Throwable> taskFailureListener;
     private final ExecutorService writer;
 
     /**
@@ -37,18 +38,23 @@ public final class IslandFileWriteQueue {
     }
 
     /**
-     * What happened to one queued batch: how many files were written, which failed and why, and how long it took.
+     * What happened to one queued batch: how many files were written, how many were skipped because a newer version of
+     * the island was queued after them, which failed and why, and how long it took.
      */
-    public record BatchReport(int written, Map<UUID, Exception> failures, long millis) {
+    public record BatchReport(int written, int superseded, Map<UUID, Throwable> failures, long millis) {
     }
 
     /**
-     * @param batchListener called on the writer thread after each batch of writes, to log it
+     * @param batchListener       called on the writer thread after each batch of writes, to log it
+     * @param taskFailureListener called on the writer thread when a queued task fails outside a single island's write
+     *                            (an {@link Error}, a failing listener), so no failure goes unreported
      */
-    public IslandFileWriteQueue(final Path folderPath, final IslandFileWriteTracker writeTracker, final Consumer<BatchReport> batchListener) {
+    public IslandFileWriteQueue(final Path folderPath, final IslandFileWriteTracker writeTracker, final Consumer<BatchReport> batchListener,
+                                final Consumer<Throwable> taskFailureListener) {
         this.folderPath = folderPath;
         this.writeTracker = writeTracker;
         this.batchListener = batchListener;
+        this.taskFailureListener = taskFailureListener;
         this.writer = Executors.newSingleThreadExecutor(task -> {
             final Thread thread = new Thread(task, THREAD_NAME);
             thread.setDaemon(true);
@@ -104,26 +110,52 @@ public final class IslandFileWriteQueue {
 
     private Future<?> submit(final Runnable task) {
         try {
-            return this.writer.submit(task);
+            return this.writer.submit(() -> runReportingFailures(task));
         } catch (final RejectedExecutionException closed) {
             throw new IllegalStateException("The island writer was shut down; island files can no longer be written for this server", closed);
         }
     }
 
+    private void runReportingFailures(final Runnable task) {
+        try {
+            task.run();
+        } catch (final Throwable taskFailure) {
+            this.taskFailureListener.accept(taskFailure);
+            if (taskFailure instanceof final Error error) throw error;
+        }
+    }
+
+    /**
+     * An {@link Error} while writing one island (out of memory) stops the batch: that island and the rest are handed
+     * back to the tracker so the next save writes them, the batch is reported, and the error is rethrown.
+     */
     private void writeBatch(final List<IslandWrite> batch) {
         final long startNanos = System.nanoTime();
         int written = 0;
-        final Map<UUID, Exception> failures = new LinkedHashMap<>();
-        for (final IslandWrite write : batch) {
+        int superseded = 0;
+        final Map<UUID, Throwable> failures = new LinkedHashMap<>();
+        for (int index = 0; index < batch.size(); index++) {
+            final IslandWrite write = batch.get(index);
+            if (!this.writeTracker.isLatestQueued(write.islandId(), write.queuedDigest())) {
+                superseded++;
+                continue;
+            }
             try {
                 IslandFileStore.writeAtomically(this.folderPath, write.islandId(), write.uncompressedNbt());
                 written++;
             } catch (final Exception writeFailure) {
                 this.writeTracker.writeFailed(write.islandId(), write.queuedDigest());
                 failures.put(write.islandId(), writeFailure);
+            } catch (final Error fatal) {
+                for (final IslandWrite unwritten : batch.subList(index, batch.size())) {
+                    this.writeTracker.writeFailed(unwritten.islandId(), unwritten.queuedDigest());
+                    failures.put(unwritten.islandId(), fatal);
+                }
+                this.batchListener.accept(new BatchReport(written, superseded, failures, (System.nanoTime() - startNanos) / 1_000_000L));
+                throw fatal;
             }
         }
-        this.batchListener.accept(new BatchReport(written, failures, (System.nanoTime() - startNanos) / 1_000_000L));
+        this.batchListener.accept(new BatchReport(written, superseded, failures, (System.nanoTime() - startNanos) / 1_000_000L));
     }
 
 }

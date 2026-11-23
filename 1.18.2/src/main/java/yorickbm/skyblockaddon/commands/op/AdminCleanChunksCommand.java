@@ -206,7 +206,7 @@ public class AdminCleanChunksCommand {
                     island.getId(), beforeCount - prunedThisIsland - failedThisIsland, prunedThisIsland, failedThisIsland, beforeCount);
         }
 
-        // Persist the trimmed lists immediately so cleanup survives an unexpected restart.
+        // Queue the trimmed lists for writing now so cleanup survives an unexpected restart.
         final CompletableFuture<Void> saveFuture = new CompletableFuture<>();
         server.execute(() -> {
             try {
