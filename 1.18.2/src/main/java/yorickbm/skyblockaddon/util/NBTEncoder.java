@@ -175,25 +175,31 @@ public class NBTEncoder {
     public static <T extends NBTSerializable> IslandSerializationReport serializeChanged(final Collection<T> collection,
                                                                                          final IslandFileWriteTracker writeTracker) {
         final List<IslandFileWriteQueue.IslandWrite> changed = new ArrayList<>();
-        int unchanged = 0;
         final List<UUID> failedSerializations = new ArrayList<>();
+        try {
+            serializeEach(collection, writeTracker, changed, failedSerializations);
+        } catch (final Error fatal) {
+            changed.forEach(write -> writeTracker.writeFailed(write.islandId(), write.queuedDigest()));
+            throw fatal;
+        }
+        if (!failedSerializations.isEmpty()) {
+            LOGGER.error("{} of {} island(s) were not saved: {}", failedSerializations.size(), collection.size(), failedSerializations);
+        }
+        return new IslandSerializationReport(List.copyOf(changed), collection.size() - changed.size() - failedSerializations.size(), List.copyOf(failedSerializations));
+    }
+
+    private static <T extends NBTSerializable> void serializeEach(final Collection<T> collection, final IslandFileWriteTracker writeTracker,
+                                                                  final List<IslandFileWriteQueue.IslandWrite> changed, final List<UUID> failedSerializations) {
         for (final T data : collection) {
             try {
                 final byte[] serializedIsland = uncompressedBytes(data.serializeNBT());
-                if (!writeTracker.needsWrite(data.getId(), serializedIsland)) {
-                    unchanged++;
-                    continue;
-                }
+                if (!writeTracker.needsWrite(data.getId(), serializedIsland)) continue;
                 changed.add(new IslandFileWriteQueue.IslandWrite(data.getId(), serializedIsland, writeTracker.recordQueued(data.getId(), serializedIsland)));
             } catch (final IOException | RuntimeException e) {
                 failedSerializations.add(data.getId());
                 LOGGER.error("Failed to serialize island {} for saving", data.getId(), e);
             }
         }
-        if (!failedSerializations.isEmpty()) {
-            LOGGER.error("{} of {} island(s) were not saved: {}", failedSerializations.size(), collection.size(), failedSerializations);
-        }
-        return new IslandSerializationReport(List.copyOf(changed), unchanged, List.copyOf(failedSerializations));
     }
 
     private static void createFolderIfMissing(final Path folderPath) {

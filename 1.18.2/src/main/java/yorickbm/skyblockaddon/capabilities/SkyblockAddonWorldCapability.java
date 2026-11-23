@@ -32,6 +32,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -128,7 +129,9 @@ public class SkyblockAddonWorldCapability {
     }
 
     private static void logWrittenBatch(final IslandFileWriteQueue.BatchReport report) {
-        report.failures().forEach((islandId, failure) -> LOGGER.error("Failed to write the file of island {}; it is written again at the next save", islandId, failure));
+        final Map<Throwable, List<UUID>> islandsByFailure = new IdentityHashMap<>();
+        report.failures().forEach((islandId, failure) -> islandsByFailure.computeIfAbsent(failure, ignored -> new ArrayList<>()).add(islandId));
+        islandsByFailure.forEach((failure, islandIds) -> LOGGER.error("Failed to write the file(s) of island(s) {}; they are written again at the next save", islandIds, failure));
         if (report.failures().isEmpty()) {
             LOGGER.info("Wrote {} island file(s) in {} ms ({} skipped for a newer queued version).", report.written(), report.millis(), report.superseded());
         } else {

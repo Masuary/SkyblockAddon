@@ -121,13 +121,13 @@ public final class IslandFileWriteQueue {
             task.run();
         } catch (final Throwable taskFailure) {
             this.taskFailureListener.accept(taskFailure);
-            if (taskFailure instanceof final Error error) throw error;
         }
     }
 
     /**
      * An {@link Error} while writing one island (out of memory) stops the batch: that island and the rest are handed
-     * back to the tracker so the next save writes them, the batch is reported, and the error is rethrown.
+     * back to the tracker so the next save writes them, the batch is reported, and the error goes to the task failure
+     * listener.
      */
     private void writeBatch(final List<IslandWrite> batch) {
         final long startNanos = System.nanoTime();
