@@ -185,6 +185,7 @@ dependencies {
     compileOnly fg.deobf("curse.maven:building-gadgets-298187:4412996")
     compileOnly fg.deobf("curse.maven:effortless-building-302113:4369816")
     compileOnly fg.deobf("curse.maven:create-328085:4835188")
+    compileOnly fg.deobf("curse.maven:pneumaticcraft-repressurized-281849:4922258")
 
     compileOnly modDep('vault_jar', "curse.maven:vault-hunters-official-mod-458203:${vault_hunters_file}")
     compileOnly modDep('buildscape_jar', "curse.maven:buildscape-1377354:${buildscape_file}")

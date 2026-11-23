@@ -8,12 +8,13 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.vehicle.AbstractMinecart;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.event.entity.EntityMountEvent;
 import net.minecraftforge.event.entity.EntityTeleportEvent;
@@ -41,6 +42,7 @@ import yorickbm.skyblockaddon.core.JSON.PermissionDataJson;
 import yorickbm.skyblockaddon.core.islands.Island;
 import yorickbm.skyblockaddon.core.islands.IslandGroup;
 import yorickbm.skyblockaddon.core.islands.IslandManager;
+import yorickbm.skyblockaddon.core.permissions.InteractionSubject;
 import yorickbm.skyblockaddon.core.permissions.Permission;
 import yorickbm.skyblockaddon.core.permissions.PermissionManager;
 import yorickbm.skyblockaddon.core.permissions.PermissionTriggers;
@@ -50,7 +52,6 @@ import yorickbm.skyblockaddon.util.ForgeConverter;
 import yorickbm.skyblockaddon.util.RightClickedStacks;
 import yorickbm.skyblockaddon.util.ToggleOwnedItemUses;
 
-import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -62,6 +63,8 @@ import java.util.stream.Collectors;
 
 public class PermissionEvents {
     private static final String DIMENSION_RULE_PREFIX = "dimension:";
+    private static final String CREATE_NAMESPACE = "create";
+    private static final String CREATE_WRENCH = "create:wrench";
 
     private static final List<TriggerRule<?>> SIMPLE_TRIGGER_RULES = List.of(
             TriggerRule.firstPermission(BlockEvent.FarmlandTrampleEvent.class, PermissionTriggers.ON_TRAMPLE, BlockEvent.FarmlandTrampleEvent::getEntity),
@@ -70,7 +73,7 @@ public class PermissionEvents {
             TriggerRule.firstPermission(PlayerSleepInBedEvent.class, PermissionTriggers.ON_SLEEP_IN_BED, PlayerSleepInBedEvent::getEntity)
                     .withDenialEffect((event, player) -> event.setResult(Player.BedSleepingProblem.OTHER_PROBLEM)),
             TriggerRule.firstPermission(PlayerXpEvent.PickupXp.class, PermissionTriggers.ON_XP, PlayerXpEvent.PickupXp::getEntity),
-            TriggerRule.firstPermission(BonemealEvent.class, PermissionTriggers.ON_BONEMEAL, BonemealEvent::getEntity),
+            TriggerRule.firstPermission(BonemealEvent.class, PermissionTriggers.ON_BONEMEAL, BonemealEvent::getEntity).atHighestPriority(),
 
             TriggerRule.matchedAgainstData(EntityItemPickupEvent.class, PermissionTriggers.ON_PICKUP, EntityItemPickupEvent::getEntity,
                     event -> itemId(event.getItem().getItem().getItem()), PermissionDataJson::getItemsData),
@@ -111,14 +114,13 @@ public class PermissionEvents {
 
             final ServerPlayer player = (ServerPlayer) event.getPlayer();
             final ServerLevel level = (ServerLevel) event.getWorld();
-            final Optional<ToggleOwnedItemUses.Owner> toggleOwningTheUse = PermissionTriggers.ON_PLACE_BLOCK.equals(trigger)
-                    ? ToggleOwnedItemUses.ownerOf(level, event.getPos(), event.getHitVec().getDirection(), event.getItemStack())
-                    : Optional.empty();
+            final Optional<ToggleOwnedItemUses.Owner> toggleOwningTheUse = ToggleOwnedItemUses.ownerOf(level, event.getPos(), event.getHitVec().getDirection(),
+                    event.getItemStack(), PermissionTriggers.ON_PLACE_BLOCK.equals(trigger)).filter(owner -> isTriggerInRegistry(owner.trigger()));
             if (toggleOwningTheUse.isPresent()) {
                 judgeToggleOwnedUse(event, standingOn, player, level, toggleOwningTheUse.get());
             } else if (InteractionHandler.checkPlayerInteraction(standingOn, player, level, event.getPos(), event.getItemStack(), trigger)) {
                 InteractionHandler.denyBlockClick(event, player);
-            } else if (InteractionHandler.isEntityPlacementDenied(standingOn, player, event.getItemStack())) {
+            } else if (InteractionHandler.isEntityPlacementDenied(standingOn, player, event.getItemStack()) || isVaultCrystalUseDenied(standingOn, player, event.getItemStack())) {
                 final boolean blockUseComesFirst = PermissionTriggers.ON_RIGHT_CLICK_BLOCK.equals(trigger) && !player.isSecondaryUseActive();
                 InteractionHandler.denyItemUseOnBlock(event, player, !blockUseComesFirst);
             }
@@ -128,17 +130,32 @@ public class PermissionEvents {
     }
 
     /**
-     * Judged by the owning toggle's trigger here, or for bone meal by the bonemeal event later in the click. The blocks
-     * an allowed use places are then left to that judgement.
+     * Judged by the owning toggle's trigger alone; the blocks an allowed use places are then left to that judgement.
      */
     private static void judgeToggleOwnedUse(final PlayerInteractEvent.RightClickBlock event, final AtomicReference<Island> standingOn, final ServerPlayer player,
                                             final ServerLevel level, final ToggleOwnedItemUses.Owner toggleOwningTheUse) {
-        final Optional<String> trigger = toggleOwningTheUse.triggerJudgedOnTheClick();
-        if (trigger.isPresent() && InteractionHandler.checkPlayerInteraction(standingOn, player, level, event.getPos(), event.getItemStack(), trigger.get())) {
+        if (InteractionHandler.checkPlayerInteraction(standingOn, player, level, event.getPos(), event.getItemStack(), toggleOwningTheUse.trigger())) {
             InteractionHandler.denyBlockClick(event, player);
             return;
         }
         ToggleOwnedItemUses.rememberAllowedUse(player, event.getItemStack());
+    }
+
+    /**
+     * A vault crystal held while clicking a block with its own use runs only when that use passes, and may then open a
+     * portal next to the block: the crystal is still judged by "Vault portals".
+     */
+    private static boolean isVaultCrystalUseDenied(final AtomicReference<Island> standingOn, final ServerPlayer player, final ItemStack handItem) {
+        return ToggleOwnedItemUses.isVaultCrystal(handItem) && isTriggerInRegistry(PermissionTriggers.ON_OPEN_VAULT_PORTAL)
+                && InteractionHandler.isInteractionDenied(standingOn, player, PermissionTriggers.ON_OPEN_VAULT_PORTAL, InteractionHandler.subjectOfUntargetedPlacement(handItem));
+    }
+
+    /**
+     * A server registry written before a trigger existed has no permission on it; the action then falls back to the
+     * judgement it had before (placements under "Place blocks") instead of being open to everyone.
+     */
+    private static boolean isTriggerInRegistry(final String trigger) {
+        return !PermissionManager.getInstance().getPermissionsForTrigger(trigger).isEmpty();
     }
 
     /**
@@ -175,30 +192,24 @@ public class PermissionEvents {
 
     /**
      * Entity storage opened without a click on the entity (a seated inventory key, a mod's open-screen packet). Runs
-     * last, so a screen another listener already closed is left alone. Some mods open the screen straight from their
-     * packet handler on the network thread (wildbackport's chest boat key): the island data is then read off the server
-     * thread, so a read that races a group change refuses the screen instead of failing.
+     * last, so a screen another listener already closed is left alone. wildbackport opens its chest boat screen from
+     * the packet handler on the network thread and then again when the packet runs on the server thread: the
+     * network-thread screen is closed at once without reading island data (a click packet queued before it must not
+     * find it open), and the server-thread one is judged.
      */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onContainerOpen(final PlayerContainerEvent.Open event) {
-        if (!(event.getPlayer() instanceof final ServerPlayer player)) return;
+        if (!(event.getPlayer() instanceof final ServerPlayer player) || player.getServer() == null) return;
         if (player.containerMenu != event.getContainer()) return;
 
-        final boolean onServerThread = player.getServer() != null && player.getServer().isSameThread();
-        if (!isEntityStorageDeniedFailingClosed(player, event.getContainer(), onServerThread)) return;
+        if (!player.getServer().isSameThread()) {
+            if (InteractionHandler.hasEntityStorage(event.getContainer())) player.closeContainer();
+            return;
+        }
+        if (!InteractionHandler.isEntityStorageDenied(player, event.getContainer())) return;
 
         player.closeContainer();
-        if (onServerThread && InteractionHandler.isFirstDenialMessageThisTick(player)) InteractionHandler.sendDeniedMessage(player);
-        else if (!onServerThread) player.getServer().execute(() -> InteractionHandler.sendDeniedMessage(player));
-    }
-
-    private static boolean isEntityStorageDeniedFailingClosed(final ServerPlayer player, final AbstractContainerMenu menu, final boolean onServerThread) {
-        if (onServerThread) return InteractionHandler.isEntityStorageDenied(player, menu);
-        try {
-            return InteractionHandler.isEntityStorageDenied(player, menu);
-        } catch (final ConcurrentModificationException raceWithTheServerThread) {
-            return true;
-        }
+        if (InteractionHandler.isFirstDenialMessageThisTick(player)) InteractionHandler.sendDeniedMessage(player);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
@@ -231,13 +242,26 @@ public class PermissionEvents {
         final AtomicReference<Island> standingOn = new AtomicReference<>();
         if (!InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) {
             final ServerPlayer player = (ServerPlayer) event.getEntity();
-            if (!ToggleOwnedItemUses.isPlacedByAllowedUse(player) && InteractionHandler.checkPlayerInteraction(standingOn, player, (ServerLevel) event.getWorld(), event.getPos(), PermissionTriggers.ON_PLACE_BLOCK,
-                    InteractionHandler.subjectOfPlacedBlock(player.getMainHandItem(), event.getPlacedBlock()))) {
+            if (isPlacementDenied(standingOn, player, (ServerLevel) event.getWorld(), event.getPos(), event.getPlacedBlock())) {
                 InteractionHandler.deny(event, player);
             }
         }
 
         denyNetherPortalIgnition(event, event.getEntity(), event.getWorld(), event.getPos(), ServerPlayer::getMainHandItem);
+    }
+
+    /**
+     * Fire that formed a nether portal reaches the event as the portal block, whatever lit it (flint and steel on any
+     * block facing the frame, a fire charge): judged by "Nether portals" alone, like the click on obsidian.
+     */
+    private static boolean isPlacementDenied(final AtomicReference<Island> standingOn, final ServerPlayer player, final ServerLevel level, final BlockPos position,
+                                             final BlockState placedState) {
+        final InteractionSubject placedBlock = InteractionHandler.subjectOfPlacedBlock(player.getMainHandItem(), placedState);
+        if (placedState.is(Blocks.NETHER_PORTAL) && isTriggerInRegistry(PermissionTriggers.ON_PORTAL_IGNITION)) {
+            return InteractionHandler.checkPlayerInteraction(standingOn, player, level, position, PermissionTriggers.ON_PORTAL_IGNITION, placedBlock);
+        }
+        return !ToggleOwnedItemUses.isPlacedByAllowedUse(player)
+                && InteractionHandler.checkPlayerInteraction(standingOn, player, level, position, PermissionTriggers.ON_PLACE_BLOCK, placedBlock);
     }
 
     @SubscribeEvent
@@ -263,9 +287,23 @@ public class PermissionEvents {
         }
     }
 
+    /**
+     * A Create wrench on a minecart that carries a contraption (or on the contraption itself) picks the whole
+     * contraption up, with everything stored on it, through Create's own click listener: judged as breaking blocks at
+     * the cart.
+     */
+    private static boolean isContraptionPickupDenied(final ServerPlayer player, final Entity target, final ItemStack handItem) {
+        if (!CREATE_WRENCH.equals(Objects.toString(handItem.getItem().getRegistryName()))) return false;
+        final Entity cart = target instanceof AbstractMinecart ? target : target.getVehicle();
+        if (!(cart instanceof AbstractMinecart) || !(cart.getLevel() instanceof final ServerLevel level)) return false;
+        final boolean carriesContraption = cart.getPassengers().stream()
+                .anyMatch(passenger -> CREATE_NAMESPACE.equals(Objects.requireNonNull(EntityType.getKey(passenger.getType())).getNamespace()));
+        return carriesContraption && InteractionHandler.isBreakDenied(player, level, cart.blockPosition());
+    }
+
     private static void denyEntityClick(final PlayerInteractEvent event, final Entity target) {
         if (!(event.getPlayer() instanceof final ServerPlayer player)) return;
-        if (!InteractionHandler.isEntityInteractionDenied(player, target, event.getItemStack())) return;
+        if (!InteractionHandler.isEntityInteractionDenied(player, target, event.getItemStack()) && !isContraptionPickupDenied(player, target, event.getItemStack())) return;
 
         event.setCancellationResult(InteractionResult.FAIL);
         event.setCanceled(true);
@@ -341,14 +379,16 @@ public class PermissionEvents {
 
     /**
      * A permission check for an event whose only special handling is how its trigger is judged, plus an optional effect
-     * after the denial. Registered at normal priority, like the per-event handlers it replaces.
+     * after the denial. Registered at normal priority, like the per-event handlers it replaces, unless a rule must act
+     * before other mods' listeners.
      */
-    private record TriggerRule<E extends Event>(Class<E> eventType, Function<E, Entity> actor, TriggerDecision<E> decision, BiConsumer<E, ServerPlayer> denialEffect) {
+    private record TriggerRule<E extends Event>(Class<E> eventType, Function<E, Entity> actor, TriggerDecision<E> decision, BiConsumer<E, ServerPlayer> denialEffect,
+                                                EventPriority priority) {
 
         static <E extends Event> TriggerRule<E> firstPermission(final Class<E> eventType, final String trigger, final Function<E, Entity> actor) {
             return new TriggerRule<>(eventType, actor,
                     (event, player, standingOn) -> isDeniedByFirstPermission(standingOn.get().getGroupForEntityUUID(player.getUUID()), trigger),
-                    (event, player) -> { });
+                    (event, player) -> { }, EventPriority.NORMAL);
         }
 
         static <E extends Event> TriggerRule<E> matchedAgainstData(final Class<E> eventType, final String trigger, final Function<E, Entity> actor,
@@ -357,13 +397,13 @@ public class PermissionEvents {
                 final Optional<IslandGroup> group = standingOn.get().getGroupForEntityUUID(player.getUUID());
                 if (group.isEmpty()) return true;
                 return InteractionHandler.isDeniedByMatchData(group, trigger, matchValue.apply(event), dataExtractor, true);
-            }, (event, player) -> { });
+            }, (event, player) -> { }, EventPriority.NORMAL);
         }
 
         static <E extends PlayerInteractEvent> TriggerRule<E> playerInteraction(final Class<E> eventType, final String trigger) {
             return new TriggerRule<>(eventType, PlayerInteractEvent::getPlayer,
                     (event, player, standingOn) -> InteractionHandler.checkPlayerInteraction(standingOn, player, (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(), trigger),
-                    (event, player) -> { });
+                    (event, player) -> { }, EventPriority.NORMAL);
         }
 
         /**
@@ -373,11 +413,18 @@ public class PermissionEvents {
             return new TriggerRule<>(PlayerInteractEvent.RightClickItem.class, PlayerInteractEvent::getPlayer,
                     (event, player, standingOn) -> RightClickedStacks.stacksUsedBy(player, event.getItemStack()).stream()
                             .anyMatch(usedStack -> InteractionHandler.checkPlayerInteraction(standingOn, player, (ServerLevel) event.getWorld(), event.getPos(), usedStack, trigger)),
-                    (event, player) -> { });
+                    (event, player) -> { }, EventPriority.NORMAL);
         }
 
         TriggerRule<E> withDenialEffect(final BiConsumer<E, ServerPlayer> effect) {
-            return new TriggerRule<>(this.eventType, this.actor, this.decision, effect);
+            return new TriggerRule<>(this.eventType, this.actor, this.decision, effect, this.priority);
+        }
+
+        /**
+         * Judge before other mods' listeners act on the event.
+         */
+        TriggerRule<E> atHighestPriority() {
+            return new TriggerRule<>(this.eventType, this.actor, this.decision, this.denialEffect, EventPriority.HIGHEST);
         }
 
         /**
@@ -387,11 +434,11 @@ public class PermissionEvents {
         TriggerRule<E> onlyWhen(final Predicate<E> judged) {
             final TriggerDecision<E> judgedDecision = this.decision;
             return new TriggerRule<>(this.eventType, this.actor,
-                    (event, player, standingOn) -> judged.test(event) && judgedDecision.isDenied(event, player, standingOn), this.denialEffect);
+                    (event, player, standingOn) -> judged.test(event) && judgedDecision.isDenied(event, player, standingOn), this.denialEffect, this.priority);
         }
 
         void register(final IEventBus eventBus) {
-            eventBus.addListener(EventPriority.NORMAL, false, this.eventType, this::handle);
+            eventBus.addListener(this.priority, false, this.eventType, this::handle);
         }
 
         private void handle(final E event) {

@@ -2,6 +2,7 @@ package yorickbm.skyblockaddon.core.permissions;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import yorickbm.skyblockaddon.core.util.MatchResult;
@@ -105,6 +106,14 @@ class BundledRegistryCoverageTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"vaulthunters", "woldsvaults", "default"})
+    void carpentryBedsAreFramesFirstAndStayUnderTheCatchAll(final String pack) {
+        final PermissionManager manager = bundled(pack);
+        assertEquals(Optional.of("interact_generic"), blockClickDenial(manager, VISITOR, "blockcarpentry:frame_bed"));
+        assertEquals(Optional.of("interact_generic"), blockClickDenial(manager, VISITOR, "blockcarpentry:illusion_bed"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"vaulthunters", "woldsvaults", "default"})
     void storageCartsOfOtherModsNeedTheChestToggle(final String pack) {
         final PermissionManager manager = bundled(pack);
         assertEquals(Optional.of("open_chests"), entityDenial(manager, VISITOR, "supplementaries:dispenser_minecart"));
@@ -197,24 +206,25 @@ class BundledRegistryCoverageTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"vaulthunters", "woldsvaults"})
-    void spawnEggsNeedOnlyTheSpawnEggToggle(final String pack) {
+    @CsvSource({
+            "vaulthunters, minecraft:zombie_spawn_egg", "vaulthunters, ispawner:spawn_egg", "vaulthunters, quark:egg_parrot_red", "vaulthunters, minecraft:egg",
+            "woldsvaults, minecraft:zombie_spawn_egg", "woldsvaults, ispawner:spawn_egg", "woldsvaults, quark:egg_parrot_red", "woldsvaults, minecraft:egg"})
+    void everySpawnEggItemNeedsOnlyTheSpawnEggToggle(final String pack, final String eggId) {
         final PermissionManager manager = bundled(pack);
-        assertEquals(Optional.of("interact_spawn"), placementDenial(manager, VISITOR, "minecraft:zombie_spawn_egg", "minecraft:grass_block"));
-        assertEquals(Optional.empty(), placementDenial(manager, "interact_spawn"::equals, "minecraft:zombie_spawn_egg", "minecraft:grass_block"));
-        assertEquals(Optional.of("interact_spawn"), InteractionPermissionDecision.findDenyingEntityPlacement(
-                manager.getPermissionsForTrigger(PermissionTriggers.ON_PLACE_BLOCK), "place_blocks"::equals, "minecraft:zombie_spawn_egg").map(Permission::getId));
-        assertEquals(Optional.empty(), InteractionPermissionDecision.findDenyingEntityPlacement(
-                manager.getPermissionsForTrigger(PermissionTriggers.ON_PLACE_BLOCK), "interact_spawn"::equals, "minecraft:zombie_spawn_egg"));
+        final List<Permission> placementPermissions = manager.getPermissionsForTrigger(PermissionTriggers.ON_PLACE_BLOCK);
+        assertEquals(Optional.of("interact_spawn"), placementDenial(manager, VISITOR, eggId, "minecraft:grass_block"));
+        assertEquals(Optional.empty(), placementDenial(manager, "interact_spawn"::equals, eggId, "minecraft:grass_block"));
+        assertEquals(Optional.of("interact_spawn"), InteractionPermissionDecision.findDenyingEntityPlacement(placementPermissions, "place_blocks"::equals, eggId).map(Permission::getId));
+        assertEquals(Optional.empty(), InteractionPermissionDecision.findDenyingEntityPlacement(placementPermissions, "interact_spawn"::equals, eggId));
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"vaulthunters", "woldsvaults"})
-    void easyVillagersAndPortalFramesStayUnderPlaceBlocks(final String pack) {
+    void easyVillagersAndBlocksOnPortalFramesStayUnderPlaceBlocks(final String pack) {
         final PermissionManager manager = bundled(pack);
         assertEquals(Optional.of("place_blocks"), placementDenial(manager, "interact_easy_villagers"::equals, "easy_villagers:villager", "minecraft:grass_block"));
-        assertEquals(Optional.of("place_blocks"), placementDenial(manager, "use_vault_portal"::equals, "the_vault:vault_crystal", "the_vault:vault_stone_pillar"));
         assertEquals(Optional.of("place_blocks"), placementDenial(manager, "use_vault_portal"::equals, "minecraft:stick", "the_vault:vault_portal"));
+        assertEquals(Optional.of("place_blocks"), placementDenial(manager, "use_vault_portal"::equals, "minecraft:stick", "the_vault:vault_stone_pillar"));
     }
 
     @ParameterizedTest

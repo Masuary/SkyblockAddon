@@ -56,6 +56,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public class InteractionHandler {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -293,13 +294,20 @@ public class InteractionHandler {
      * the island where the entity is.
      */
     public static boolean isEntityStorageDenied(final ServerPlayer player, final AbstractContainerMenu menu) {
+        return entityStorages(menu).anyMatch(entity -> isEntityInteractionDenied(player, entity, ItemStack.EMPTY));
+    }
+
+    public static boolean hasEntityStorage(final AbstractContainerMenu menu) {
+        return entityStorages(menu).findAny().isPresent();
+    }
+
+    private static Stream<Entity> entityStorages(final AbstractContainerMenu menu) {
         return menu.slots.stream()
                 .map(slot -> slot.container)
                 .filter(Entity.class::isInstance)
                 .map(Entity.class::cast)
                 .filter(entity -> !(entity instanceof Player))
-                .distinct()
-                .anyMatch(entity -> isEntityInteractionDenied(player, entity, ItemStack.EMPTY));
+                .distinct();
     }
 
     /**

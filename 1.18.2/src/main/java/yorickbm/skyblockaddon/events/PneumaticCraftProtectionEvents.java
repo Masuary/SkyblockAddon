@@ -201,7 +201,9 @@ public class PneumaticCraftProtectionEvents {
 
     /**
      * PneumaticCraft items used on blocks. A click on a PneumaticCraft block is judged by the island permissions like
-     * any other block (the "PneumaticCraft" toggle), so a Visitor group given that toggle can use the machines.
+     * any other block (the "PneumaticCraft" toggle), so a Visitor group given that toggle can use the machines; a click
+     * with another mod's wrench reaches the block through PneumaticCraft's own packet, judged in
+     * {@code PneumaticCraftWrenchMixinConfig}.
      */
     @SubscribeEvent
     public void onRightClickBlock(final PlayerInteractEvent.RightClickBlock event) {

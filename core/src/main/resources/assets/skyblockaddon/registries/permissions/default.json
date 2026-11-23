@@ -560,7 +560,6 @@
           "!minecraft:.*_bed",
           "!the_vault:velvet_bed",
           "!buildscape:straw_bed",
-          "!blockcarpentry:(frame|illusion)_bed",
           "!comforts:(hammock|sleeping_bag)_.*",
           "!dyenamics:.*_bed",
           "!dyenamicsandfriends:comforts_.*_(hammock|sleeping_bag)"

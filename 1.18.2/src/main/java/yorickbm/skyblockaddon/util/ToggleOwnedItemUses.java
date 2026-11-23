@@ -10,6 +10,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.BonemealableBlock;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.CaveVines;
+import net.minecraft.world.level.block.SweetBerryBushBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.portal.PortalShape;
 import net.minecraftforge.fml.ModList;
@@ -20,29 +22,29 @@ import java.util.Optional;
 import java.util.WeakHashMap;
 
 /**
- * Item uses on a block that one named toggle judges alone, although the click would otherwise count as a placement:
- * bone meal on a block it can grow ("Use bone meal", judged later by the bonemeal event), flint and steel on obsidian
- * where the fire forms a nether portal ("Nether portals") and a vault crystal on a vault portal frame ("Vault portals"),
- * both judged on the click. The blocks such a use places in the same click (plants, fire and portal blocks) are not
- * judged as placements either.
+ * Item uses on a block that one named toggle judges alone on the click, although the click would otherwise count as a
+ * placement: bone meal on a block it can grow ("Use bone meal"), flint and steel on obsidian where the fire forms a
+ * nether portal ("Nether portals") and a vault crystal on any block ("Vault portals"; the crystal has no other use on a
+ * block). The blocks such a use places in the same click (plants, fire and portal blocks) are not judged as placements
+ * either.
  */
 public final class ToggleOwnedItemUses {
     private static final boolean VAULT_HUNTERS_LOADED = ModList.get().isLoaded("the_vault");
     private static final Map<ServerPlayer, AllowedUse> ALLOWED_USE_THIS_TICK = new WeakHashMap<>();
 
     public enum Owner {
-        BONE_MEAL(Optional.empty()),
-        NETHER_PORTAL_IGNITION(Optional.of(PermissionTriggers.ON_PORTAL_IGNITION)),
-        VAULT_PORTAL_OPENING(Optional.of(PermissionTriggers.ON_OPEN_VAULT_PORTAL));
+        BONE_MEAL(PermissionTriggers.ON_BONEMEAL),
+        NETHER_PORTAL_IGNITION(PermissionTriggers.ON_PORTAL_IGNITION),
+        VAULT_PORTAL_OPENING(PermissionTriggers.ON_OPEN_VAULT_PORTAL);
 
-        private final Optional<String> triggerJudgedOnTheClick;
+        private final String trigger;
 
-        Owner(final Optional<String> triggerJudgedOnTheClick) {
-            this.triggerJudgedOnTheClick = triggerJudgedOnTheClick;
+        Owner(final String trigger) {
+            this.trigger = trigger;
         }
 
-        public Optional<String> triggerJudgedOnTheClick() {
-            return triggerJudgedOnTheClick;
+        public String trigger() {
+            return trigger;
         }
     }
 
@@ -52,20 +54,40 @@ public final class ToggleOwnedItemUses {
     private ToggleOwnedItemUses() {
     }
 
-    public static Optional<Owner> ownerOf(final ServerLevel level, final BlockPos clickedPosition, final Direction clickedFace, final ItemStack usedStack) {
+    /**
+     * The toggle that owns the use of the stack on the clicked block. A click on a block with its own use (not a
+     * placement) is owned only by bone meal on a growable that hands that click on to the item.
+     */
+    public static Optional<Owner> ownerOf(final ServerLevel level, final BlockPos clickedPosition, final Direction clickedFace, final ItemStack usedStack,
+                                          final boolean clickIsPlacement) {
         final BlockState clickedState = level.getBlockState(clickedPosition);
-        if (usedStack.getItem() instanceof BoneMealItem && clickedState.getBlock() instanceof final BonemealableBlock growable
-                && growable.isValidBonemealTarget(level, clickedPosition, clickedState, false)) {
+        if (isGrownByBoneMeal(level, clickedPosition, clickedState, usedStack) && (clickIsPlacement || passesBoneMealToTheItem(clickedState, usedStack))) {
             return Optional.of(Owner.BONE_MEAL);
         }
+        if (!clickIsPlacement) return Optional.empty();
         if (usedStack.is(Items.FLINT_AND_STEEL) && clickedState.is(Blocks.OBSIDIAN)
                 && PortalShape.findEmptyPortalShape(level, clickedPosition.relative(clickedFace), Direction.Axis.X).isPresent()) {
             return Optional.of(Owner.NETHER_PORTAL_IGNITION);
         }
-        if (VAULT_HUNTERS_LOADED && VaultPortalFrames.isCrystalOnFrame(level, clickedPosition, clickedState, usedStack)) {
-            return Optional.of(Owner.VAULT_PORTAL_OPENING);
-        }
+        if (isVaultCrystal(usedStack)) return Optional.of(Owner.VAULT_PORTAL_OPENING);
         return Optional.empty();
+    }
+
+    public static boolean isVaultCrystal(final ItemStack stack) {
+        return VAULT_HUNTERS_LOADED && VaultCrystals.isVaultCrystal(stack);
+    }
+
+    private static boolean isGrownByBoneMeal(final ServerLevel level, final BlockPos clickedPosition, final BlockState clickedState, final ItemStack usedStack) {
+        return usedStack.getItem() instanceof BoneMealItem && clickedState.getBlock() instanceof final BonemealableBlock growable
+                && growable.isValidBonemealTarget(level, clickedPosition, clickedState, false);
+    }
+
+    /**
+     * Growables whose own use returns PASS while bone meal can grow them, so the bone meal is what the click uses.
+     */
+    private static boolean passesBoneMealToTheItem(final BlockState clickedState, final ItemStack usedStack) {
+        return clickedState.getBlock() instanceof CaveVines
+                || clickedState.getBlock() instanceof SweetBerryBushBlock && usedStack.is(Items.BONE_MEAL);
     }
 
     /**

@@ -196,7 +196,10 @@
         "skyblockaddon": [],
         "items": [
           "!.*:.*_spawn_egg",
-          "supplementaries:slingshot"
+          "supplementaries:slingshot",
+          "!minecraft:egg",
+          "!ispawner:spawn_egg",
+          "!quark:egg_parrot_.*"
         ],
         "blocks": [
           ".*:.*"
@@ -1731,7 +1734,6 @@
           "!minecraft:.*_bed",
           "!the_vault:velvet_bed",
           "!buildscape:straw_bed",
-          "!blockcarpentry:(frame|illusion)_bed",
           "!comforts:(hammock|sleeping_bag)_.*",
           "!dyenamics:.*_bed",
           "!dyenamicsandfriends:comforts_.*_(hammock|sleeping_bag)"

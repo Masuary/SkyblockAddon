@@ -136,6 +136,28 @@ public final class MixinPermissionChecks {
     }
 
     /**
+     * PneumaticCraft's wrench packet for another mod's wrench, judged by the island at the position: a wrenched drone
+     * like a right click on it, a sneaking wrench (the block is dismantled and dropped) like breaking the block, else
+     * (the block is rotated) like a right click on the block with the wrench.
+     */
+    public static boolean denyPneumaticCraftWrench(final Player player, final Level level, final BlockPos position, final Object wrenched, final InteractionHand hand) {
+        if (!(level instanceof final ServerLevel serverLevel) || !(player instanceof final ServerPlayer serverPlayer)) return false;
+        final ItemStack wrench = player.getItemInHand(hand);
+        final boolean denied;
+        if (wrenched instanceof final Entity wrenchedEntity) {
+            denied = InteractionHandler.isEntityInteractionDenied(serverPlayer, wrenchedEntity, wrench);
+        } else if (player.isShiftKeyDown()) {
+            denied = InteractionHandler.isBreakDenied(player, serverLevel, position);
+        } else {
+            denied = InteractionHandler.islandGuardingPosition(player, serverLevel, position)
+                    .map(island -> isDeniedOn(island, player, PermissionTriggers.ON_RIGHT_CLICK_BLOCK, InteractionHandler.subjectOfClick(serverLevel, position, wrench)))
+                    .orElse(false);
+        }
+        if (denied && InteractionHandler.isFirstDenialMessageThisTick(serverPlayer)) InteractionHandler.sendDeniedMessage(player);
+        return denied;
+    }
+
+    /**
      * A block broken at range by a world write no Forge event sees, judged by the island at the position like a break by
      * hand there (a left click with the main hand item).
      */
