@@ -35,6 +35,7 @@ public final class PermissionTriggers {
     public static final String ON_PICKUP_PIGLIN = "onPickupPiglin";
     public static final String ON_ENTER_NETHER_PORTAL = "onEnterNetherPortal";
     public static final String ON_ENTER_VAULT_PORTAL = "onEnterVaultPortal";
+    public static final String ON_OPEN_VAULT_PORTAL = "onOpenVaultPortal";
     public static final String ON_ELEVATOR_USE = "onElevatorUse";
 
     private static final List<String> KNOWN_TRIGGERS = Arrays.stream(PermissionTriggers.class.getDeclaredFields())

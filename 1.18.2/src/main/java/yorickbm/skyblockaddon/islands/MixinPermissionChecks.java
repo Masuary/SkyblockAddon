@@ -121,6 +121,21 @@ public final class MixinPermissionChecks {
     }
 
     /**
+     * A click on a block of an assembled Create contraption (storage, deployers, doors, levers, train controls) reaches
+     * the block through Create's own packet, without a Forge event: judged like a right click on the same block placed
+     * at the contraption block's world position, by the island there.
+     */
+    public static boolean denyContraptionBlockClick(final Player player, final Level level, final BlockPos worldPosition, final BlockState contraptionBlock, final ItemStack handItem) {
+        if (!(level instanceof final ServerLevel serverLevel)) return false;
+        final Optional<Island> guardingIsland = InteractionHandler.islandGuardingPosition(player, serverLevel, worldPosition);
+        if (guardingIsland.isEmpty()) return false;
+
+        final boolean denied = isDeniedOn(guardingIsland.get(), player, PermissionTriggers.ON_RIGHT_CLICK_BLOCK, InteractionHandler.subjectOfClickOn(contraptionBlock, handItem));
+        if (denied && InteractionHandler.isFirstDenialMessageThisTick((ServerPlayer) player)) InteractionHandler.sendDeniedMessage(player);
+        return denied;
+    }
+
+    /**
      * A block broken at range by a world write no Forge event sees, judged by the island at the position like a break by
      * hand there (a left click with the main hand item).
      */

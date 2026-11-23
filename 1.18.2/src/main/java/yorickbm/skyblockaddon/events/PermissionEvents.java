@@ -48,6 +48,7 @@ import yorickbm.skyblockaddon.islands.InteractionHandler;
 import yorickbm.skyblockaddon.util.BlockInteractability;
 import yorickbm.skyblockaddon.util.ForgeConverter;
 import yorickbm.skyblockaddon.util.RightClickedStacks;
+import yorickbm.skyblockaddon.util.ToggleOwnedItemUses;
 
 import java.util.ConcurrentModificationException;
 import java.util.List;
@@ -99,6 +100,8 @@ public class PermissionEvents {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onRightClickBlock(final PlayerInteractEvent.RightClickBlock event) {
+        if (event.getPlayer() instanceof final ServerPlayer clickingPlayer) ToggleOwnedItemUses.forgetAllowedUse(clickingPlayer);
+
         final AtomicReference<Island> standingOn = new AtomicReference<>();
         if (!InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) {
             final String trigger = BlockInteractability.isRightClickInteraction(event.getWorld(), event.getPos(), event.getPlayer(), event.getHand())
@@ -106,7 +109,13 @@ public class PermissionEvents {
                     : PermissionTriggers.ON_PLACE_BLOCK;
 
             final ServerPlayer player = (ServerPlayer) event.getPlayer();
-            if (InteractionHandler.checkPlayerInteraction(standingOn, player, (ServerLevel) event.getWorld(), event.getPos(), event.getItemStack(), trigger)) {
+            final ServerLevel level = (ServerLevel) event.getWorld();
+            final Optional<ToggleOwnedItemUses.Owner> toggleOwningTheUse = PermissionTriggers.ON_PLACE_BLOCK.equals(trigger)
+                    ? ToggleOwnedItemUses.ownerOf(level, event.getPos(), event.getHitVec().getDirection(), event.getItemStack())
+                    : Optional.empty();
+            if (toggleOwningTheUse.isPresent()) {
+                judgeToggleOwnedUse(event, standingOn, player, level, toggleOwningTheUse.get());
+            } else if (InteractionHandler.checkPlayerInteraction(standingOn, player, level, event.getPos(), event.getItemStack(), trigger)) {
                 InteractionHandler.denyBlockClick(event, player);
             } else if (InteractionHandler.isEntityPlacementDenied(standingOn, player, event.getItemStack())) {
                 final boolean blockUseComesFirst = PermissionTriggers.ON_RIGHT_CLICK_BLOCK.equals(trigger) && !player.isSecondaryUseActive();
@@ -118,11 +127,27 @@ public class PermissionEvents {
     }
 
     /**
+     * A vault crystal on a portal frame is judged here; bone meal and nether portal ignition by their own checks later
+     * in the click. The blocks an allowed use places are then left to that judgement.
+     */
+    private static void judgeToggleOwnedUse(final PlayerInteractEvent.RightClickBlock event, final AtomicReference<Island> standingOn, final ServerPlayer player,
+                                            final ServerLevel level, final ToggleOwnedItemUses.Owner toggleOwningTheUse) {
+        if (toggleOwningTheUse == ToggleOwnedItemUses.Owner.VAULT_PORTAL_OPENING && InteractionHandler.checkPlayerInteraction(standingOn, player, level, event.getPos(),
+                event.getItemStack(), PermissionTriggers.ON_OPEN_VAULT_PORTAL)) {
+            InteractionHandler.denyBlockClick(event, player);
+            return;
+        }
+        ToggleOwnedItemUses.rememberAllowedUse(player, event.getItemStack());
+    }
+
+    /**
      * Boats, and spawn eggs aimed at water, are used through RightClickItem, which no block check sees. A randomizer
      * bag is denied when any stack it could pick is a denied entity placer.
      */
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onRightClickItemPlacingEntity(final PlayerInteractEvent.RightClickItem event) {
+        if (event.getPlayer() instanceof final ServerPlayer clickingPlayer) ToggleOwnedItemUses.forgetAllowedUse(clickingPlayer);
+
         final AtomicReference<Island> standingOn = new AtomicReference<>();
         if (InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) return;
 
@@ -205,7 +230,7 @@ public class PermissionEvents {
         final AtomicReference<Island> standingOn = new AtomicReference<>();
         if (!InteractionHandler.verifyEntity(event.getEntity(), standingOn).asBoolean()) {
             final ServerPlayer player = (ServerPlayer) event.getEntity();
-            if (InteractionHandler.checkPlayerInteraction(standingOn, player, (ServerLevel) event.getWorld(), event.getPos(), PermissionTriggers.ON_PLACE_BLOCK,
+            if (!ToggleOwnedItemUses.isPlacedByAllowedUse(player) && InteractionHandler.checkPlayerInteraction(standingOn, player, (ServerLevel) event.getWorld(), event.getPos(), PermissionTriggers.ON_PLACE_BLOCK,
                     InteractionHandler.subjectOfPlacedBlock(player.getMainHandItem(), event.getPlacedBlock()))) {
                 InteractionHandler.deny(event, player);
             }

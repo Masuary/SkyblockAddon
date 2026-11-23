@@ -4,8 +4,9 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * What a block interaction is judged on, as registry ids: the item in the acting hand, the block that item would place
- * (for block items) and the block the interaction targets (the clicked block, or the block a placement produced).
+ * What a block interaction is judged on, as registry ids: the item in the acting hand, the block being placed (the block
+ * a held block item would place, or the block a placement produced) and the block the interaction targets (the clicked
+ * block, or the block a placement produced).
  */
 public record InteractionSubject(Optional<String> handItemId, Optional<String> heldBlockId, Optional<String> targetBlockId) {
     public InteractionSubject {

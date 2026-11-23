@@ -19,5 +19,6 @@ public class MixinConnector implements IMixinConnector {
         Mixins.addConfiguration("/mixins/easy_piglins.mixin.json");
         Mixins.addConfiguration("/mixins/elevatorid.mixin.json");
         Mixins.addConfiguration("/mixins/effortlessbuilding.mixin.json");
+        Mixins.addConfiguration("/mixins/create.mixin.json");
     }
 }

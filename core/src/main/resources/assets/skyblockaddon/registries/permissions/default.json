@@ -810,7 +810,8 @@
       "category": "animals",
       "triggers": [
         "onRightClickBlock",
-        "onRightClickItem"
+        "onRightClickItem",
+        "onPlaceBlock"
       ],
       "data": {
         "skyblockaddon": [],

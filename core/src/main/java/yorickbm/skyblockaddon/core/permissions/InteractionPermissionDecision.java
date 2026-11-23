@@ -21,14 +21,20 @@ public final class InteractionPermissionDecision {
      * is denied by any lacked permission that has block rules. {@link PermissionTriggers#ON_BREAK_BLOCK} (fired for
      * area tools such as gadgets, never with a single target) is judged the same way without a target block. Other
      * triggers judge the target block only and skip the block rules when there is none.
+     * <p>
+     * A placement that places no block (a non-block item used on a block, an entity placer) is not judged by a
+     * permission whose item rules carve the hand item out: that item belongs to another permission on the trigger
+     * (spawn eggs to the spawn egg toggle, not to Place blocks).
      */
     public static Optional<Permission> findDenyingPermission(final String trigger, final List<Permission> triggerPermissions,
                                                              final Predicate<String> groupHasPermission, final InteractionSubject subject) {
-        final Optional<String> blockSubject = PermissionTriggers.ON_PLACE_BLOCK.equals(trigger)
+        final boolean placement = PermissionTriggers.ON_PLACE_BLOCK.equals(trigger);
+        final Optional<String> blockSubject = placement
                 ? subject.heldBlockId().or(subject::targetBlockId)
                 : subject.targetBlockId();
-        final boolean untargetedTrigger = PermissionTriggers.ON_PLACE_BLOCK.equals(trigger) || PermissionTriggers.ON_BREAK_BLOCK.equals(trigger);
+        final boolean untargetedTrigger = placement || PermissionTriggers.ON_BREAK_BLOCK.equals(trigger);
         final boolean untargetedWithoutBlockSubject = untargetedTrigger && blockSubject.isEmpty();
+        final Optional<String> itemLeftToItsOwnPermission = placement && subject.heldBlockId().isEmpty() ? subject.handItemId() : Optional.empty();
 
         for (final Permission permission : triggerPermissions) {
             if (groupHasPermission.test(permission.getId())) continue;
@@ -36,6 +42,7 @@ public final class InteractionPermissionDecision {
             final List<String> itemRules = permission.getData().getItemsData();
             final List<String> blockRules = permission.getData().getBlocksData();
             if (itemRules.isEmpty() && blockRules.isEmpty()) return Optional.of(permission);
+            if (itemLeftToItsOwnPermission.filter(handItemId -> PermissionManager.isCarvedOut(itemRules, handItemId)).isPresent()) continue;
 
             final boolean itemDenied = !itemRules.isEmpty() && subject.handItemId()
                     .map(handItemId -> PermissionManager.checkMatch(itemRules, handItemId) == MatchResult.BLOCK)

@@ -362,7 +362,13 @@ public class InteractionHandler {
      * A click on a block: the hand item, the block it would place and the clicked block (none when air).
      */
     public static InteractionSubject subjectOfClick(final ServerLevel world, final BlockPos position, final ItemStack handItem) {
-        final BlockState clickedState = world.getBlockState(position);
+        return subjectOfClickOn(world.getBlockState(position), handItem);
+    }
+
+    /**
+     * A click on a block that is not in the world at the clicked position (a block of a moving contraption).
+     */
+    public static InteractionSubject subjectOfClickOn(final BlockState clickedState, final ItemStack handItem) {
         final Optional<String> clickedBlockId = clickedState.isAir() ? Optional.empty() : Optional.of(blockId(clickedState.getBlock()));
         return new InteractionSubject(itemId(handItem), heldBlockId(handItem), clickedBlockId);
     }
@@ -374,7 +380,7 @@ public class InteractionHandler {
     public static InteractionSubject subjectOfPlacedBlock(final ItemStack handItem, final BlockState placedState) {
         final Block placedBlock = placedState.getBlock();
         final Block judgedBlock = placedBlock.asItem() instanceof final BlockItem placingItem ? placingItem.getBlock() : placedBlock;
-        return new InteractionSubject(itemId(handItem), Optional.empty(), Optional.of(blockId(judgedBlock)));
+        return new InteractionSubject(itemId(handItem), Optional.of(blockId(judgedBlock)), Optional.of(blockId(judgedBlock)));
     }
 
     /**
